@@ -13,6 +13,8 @@ public class JuegosPanel extends JPanel {
     // Campo para que el .form quede contento (no lo usamos directamente)
     private JPanel panelJuegos;
     private JScrollPane scrollJuegos;
+    private JPanel formJuegosPanel;
+    private JPanel panelBotonesJuegos;
 
     private final JuegoService juegoService;
 
@@ -49,35 +51,35 @@ public class JuegosPanel extends JPanel {
         add(scroll, BorderLayout.WEST);
 
         // ----- Formulario al centro -----
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        formJuegosPanel = new JPanel(new GridLayout(0, 2, 5, 5));
 
         txtNombreJuego = new JTextField();
         cbTipoJuego = new JComboBox<>(TipoJuego.values());
         spDificultad = new JSpinner(new SpinnerNumberModel(1, 1, 5, 1));
         txtDescripcionJuego = new JTextArea(4, 20);
 
-        formPanel.add(new JLabel("Nombre:"));
-        formPanel.add(txtNombreJuego);
-        formPanel.add(new JLabel("Tipo:"));
-        formPanel.add(cbTipoJuego);
-        formPanel.add(new JLabel("Dificultad:"));
-        formPanel.add(spDificultad);
-        formPanel.add(new JLabel("Descripción:"));
-        formPanel.add(new JScrollPane(txtDescripcionJuego));
+        formJuegosPanel.add(new JLabel("Nombre:"));
+        formJuegosPanel.add(txtNombreJuego);
+        formJuegosPanel.add(new JLabel("Tipo:"));
+        formJuegosPanel.add(cbTipoJuego);
+        formJuegosPanel.add(new JLabel("Dificultad:"));
+        formJuegosPanel.add(spDificultad);
+        formJuegosPanel.add(new JLabel("Descripción:"));
+        formJuegosPanel.add(new JScrollPane(txtDescripcionJuego));
 
-        add(formPanel, BorderLayout.CENTER);
+        add(formJuegosPanel, BorderLayout.CENTER);
 
         // ----- Botones abajo -----
-        JPanel buttonsPanel = new JPanel();
+        panelBotonesJuegos = new JPanel();
         btnAgregarJuego = new JButton("Agregar");
         btnEliminarJuego = new JButton("Eliminar");
         btnLimpiarJuego = new JButton("Limpiar");
 
-        buttonsPanel.add(btnAgregarJuego);
-        buttonsPanel.add(btnEliminarJuego);
-        buttonsPanel.add(btnLimpiarJuego);
+        panelBotonesJuegos.add(btnAgregarJuego);
+        panelBotonesJuegos.add(btnEliminarJuego);
+        panelBotonesJuegos.add(btnLimpiarJuego);
 
-        add(buttonsPanel, BorderLayout.SOUTH);
+        add(panelBotonesJuegos, BorderLayout.SOUTH);
 
         // ----- Eventos -----
         btnAgregarJuego.addActionListener(e -> agregarJuego());

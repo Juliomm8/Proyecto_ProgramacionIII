@@ -9,6 +9,9 @@ public class MainWindow extends JFrame {
 
     private JPanel mainPanel; // fantasma para el .form
     private JTabbedPane tabbedPanePrincipal;
+    private JPanel tabJuegosPanel;
+    private JPanel tabPerfilesPanel;
+
     private final JuegoService juegoService;
     private final PerfilService perfilService;
 

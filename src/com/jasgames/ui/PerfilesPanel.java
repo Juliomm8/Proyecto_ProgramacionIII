@@ -16,6 +16,10 @@ public class PerfilesPanel extends JPanel {
     private JPanel panelPerfiles;        // root en el .form
     private JScrollPane scrollNinos;     // scroll de la lista
     private JPanel formPerfilesPanel;    // panel central del formulario
+    private JPanel panelBusquedaOrden;
+
+    private JLabel lblOrdenarPor;
+    private JLabel lblBuscar;
 
     private final PerfilService perfilService;
 
@@ -54,13 +58,13 @@ public class PerfilesPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
 
         // ---------- PANEL NORTE: BÚSQUEDA + ORDEN ----------
-        JPanel panelBusquedaOrden = new JPanel(new GridLayout(2, 3, 5, 5));
+        panelBusquedaOrden = new JPanel(new GridLayout(2, 3, 5, 5));
 
-        JLabel lblBuscar = new JLabel("Buscar:");
+        lblBuscar = new JLabel("Buscar:");
         txtBuscar = new JTextField();
         btnBuscarNino = new JButton("Buscar");
 
-        JLabel lblOrdenarPor = new JLabel("Ordenar por:");
+        lblOrdenarPor = new JLabel("Ordenar por:");
         cbOrdenarPor = new JComboBox<>(new String[]{"ID", "Nombre", "Edad", "Diagnóstico"});
         btnOrdenar = new JButton("Ordenar");
 
