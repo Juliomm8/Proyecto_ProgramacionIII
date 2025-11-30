@@ -1,4 +1,4 @@
-# 🎮 Proyecto Programación III – Sistema de Juegos y Perfiles
+#  Proyecto Programación III – Sistema de Juegos y Perfiles
 
 Aplicación de escritorio desarrollada en **Java** como parte de la materia **Programación III / Ingeniería de Requerimientos**.  
 El objetivo del proyecto es gestionar **perfiles de usuarios** y **módulos de juegos**, utilizando programación orientada a objetos y formularios con Swing.
@@ -27,7 +27,7 @@ El objetivo del proyecto es gestionar **perfiles de usuarios** y **módulos de j
 
 ---
 
-## 🛠️ Tecnologías utilizadas
+##  Tecnologías utilizadas
 
 - **Lenguaje:** Java  
 - **Paradigma:** Programación Orientada a Objetos  
@@ -58,8 +58,9 @@ Proyecto_ProgramacionIII/
 
 **En desarrollo**
 - Se siguen añadiendo ventanas, lógica de negocio y mejoras en la interfaz.
+---
 
-  ## 👥 Autores
+##  Autores
 
 - **Amelia Povea**
 - **Alison Armas**
