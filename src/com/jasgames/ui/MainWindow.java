@@ -7,30 +7,24 @@ import javax.swing.*;
 
 public class MainWindow extends JFrame {
 
+    private JPanel mainPanel; // fantasma para el .form
+    private JTabbedPane tabbedPanePrincipal;
     private final JuegoService juegoService;
     private final PerfilService perfilService;
-    private JPanel mainPanel;
-    private JTabbedPane tabbedPanePrincipal;
-    private JPanel tabJuegosPanel;
-    private JPanel tabPerfilesPanel;
 
     public MainWindow() {
-        // Servicios de cada módulo
         this.juegoService = new JuegoService();
         this.perfilService = new PerfilService();
 
-        // Config general de la ventana
         setTitle("JAS Games - Avance Proyecto");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 600);
-        setLocationRelativeTo(null); // centrar
+        setLocationRelativeTo(null);
 
-        // Pestañas (módulos)
         JTabbedPane tabbedPane = new JTabbedPane();
-        //tabbedPane.addTab("Juegos", new JuegosPanel(juegoService));
-        //tabbedPane.addTab("Perfiles", new PerfilesPanel(perfilService));
+        tabbedPane.addTab("Juegos", new JuegosPanel(juegoService));
+        tabbedPane.addTab("Perfiles", new PerfilesPanel(perfilService));
 
-        // Agregamos el tabbed al frame
         add(tabbedPane);
     }
 }

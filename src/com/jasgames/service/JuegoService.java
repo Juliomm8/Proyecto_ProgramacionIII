@@ -2,6 +2,7 @@ package com.jasgames.service;
 
 import com.jasgames.model.Actividad;
 import com.jasgames.model.Juego;
+import com.jasgames.model.TipoJuego;
 
 import java.util.*;
 
@@ -15,20 +16,30 @@ public class JuegoService {
         this.colaActividades = new LinkedList<>();
     }
 
-    // CRUD de juegos
+    // ------------ CRUD JUEGOS ------------
     public void agregarJuego(Juego juego) {
         juegos.add(juego);
-    }
-
-    public List<Juego> obtenerTodos() {
-        return Collections.unmodifiableList(juegos);
     }
 
     public void eliminarJuego(Juego juego) {
         juegos.remove(juego);
     }
 
-    // Cola de actividades
+    public List<Juego> obtenerTodos() {
+        return Collections.unmodifiableList(juegos);
+    }
+
+    public List<Juego> filtrarPorTipo(TipoJuego tipo) {
+        List<Juego> resultado = new ArrayList<>();
+        for (Juego juego : juegos) {
+            if (juego.getTipo() == tipo) {
+                resultado.add(juego);
+            }
+        }
+        return resultado;
+    }
+
+    // ------------ COLA DE ACTIVIDADES ------------
     public void encolarActividad(Actividad actividad) {
         colaActividades.offer(actividad);
     }
