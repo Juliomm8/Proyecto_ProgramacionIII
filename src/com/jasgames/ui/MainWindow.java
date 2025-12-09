@@ -46,11 +46,11 @@ public class MainWindow extends JFrame {
     private void initTabs() {
         tabbedPanePrincipal.removeAll();
 
-        // pestañas con tus paneles ya implementados
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService));
         tabbedPanePrincipal.addTab("Perfiles", new PerfilesPanel(perfilService));
-        tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel());
+        tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService()));
     }
+
 
     private void initListeners() {
         if (btnBackDocente != null) {
