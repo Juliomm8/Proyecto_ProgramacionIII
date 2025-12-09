@@ -1,8 +1,9 @@
 package com.jasgames.ui;
 
 import javax.swing.*;
+import java.awt.*;
 
-public class DashboardPanel {
+public class DashboardPanel extends JPanel {
     private JPanel panelDashboard;
     private JPanel panelHeaderDashboard;
     private JLabel lblTituloDashboard;
@@ -13,4 +14,11 @@ public class DashboardPanel {
     private JButton btnOrdenarPorPuntaje;
     private JTable tblResultados;
     private JScrollPane scrollResultados;
+
+    public DashboardPanel() {
+
+        setLayout(new BorderLayout());
+        add(panelDashboard, BorderLayout.CENTER);
+    }
+
 }

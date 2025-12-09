@@ -1,7 +1,8 @@
 package com.jasgames.ui;
 
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+import com.jasgames.service.AppContext;
+
+import javax.swing.*;
 
 public class App {
 
@@ -9,8 +10,9 @@ public class App {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainWindow mainWindow = new MainWindow();
-            mainWindow.setVisible(true);
+            AppContext context = new AppContext();
+            SeleccionUsuarioWindow seleccion = new SeleccionUsuarioWindow(context);
+            seleccion.setVisible(true);
         });
     }
 }
