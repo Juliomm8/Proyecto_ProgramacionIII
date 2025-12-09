@@ -11,6 +11,10 @@ public class MainWindow extends JFrame {
     private JTabbedPane tabbedPanePrincipal;
     private JPanel tabJuegosPanel;
     private JPanel tabPerfilesPanel;
+    private JPanel panelHeaderDocente;
+    private JLabel lblTituloDocente;
+    private JButton btnBackDocente;
+    private JPanel tabDashboardPanel;
 
     private final JuegoService juegoService;
     private final PerfilService perfilService;

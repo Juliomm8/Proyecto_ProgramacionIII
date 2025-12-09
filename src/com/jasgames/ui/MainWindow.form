@@ -29,8 +29,36 @@
             <border type="none"/>
             <children/>
           </grid>
+          <grid id="f4c7e" binding="tabDashboardPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <tabbedpane title="Dashboard"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
         </children>
       </tabbedpane>
+      <grid id="e8fce" binding="panelHeaderDocente" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="North"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="9662d" class="javax.swing.JLabel" binding="lblTituloDocente">
+            <constraints border-constraint="Center"/>
+            <properties>
+              <horizontalAlignment value="0"/>
+              <text value="Modo Docente"/>
+            </properties>
+          </component>
+          <component id="8b833" class="javax.swing.JButton" binding="btnBackDocente">
+            <constraints border-constraint="West"/>
+            <properties>
+              <text value="← Volver"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>
