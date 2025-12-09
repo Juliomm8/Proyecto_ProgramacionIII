@@ -1,110 +1,198 @@
 package com.jasgames.service;
 
-import com.jasgames.model.CriterioOrdenNino;
-import com.jasgames.model.Nino;
-import com.jasgames.model.PIA;
-import java.util.*;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.jasgames.model.CriterioOrdenNino;
+import com.jasgames.model.Nino;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class PerfilService {
 
-    private final Map<Integer, Nino> ninosPorId;
-    private final Map<Integer, PIA> piaPorNinoId;
+    // Archivo donde se guardan los niños
+    private static final String ARCHIVO_NINOS = "data/ninos.json";
+
+    // Lista interna de niños
+    private final List<Nino> ninos = new ArrayList<>();
+
+    // Gson para JSON
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
 
     public PerfilService() {
-        this.ninosPorId = new HashMap<>();
-        this.piaPorNinoId = new HashMap<>();
+        // Al crear el servicio, cargamos lo que haya en el JSON
+        cargarNinosDesdeArchivo();
     }
 
-    // ------------ CRUD BÁSICO ------------
+    // =========================================================
+    // MÉTODOS QUE LA UI USA
+    // =========================================================
 
-    public void registrarNino(Nino nino) {
-        ninosPorId.put(nino.getId(), nino);
+    /** Usado por PerfilesPanel para llenar la tabla */
+    public List<Nino> obtenerTodosNinos() {
+        return new ArrayList<>(ninos);
     }
 
+    /** Usado por PerfilesPanel al buscar por ID */
     public Nino buscarNinoPorId(int id) {
-        return ninosPorId.get(id);
-    }
-
-    public boolean eliminarNinoPorId(int id) {
-        return ninosPorId.remove(id) != null;
-    }
-
-    public void actualizarNino(Nino ninoActualizado) {
-        ninosPorId.put(ninoActualizado.getId(), ninoActualizado);
-    }
-
-    public Collection<Nino> obtenerTodosNinos() {
-        return ninosPorId.values();
-    }
-
-    // ------------ BÚSQUEDA ------------
-
-    public List<Nino> buscarPorNombre(String texto) {
-        List<Nino> resultado = new ArrayList<>();
-        String q = texto.toLowerCase();
-
-        for (Nino nino : ninosPorId.values()) {
-            if (nino.getNombre().toLowerCase().contains(q)) {
-                resultado.add(nino);
+        for (Nino n : ninos) {
+            if (n.getId() == id) {
+                return n;
             }
         }
-        return resultado;
+        return null;
     }
 
+    /**
+     * Buscar un niño por ID (si el texto es numérico) o por nombre
+     * (si no es numérico). Este método lo usa PerfilesPanel.
+     */
     public Nino buscarPorIdONombre(String texto) {
         if (texto == null || texto.isBlank()) {
             return null;
         }
 
+        String trimmed = texto.trim();
+
+        // 1) Intentar interpretarlo como ID (int)
         try {
-            int id = Integer.parseInt(texto.trim());
-            return buscarNinoPorId(id);
+            int idBuscado = Integer.parseInt(trimmed);
+            for (Nino n : ninos) {
+                if (n.getId() == idBuscado) {
+                    return n;
+                }
+            }
         } catch (NumberFormatException e) {
-            List<Nino> encontrados = buscarPorNombre(texto);
-            return encontrados.isEmpty() ? null : encontrados.get(0);
+            // No es un número, seguimos con búsqueda por nombre
+        }
+
+        // 2) Buscar por nombre que contenga el texto (ignorando mayúsculas/minúsculas)
+        String buscadoLower = trimmed.toLowerCase();
+        for (Nino n : ninos) {
+            if (n.getNombre() != null &&
+                    n.getNombre().toLowerCase().contains(buscadoLower)) {
+                return n;
+            }
+        }
+
+        // Si no se encontró nada
+        return null;
+    }
+
+    /** Usado por PerfilesPanel para actualizar los datos editados */
+    public void actualizarNino(Nino ninoActualizado) {
+        if (ninoActualizado == null) return;
+
+        for (int i = 0; i < ninos.size(); i++) {
+            if (ninos.get(i).getId() == ninoActualizado.getId()) {
+                ninos.set(i, ninoActualizado);
+                guardarNinosEnArchivo();
+                return;
+            }
         }
     }
 
-    // ------------ ORDENAMIENTO ------------
+    /** Registrar un nuevo niño (o reemplazar si el ID ya existe) */
+    public void registrarNino(Nino nino) {
+        if (nino == null) return;
 
+        // si ya existe ese ID, lo reemplazamos
+        eliminarNinoPorId(nino.getId());
+        ninos.add(nino);
+        guardarNinosEnArchivo();
+    }
+
+    /** Eliminar un niño por ID */
+    public boolean eliminarNinoPorId(int id) {
+        boolean eliminado = ninos.removeIf(n -> n.getId() == id);
+        if (eliminado) {
+            guardarNinosEnArchivo();
+        }
+        return eliminado;
+    }
+
+    /** Devolver copia de la lista ordenada según el criterio */
     public List<Nino> obtenerNinosOrdenados(CriterioOrdenNino criterio) {
-        List<Nino> lista = new ArrayList<>(ninosPorId.values());
-
-        Comparator<Nino> comparator;
+        List<Nino> copia = new ArrayList<>(ninos);
+        if (criterio == null) return copia;
 
         switch (criterio) {
+            case ID:
+                // id es int
+                copia.sort(Comparator.comparingInt(Nino::getId));
+                break;
             case NOMBRE:
-                comparator = Comparator.comparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER);
+                copia.sort(Comparator.comparing(
+                        Nino::getNombre,
+                        String.CASE_INSENSITIVE_ORDER
+                ));
                 break;
             case EDAD:
-                comparator = Comparator.comparingInt(Nino::getEdad)
-                        .thenComparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER);
+                copia.sort(Comparator.comparingInt(Nino::getEdad));
                 break;
             case DIAGNOSTICO:
-                comparator = Comparator.comparing(Nino::getDiagnostico, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER);
-                break;
-            case ID:
-            default:
-                comparator = Comparator.comparingInt(Nino::getId);
+                // por si diagnostico no es String, usamos String.valueOf
+                copia.sort(Comparator.comparing(
+                        n -> String.valueOf(n.getDiagnostico()),
+                        String.CASE_INSENSITIVE_ORDER
+                ));
                 break;
         }
-
-        lista.sort(comparator);
-        return lista;
+        return copia;
     }
 
-    // ------------ PIA  ------------
+    // =========================================================
+    // PERSISTENCIA JSON
+    // =========================================================
 
-    public void asignarPIA(PIA pia) {
-        piaPorNinoId.put(pia.getNino().getId(), pia);
+    /** Guarda la lista de niños en data/ninos.json */
+    private void guardarNinosEnArchivo() {
+        try {
+            Path pathArchivo = Paths.get(ARCHIVO_NINOS);
+            Path carpeta = pathArchivo.getParent();
+            if (carpeta != null) {
+                Files.createDirectories(carpeta); // crea "data" si no existe
+            }
+
+            String json = gson.toJson(ninos);
+            Files.writeString(pathArchivo, json, StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public PIA obtenerPIADeNino(int idNino) {
-        return piaPorNinoId.get(idNino);
+    /** Carga los niños desde data/ninos.json, si existe */
+    private void cargarNinosDesdeArchivo() {
+        Path pathArchivo = Paths.get(ARCHIVO_NINOS);
+        if (!Files.exists(pathArchivo)) {
+            return; // primera vez, no hay archivo
+        }
+
+        try {
+            String json = Files.readString(pathArchivo, StandardCharsets.UTF_8);
+            if (json == null || json.isBlank()) return;
+
+            Type tipoLista = new TypeToken<List<Nino>>() {}.getType();
+            List<Nino> cargados = gson.fromJson(json, tipoLista);
+
+            ninos.clear();
+            if (cargados != null) {
+                ninos.addAll(cargados);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
