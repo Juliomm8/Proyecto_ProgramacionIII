@@ -5,6 +5,10 @@ import com.jasgames.model.Nino;
 import com.jasgames.model.PIA;
 import java.util.*;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
 public class PerfilService {
 
     private final Map<Integer, Nino> ninosPorId;
