@@ -1,5 +1,8 @@
 package com.jasgames.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Nino {
 
     private int id;
@@ -7,6 +10,7 @@ public class Nino {
     private int edad;
     private String diagnostico;
     private int puntosTotales;
+    private Set<Integer> juegosAsignados = new HashSet<>();
 
     public Nino(int id, String nombre, int edad, String diagnostico) {
         this.id = id;
@@ -30,6 +34,14 @@ public class Nino {
 
     public String getDiagnostico() {
         return diagnostico;
+    }
+
+    public Set<Integer> getJuegosAsignados() {
+        return juegosAsignados;
+    }
+
+    public void setJuegosAsignados(Set<Integer> juegosAsignados) {
+        this.juegosAsignados = juegosAsignados;
     }
 
     public int getPuntosTotales() {

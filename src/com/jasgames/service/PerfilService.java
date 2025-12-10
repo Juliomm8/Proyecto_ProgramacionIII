@@ -12,9 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class PerfilService {
 
@@ -51,6 +49,33 @@ public class PerfilService {
             }
         }
         return null;
+    }
+
+    /** Devuelve los IDs de juegos asignados a un niño por su ID. */
+    public Set<Integer> getJuegosAsignados(int idNino) {
+        Nino nino = buscarNinoPorId(idNino);
+        if (nino == null || nino.getJuegosAsignados() == null) {
+            return Collections.emptySet();
+        }
+        // devolvemos una copia para no exponer la colección interna
+        return new HashSet<>(nino.getJuegosAsignados());
+    }
+
+    /** Reemplaza el conjunto de juegos asignados a un niño y guarda en JSON. */
+    public void asignarJuegos(int idNino, Set<Integer> juegosIds) {
+        Nino nino = buscarNinoPorId(idNino);
+        if (nino == null) {
+            return;
+        }
+
+        if (juegosIds == null) {
+            nino.setJuegosAsignados(new HashSet<>());
+        } else {
+            nino.setJuegosAsignados(new HashSet<>(juegosIds));
+        }
+
+        // Persistimos el cambio en data/ninos.json
+        guardarNinosEnArchivo();
     }
 
     /**

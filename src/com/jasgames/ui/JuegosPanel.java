@@ -45,9 +45,6 @@ public class JuegosPanel extends JPanel {
     private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
     private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
 
-    // Asignaciones en memoria: idNiño -> conjunto de idJuego
-    private final Map<Integer, Set<Integer>> asignacionesPorNino = new HashMap<>();
-
     public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
         this.perfilService = perfilService;
@@ -139,7 +136,6 @@ public class JuegosPanel extends JPanel {
         java.util.List<Nino> ninos = perfilService.obtenerTodosNinos();
         for (Nino nino : ninos) {
             cboNinos.addItem(nino);
-            asignacionesPorNino.putIfAbsent(nino.getId(), new HashSet<>());
         }
 
         if (cboNinos.getItemCount() > 0) {
@@ -196,8 +192,7 @@ public class JuegosPanel extends JPanel {
         panelAsignacionContenido.removeAll();
         checkBoxesAsignacion.clear();
 
-        Set<Integer> juegosAsignados = asignacionesPorNino
-                .getOrDefault(seleccionado.getId(), Collections.emptySet());
+        Set<Integer> juegosAsignados = perfilService.getJuegosAsignados(seleccionado.getId());
 
         for (Juego juego : juegoService.obtenerTodos()) {
             if (!juego.isHabilitado()) {
@@ -238,7 +233,7 @@ public class JuegosPanel extends JPanel {
             }
         }
 
-        asignacionesPorNino.put(seleccionado.getId(), nuevosAsignados);
+        perfilService.asignarJuegos(seleccionado.getId(), nuevosAsignados);
 
         JOptionPane.showMessageDialog(
                 this,
@@ -252,6 +247,6 @@ public class JuegosPanel extends JPanel {
      * Devuelve los IDs de juegos asignados a un niño por su ID.
      */
     public Set<Integer> getJuegosAsignadosParaNino(int idNino) {
-        return asignacionesPorNino.getOrDefault(idNino, Collections.emptySet());
+        return perfilService.getJuegosAsignados(idNino);
     }
 }
