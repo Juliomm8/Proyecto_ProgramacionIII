@@ -1,148 +1,257 @@
 package com.jasgames.ui;
 
 import com.jasgames.model.Juego;
-import com.jasgames.model.TipoJuego;
+import com.jasgames.model.Nino;
 import com.jasgames.service.JuegoService;
+import com.jasgames.service.PerfilService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
 import java.util.List;
 
+/**
+ * Panel de gestión de juegos para el modo docente.
+ *
+ * - Columna izquierda: habilitar / deshabilitar juegos del sistema.
+ * - Columna derecha: asignar juegos habilitados a un niño específico.
+ *
+ * Aunque existe un .form asociado, este panel construye su interfaz por código,
+ * reutilizando los mismos nombres de campos para mantener compatibilidad.
+ */
 public class JuegosPanel extends JPanel {
 
-    // Campo para que el .form quede contento (no lo usamos directamente)
+    // Campos esperados por el .form (algunos no se usan directamente)
     private JPanel panelJuegos;
-    private JScrollPane scrollJuegos;
-    private JPanel formJuegosPanel;
-    private JPanel panelBotonesJuegos;
+    private JPanel panelIzquierdo;
+    private JPanel panelDerecho;
+    private JLabel lblTituloJuegos;
+    private JPanel panelListaJuegos;
+    private JButton btnGuardarEstadoJuegos;
+    private JLabel lblSeleccionNino;
+    private JComboBox cboNinos;               // usaremos JComboBox<Nino>
+    private JLabel lblTituloAsignacion;
+    private JScrollPane panelAsignacionJuegos;
+    private JButton btnGuardarAsignacion;
 
+    // Panel interno dentro del scroll de asignaciones
+    private JPanel panelAsignacionContenido;
+
+    // Servicios compartidos
     private final JuegoService juegoService;
+    private final PerfilService perfilService;
 
-    // Componentes de la UI
-    private DefaultListModel<Juego> listModel;
-    private JList<Juego> listaJuegos;
-    private JTextField txtNombreJuego;
-    private JComboBox<TipoJuego> cbTipoJuego;
-    private JSpinner spDificultad;
-    private JTextArea txtDescripcionJuego;
-    private JButton btnAgregarJuego;
-    private JButton btnEliminarJuego;
-    private JButton btnLimpiarJuego;
+    // Mapas auxiliares: idJuego -> checkbox
+    private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
+    private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
 
-    // Para generar IDs
-    private int nextId = 1;
+    // Asignaciones en memoria: idNiño -> conjunto de idJuego
+    private final Map<Integer, Set<Integer>> asignacionesPorNino = new HashMap<>();
 
-    public JuegosPanel(JuegoService juegoService) {
+    public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
-        initComponents();
-        cargarJuegosDesdeService();
+        this.perfilService = perfilService;
+
+        initUI();
+        cargarJuegos();
+        cargarNinos();
+        initListeners();
     }
 
-    // ------------------- UI -------------------
+    // ---------------------------------------------------------------------
+    // Inicialización de la interfaz
+    // ---------------------------------------------------------------------
 
-    private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
+    private void initUI() {
+        setLayout(new GridLayout(1, 2, 10, 0));
 
-        // ----- Lista de juegos a la izquierda -----
-        listModel = new DefaultListModel<>();
-        listaJuegos = new JList<>(listModel);
-        JScrollPane scroll = new JScrollPane(listaJuegos);
-        scroll.setPreferredSize(new Dimension(220, 0));
-        add(scroll, BorderLayout.WEST);
+        // ====== Columna izquierda: juegos del sistema ======
+        panelIzquierdo = new JPanel(new BorderLayout(5, 5));
 
-        // ----- Formulario al centro -----
-        formJuegosPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        lblTituloJuegos = new JLabel("Juegos disponibles");
+        lblTituloJuegos.setHorizontalAlignment(SwingConstants.CENTER);
+        panelIzquierdo.add(lblTituloJuegos, BorderLayout.NORTH);
 
-        txtNombreJuego = new JTextField();
-        cbTipoJuego = new JComboBox<>(TipoJuego.values());
-        spDificultad = new JSpinner(new SpinnerNumberModel(1, 1, 5, 1));
-        txtDescripcionJuego = new JTextArea(4, 20);
+        panelListaJuegos = new JPanel();
+        panelListaJuegos.setLayout(new BoxLayout(panelListaJuegos, BoxLayout.Y_AXIS));
+        JScrollPane scrollJuegos = new JScrollPane(panelListaJuegos);
+        panelIzquierdo.add(scrollJuegos, BorderLayout.CENTER);
 
-        formJuegosPanel.add(new JLabel("Nombre:"));
-        formJuegosPanel.add(txtNombreJuego);
-        formJuegosPanel.add(new JLabel("Tipo:"));
-        formJuegosPanel.add(cbTipoJuego);
-        formJuegosPanel.add(new JLabel("Dificultad:"));
-        formJuegosPanel.add(spDificultad);
-        formJuegosPanel.add(new JLabel("Descripción:"));
-        formJuegosPanel.add(new JScrollPane(txtDescripcionJuego));
+        btnGuardarEstadoJuegos = new JButton("Guardar cambios");
+        panelIzquierdo.add(btnGuardarEstadoJuegos, BorderLayout.SOUTH);
 
-        add(formJuegosPanel, BorderLayout.CENTER);
+        // ====== Columna derecha: asignación a niños ======
+        panelDerecho = new JPanel(new BorderLayout(5, 5));
 
-        // ----- Botones abajo -----
-        panelBotonesJuegos = new JPanel();
-        btnAgregarJuego = new JButton("Agregar");
-        btnEliminarJuego = new JButton("Eliminar");
-        btnLimpiarJuego = new JButton("Limpiar");
+        JPanel panelTopDerecho = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        lblSeleccionNino = new JLabel("Seleccionar niño:");
+        cboNinos = new JComboBox();
+        panelTopDerecho.add(lblSeleccionNino);
+        panelTopDerecho.add(cboNinos);
+        panelDerecho.add(panelTopDerecho, BorderLayout.NORTH);
 
-        panelBotonesJuegos.add(btnAgregarJuego);
-        panelBotonesJuegos.add(btnEliminarJuego);
-        panelBotonesJuegos.add(btnLimpiarJuego);
+        JPanel panelCentroDerecho = new JPanel(new BorderLayout(5, 5));
+        lblTituloAsignacion = new JLabel("Juegos asignados al niño:");
+        panelCentroDerecho.add(lblTituloAsignacion, BorderLayout.NORTH);
 
-        add(panelBotonesJuegos, BorderLayout.SOUTH);
+        panelAsignacionContenido = new JPanel();
+        panelAsignacionContenido.setLayout(new BoxLayout(panelAsignacionContenido, BoxLayout.Y_AXIS));
+        panelAsignacionJuegos = new JScrollPane(panelAsignacionContenido);
+        panelCentroDerecho.add(panelAsignacionJuegos, BorderLayout.CENTER);
 
-        // ----- Eventos -----
-        btnAgregarJuego.addActionListener(e -> agregarJuego());
-        btnEliminarJuego.addActionListener(e -> eliminarJuegoSeleccionado());
-        btnLimpiarJuego.addActionListener(e -> limpiarFormulario());
+        panelDerecho.add(panelCentroDerecho, BorderLayout.CENTER);
+
+        btnGuardarAsignacion = new JButton("Guardar asignación");
+        panelDerecho.add(btnGuardarAsignacion, BorderLayout.SOUTH);
+
+        // Agregar columnas al panel principal
+        add(panelIzquierdo);
+        add(panelDerecho);
     }
 
-    // ------------------- LÓGICA (usa JuegoService) -------------------
+    // ---------------------------------------------------------------------
+    // Carga de datos inicial
+    // ---------------------------------------------------------------------
 
-    private void cargarJuegosDesdeService() {
-        List<Juego> existentes = juegoService.obtenerTodos();
-        for (Juego j : existentes) {
-            listModel.addElement(j);
-            if (j.getId() >= nextId) {
-                nextId = j.getId() + 1;
+    /** Crea un checkbox por cada juego registrado en el servicio. */
+    private void cargarJuegos() {
+        panelListaJuegos.removeAll();
+        checkBoxesJuegos.clear();
+
+        List<Juego> juegos = juegoService.obtenerTodos();
+        for (Juego juego : juegos) {
+            JCheckBox chk = new JCheckBox(juego.getNombre());
+            chk.setSelected(juego.isHabilitado());
+            chk.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            panelListaJuegos.add(chk);
+            checkBoxesJuegos.put(juego.getId(), chk);
+        }
+
+        panelListaJuegos.revalidate();
+        panelListaJuegos.repaint();
+    }
+
+    /** Carga los niños en el combo y prepara el mapa de asignaciones. */
+    private void cargarNinos() {
+        cboNinos.removeAllItems();
+
+        java.util.List<Nino> ninos = perfilService.obtenerTodosNinos();
+        for (Nino nino : ninos) {
+            cboNinos.addItem(nino);
+            asignacionesPorNino.putIfAbsent(nino.getId(), new HashSet<>());
+        }
+
+        if (cboNinos.getItemCount() > 0) {
+            cboNinos.setSelectedIndex(0);
+            actualizarAsignacionesParaSeleccionado();
+        }
+    }
+
+    private void initListeners() {
+        btnGuardarEstadoJuegos.addActionListener(e -> onGuardarEstadosJuegos());
+        cboNinos.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
+        btnGuardarAsignacion.addActionListener(e -> onGuardarAsignacion());
+    }
+
+    // ---------------------------------------------------------------------
+    // IZQUIERDA: habilitar / deshabilitar juegos
+    // ---------------------------------------------------------------------
+
+    private void onGuardarEstadosJuegos() {
+        List<Juego> juegos = juegoService.obtenerTodos();
+        for (Juego juego : juegos) {
+            JCheckBox chk = checkBoxesJuegos.get(juego.getId());
+            if (chk != null) {
+                juego.setHabilitado(chk.isSelected());
             }
         }
-    }
 
-    private void agregarJuego() {
-        String nombre = txtNombreJuego.getText().trim();
-        if (nombre.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío");
-            return;
-        }
-
-        TipoJuego tipo = (TipoJuego) cbTipoJuego.getSelectedItem();
-        int dificultad = (Integer) spDificultad.getValue();
-        String descripcion = txtDescripcionJuego.getText().trim();
-
-        Juego juego = new Juego(nextId++, nombre, tipo, dificultad, descripcion);
-
-        juegoService.agregarJuego(juego);
-        listModel.addElement(juego);
-        limpiarFormulario();
-    }
-
-    private void eliminarJuegoSeleccionado() {
-        Juego seleccionado = listaJuegos.getSelectedValue();
-        if (seleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Selecciona un juego primero");
-            return;
-        }
-
-        int opcion = JOptionPane.showConfirmDialog(
+        JOptionPane.showMessageDialog(
                 this,
-                "¿Eliminar el juego \"" + seleccionado.getNombre() + "\"?",
-                "Confirmar eliminación",
-                JOptionPane.YES_NO_OPTION
+                "Estados de los juegos actualizados.",
+                "Información",
+                JOptionPane.INFORMATION_MESSAGE
         );
 
-        if (opcion == JOptionPane.YES_OPTION) {
-            juegoService.eliminarJuego(seleccionado);
-            listModel.removeElement(seleccionado);
-            limpiarFormulario();
-        }
+        // Si el estado cambia, actualizamos también la vista de asignaciones
+        actualizarAsignacionesParaSeleccionado();
     }
 
-    private void limpiarFormulario() {
-        txtNombreJuego.setText("");
-        cbTipoJuego.setSelectedIndex(0);
-        spDificultad.setValue(1);
-        txtDescripcionJuego.setText("");
-        listaJuegos.clearSelection();
+    // ---------------------------------------------------------------------
+    // DERECHA: asignar juegos habilitados a un niño
+    // ---------------------------------------------------------------------
+
+    /** Reconstruye la lista de checkboxes de asignación para el niño actual. */
+    private void actualizarAsignacionesParaSeleccionado() {
+        Object item = cboNinos.getSelectedItem();
+        if (!(item instanceof Nino)) {
+            panelAsignacionContenido.removeAll();
+            panelAsignacionContenido.revalidate();
+            panelAsignacionContenido.repaint();
+            return;
+        }
+        Nino seleccionado = (Nino) item;
+
+        panelAsignacionContenido.removeAll();
+        checkBoxesAsignacion.clear();
+
+        Set<Integer> juegosAsignados = asignacionesPorNino
+                .getOrDefault(seleccionado.getId(), Collections.emptySet());
+
+        for (Juego juego : juegoService.obtenerTodos()) {
+            if (!juego.isHabilitado()) {
+                continue; // solo mostramos los juegos habilitados
+            }
+
+            JCheckBox chk = new JCheckBox(juego.getNombre());
+            chk.setSelected(juegosAsignados.contains(juego.getId()));
+            chk.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            panelAsignacionContenido.add(chk);
+            checkBoxesAsignacion.put(juego.getId(), chk);
+        }
+
+        panelAsignacionContenido.revalidate();
+        panelAsignacionContenido.repaint();
+    }
+
+    /** Guarda la selección de juegos para el niño actualmente seleccionado. */
+    private void onGuardarAsignacion() {
+        Object item = cboNinos.getSelectedItem();
+        if (!(item instanceof Nino)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No hay ningún niño seleccionado.",
+                    "Advertencia",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        Nino seleccionado = (Nino) item;
+
+        Set<Integer> nuevosAsignados = new HashSet<>();
+        for (Juego juego : juegoService.obtenerTodos()) {
+            JCheckBox chk = checkBoxesAsignacion.get(juego.getId());
+            if (chk != null && chk.isSelected()) {
+                nuevosAsignados.add(juego.getId());
+            }
+        }
+
+        asignacionesPorNino.put(seleccionado.getId(), nuevosAsignados);
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Asignación de juegos guardada para " + seleccionado.getNombre(),
+                "Información",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    /**
+     * Devuelve los IDs de juegos asignados a un niño por su ID.
+     */
+    public Set<Integer> getJuegosAsignadosParaNino(int idNino) {
+        return asignacionesPorNino.getOrDefault(idNino, Collections.emptySet());
     }
 }

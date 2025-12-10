@@ -8,6 +8,8 @@ public class Juego {
     private int dificultad; // 1-5 por ejemplo
     private String descripcion;
 
+    private boolean habilitado = true;
+
     public Juego(int id, String nombre, TipoJuego tipo, int dificultad, String descripcion) {
         this.id = id;
         this.nombre = nombre;
@@ -54,6 +56,14 @@ public class Juego {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public boolean isHabilitado() {
+        return habilitado;
+    }
+
+    public void setHabilitado(boolean habilitado) {
+        this.habilitado = habilitado;
     }
 
     @Override

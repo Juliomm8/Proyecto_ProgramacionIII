@@ -32,7 +32,7 @@ public class DashboardPanel extends JPanel {
     private final ResultadoService resultadoService;
     private DefaultTableModel tablaModelo;
 
-    // Constructor principal: lo usará MainWindow
+    // Constructor principal: lo usará DocenteWindow
     public DashboardPanel(ResultadoService resultadoService) {
         this.resultadoService = resultadoService;
 

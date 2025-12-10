@@ -6,7 +6,7 @@ import com.jasgames.service.PerfilService;
 
 import javax.swing.*;
 
-public class MainWindow extends JFrame {
+public class DocenteWindow extends JFrame {
 
     private JPanel mainPanel;
     private JTabbedPane tabbedPanePrincipal;
@@ -23,7 +23,7 @@ public class MainWindow extends JFrame {
     private final JuegoService juegoService;
     private final PerfilService perfilService;
 
-    public MainWindow(AppContext context, SeleccionUsuarioWindow seleccionUsuarioWindow) {
+    public DocenteWindow(AppContext context, SeleccionUsuarioWindow seleccionUsuarioWindow) {
         this.context = context;
         this.seleccionUsuarioWindow = seleccionUsuarioWindow;
         this.juegoService = context.getJuegoService();
@@ -39,14 +39,14 @@ public class MainWindow extends JFrame {
         initListeners();
     }
 
-    public MainWindow() {
+    public DocenteWindow() {
         this(new AppContext(), null);
     }
 
     private void initTabs() {
         tabbedPanePrincipal.removeAll();
 
-        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService));
+        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
         tabbedPanePrincipal.addTab("Perfiles", new PerfilesPanel(perfilService));
         tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService()));
     }

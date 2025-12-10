@@ -33,8 +33,8 @@ public class SeleccionUsuarioWindow extends JFrame {
     private void initListeners() {
         // Ir a modo Docente
         btnModoDocente.addActionListener(e -> {
-            MainWindow mainWindow = new MainWindow(context, this);
-            mainWindow.setVisible(true);
+            DocenteWindow docenteWindow = new DocenteWindow(context, this);
+            docenteWindow.setVisible(true);
             this.setVisible(false);
         });
 
