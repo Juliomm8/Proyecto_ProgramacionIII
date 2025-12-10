@@ -87,12 +87,7 @@
             </constraints>
             <properties/>
             <border type="none"/>
-            <children>
-              <component id="1bbbc" class="javax.swing.JTextArea" binding="txtDescripcionJuego">
-                <constraints/>
-                <properties/>
-              </component>
-            </children>
+            <children/>
           </scrollpane>
         </children>
       </grid>
@@ -118,6 +113,10 @@
             <properties>
               <text value="Limpiar"/>
             </properties>
+          </component>
+          <component id="1bbbc" class="javax.swing.JTextArea" binding="txtDescripcionJuego">
+            <constraints/>
+            <properties/>
           </component>
         </children>
       </grid>

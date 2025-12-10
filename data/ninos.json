@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "nombre": "Julio Mera",
+    "edad": 7,
+    "diagnostico": "TEA",
+    "puntosTotales": 0
+  },
+  {
+    "id": 2,
+    "nombre": "Jeremy Tomaselly",
+    "edad": 9,
+    "diagnostico": "TEA",
+    "puntosTotales": 0
+  },
+  {
+    "id": 3,
+    "nombre": "Samuel Cobo",
+    "edad": 6,
+    "diagnostico": "TEA y no solo eso muchas cosas mas",
+    "puntosTotales": 0
+  }
+]
