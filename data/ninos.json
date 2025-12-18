@@ -4,8 +4,10 @@
     "nombre": "Julio Mera",
     "edad": 7,
     "diagnostico": "TEA",
-    "puntosTotales": 0,
-    "juegosAsignados": []
+    "puntosTotales": 3,
+    "juegosAsignados": [
+      1
+    ]
   },
   {
     "id": 2,

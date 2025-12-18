@@ -53,4 +53,18 @@ public abstract class BaseJuegoPanel extends JPanel {
             listener.onJuegoTerminado(this.actividadActual);
         }
     }
+
+    public Actividad getActividadActual() {
+        return actividadActual;
+    }
+
+    /**
+     * Para el botón "Finalizar y guardar puntaje" en EstudianteWindow.
+     * Guarda el puntaje que tenga la actividad en ese momento.
+     */
+    public void finalizarJuegoForzado() {
+        int puntos = (actividadActual != null) ? actividadActual.getPuntos() : 0;
+        finalizarJuego(puntos);
+    }
+
 }

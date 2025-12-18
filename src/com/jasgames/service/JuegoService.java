@@ -14,6 +14,18 @@ public class JuegoService {
     public JuegoService() {
         this.juegos = new ArrayList<>();
         this.colaActividades = new LinkedList<>();
+
+        cargarJuegosIniciales();
+    }
+
+    private void cargarJuegosIniciales() {
+        agregarJuego(new Juego(
+                1,
+                "Discriminación de Colores",
+                TipoJuego.COLORES,
+                1,
+                "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error."
+        ));
     }
 
     // ------------ CRUD JUEGOS ------------

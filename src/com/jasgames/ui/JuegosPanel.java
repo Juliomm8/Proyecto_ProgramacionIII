@@ -44,6 +44,7 @@ public class JuegosPanel extends JPanel {
     // Mapas auxiliares: idJuego -> checkbox
     private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
     private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
+    private final Map<Integer, JSpinner> spinnersDificultad = new LinkedHashMap<>();
 
     public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
@@ -114,15 +115,34 @@ public class JuegosPanel extends JPanel {
     private void cargarJuegos() {
         panelListaJuegos.removeAll();
         checkBoxesJuegos.clear();
+        spinnersDificultad.clear();
 
         List<Juego> juegos = juegoService.obtenerTodos();
         for (Juego juego : juegos) {
             JCheckBox chk = new JCheckBox(juego.getNombre());
             chk.setSelected(juego.isHabilitado());
-            chk.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            panelListaJuegos.add(chk);
+            int difInicial = juego.getDificultad();
+            if (difInicial < 1) difInicial = 1;
+            if (difInicial > 5) difInicial = 5;
+
+            JSpinner spDif = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
+            spDif.setPreferredSize(new Dimension(55, spDif.getPreferredSize().height));
+
+            JPanel fila = new JPanel(new BorderLayout(8, 0));
+            fila.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            fila.add(chk, BorderLayout.CENTER);
+
+            JPanel panelDif = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+            panelDif.add(new JLabel("Dif:"));
+            panelDif.add(spDif);
+            fila.add(panelDif, BorderLayout.EAST);
+
+            panelListaJuegos.add(fila);
+
             checkBoxesJuegos.put(juego.getId(), chk);
+            spinnersDificultad.put(juego.getId(), spDif);
         }
 
         panelListaJuegos.revalidate();
@@ -160,6 +180,14 @@ public class JuegosPanel extends JPanel {
             JCheckBox chk = checkBoxesJuegos.get(juego.getId());
             if (chk != null) {
                 juego.setHabilitado(chk.isSelected());
+            }
+
+            JSpinner sp = spinnersDificultad.get(juego.getId());
+            if (sp != null) {
+                Object v = sp.getValue();
+                if (v instanceof Integer) {
+                    juego.setDificultad((Integer) v);
+                }
             }
         }
 
