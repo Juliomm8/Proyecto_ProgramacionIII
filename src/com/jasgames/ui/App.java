@@ -7,7 +7,7 @@ import javax.swing.*;
 public class App {
 
     private JPanel mainWindow;
-
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             AppContext context = new AppContext();

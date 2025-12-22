@@ -28,7 +28,6 @@ public class PerfilService {
             .create();
 
     public PerfilService() {
-        // Al crear el servicio, cargamos lo que haya en el JSON
         cargarNinosDesdeArchivo();
     }
 

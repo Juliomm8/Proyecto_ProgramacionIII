@@ -52,6 +52,10 @@ public class Nino {
         this.puntosTotales += puntos;
     }
 
+    public void setPuntosTotales(int puntosTotales) {
+        this.puntosTotales = puntosTotales;
+    }
+
     @Override
     public String toString() {
         return nombre + " (id=" + id + ")";
