@@ -48,6 +48,12 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
 
     private final Random random = new Random();
 
+    private int aciertosActuales;
+    private int aciertosRequeridos;
+    private boolean bloqueadoTemporal;
+
+    private int ultimoObjetivo = -1;
+
     // Paleta base (puedes ampliar luego)
     private static final Color ROJO = new Color(220, 40, 40);
     private static final Color AZUL = new Color(55, 110, 220);
@@ -119,13 +125,20 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
     public void iniciarJuego() {
         finalizado = false;
         intentos = 0;
+
+        aciertosActuales = 0;
+        aciertosRequeridos = calcularAciertosRequeridos();
+        bloqueadoTemporal = false;
+
         ultimoIndiceClick = -1;
         ultimoClickCorrecto = false;
+        ultimoObjetivo = -1;
 
         lblFeedback.setText(" ");
 
         int numOpciones = calcularCantidadOpciones();
-        prepararRonda(numOpciones);
+        prepararRonda(numOpciones);       // genera opciones[] y zonasClick[]
+        elegirNuevoObjetivo();            // elige color objetivo (sin repetir)
         actualizarInstruccion();
 
         lienzo.repaint();
@@ -179,33 +192,103 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
     }
 
     private void onCirculoSeleccionado(int indice) {
-        if (finalizado) return;
+        if (finalizado || bloqueadoTemporal) return;
         if (indice < 0 || indice >= opciones.length) return;
 
         intentos++;
+        bloqueadoTemporal = true;
+
         ultimoIndiceClick = indice;
         ultimoClickCorrecto = opciones[indice].equals(colorObjetivo);
 
         if (ultimoClickCorrecto) {
-            lblFeedback.setText("¡Muy bien!");
-            finalizado = true;
+            aciertosActuales++;
 
-            // Pequeña pausa para que el niño vea el refuerzo positivo
-            new Timer(650, e -> {
+            // Guardamos progreso en la actividad (por si finaliza forzado)
+            if (actividadActual != null) {
+                actividadActual.setPuntos(aciertosActuales);
+            }
+
+            lblFeedback.setText("¡Muy bien! " + aciertosActuales + "/" + aciertosRequeridos);
+
+            // ¿Ya cumplió meta?
+            if (aciertosActuales >= aciertosRequeridos) {
+                finalizado = true;
+
+                new Timer(650, e -> {
+                    ((Timer) e.getSource()).stop();
+                    finalizarJuego(aciertosActuales); // puntaje final = aciertos
+                }).start();
+
+                lienzo.repaint();
+                return;
+            }
+
+            // Si no terminó, pasa a la siguiente ronda
+            new Timer(500, e -> {
                 ((Timer) e.getSource()).stop();
-                finalizarJuego(calcularPuntaje());
+                lblFeedback.setText(" ");
+                avanzarARondaSiguiente();
             }).start();
+
         } else {
-            // Feedback neutral: sin sonidos, sin castigo
+            // Error neutro: no hay castigo, solo avanzamos a otra ronda
             lblFeedback.setText("Intenta de nuevo");
+
+            new Timer(500, e -> {
+                ((Timer) e.getSource()).stop();
+                lblFeedback.setText(" ");
+                avanzarARondaSiguiente();
+            }).start();
         }
 
         lienzo.repaint();
     }
 
+
+    private void avanzarARondaSiguiente() {
+        // Limpia selección visual
+        ultimoIndiceClick = -1;
+        ultimoClickCorrecto = false;
+
+        // Nuevo objetivo (puedes dejar las mismas opciones para estabilidad TEA)
+        elegirNuevoObjetivo();
+        actualizarInstruccion();
+
+        bloqueadoTemporal = false;
+        lienzo.repaint();
+    }
+
+    private void elegirNuevoObjetivo() {
+        if (opciones == null || opciones.length == 0) return;
+
+        int idxObjetivo;
+        if (opciones.length == 1) {
+            idxObjetivo = 0;
+        } else {
+            do {
+                idxObjetivo = random.nextInt(opciones.length);
+            } while (idxObjetivo == ultimoObjetivo);
+        }
+
+        ultimoObjetivo = idxObjetivo;
+        colorObjetivo = opciones[idxObjetivo];
+        nombreObjetivo = nombresOpciones[idxObjetivo];
+    }
+
     private int calcularPuntaje() {
         // Simple: 1 punto por acertar. (Luego puedes hacer: más puntos según dificultad)
         return 1;
+    }
+
+    private int calcularAciertosRequeridos() {
+        Juego j = (actividadActual != null) ? actividadActual.getJuego() : null;
+        int dif = (j != null) ? j.getDificultad() : 1;
+
+        if (dif < 1) dif = 1;
+        if (dif > 5) dif = 5;
+
+        return 5 + (dif - 1) * 2;
     }
 
     // ---------------------------------------------------------------------
