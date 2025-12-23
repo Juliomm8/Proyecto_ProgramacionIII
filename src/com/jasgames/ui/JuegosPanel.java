@@ -130,8 +130,8 @@ public class JuegosPanel extends JPanel {
             JSpinner spDif = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
             spDif.setPreferredSize(new Dimension(55, spDif.getPreferredSize().height));
 
-            spDif.setEnabled(false);
-            spDif.setToolTipText("La dificultad se configura por niño en la columna derecha.");
+            spDif.setEnabled(chk.isSelected());
+            chk.addItemListener(e -> spDif.setEnabled(chk.isSelected()));
 
             JPanel fila = new JPanel(new BorderLayout(8, 0));
             fila.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -195,31 +195,39 @@ public class JuegosPanel extends JPanel {
                 int anterior = juego.getDificultad();
 
                 if (nueva != anterior) {
-                    Object[] opciones = {"Cambiar a todos", "Solo sin asignar", "No cambiar nada"};
+                    Object[] opciones = {
+                            "Aplicar a TODOS",
+                            "Solo sin dificultad personalizada",
+                            "Cancelar"
+                    };
+
                     int resp = JOptionPane.showOptionDialog(
                             this,
-                            "Vas a cambiar la dificultad GLOBAL de:\n\n" + juego.getNombre() +
-                                    "\n\n¿A quién se la aplicas?",
-                            "Confirmar cambio de dificultad",
+                            "Vas a cambiar la dificultad GLOBAL de \"" + juego.getNombre() + "\".\n\n" +
+                                    "¿Cómo deseas aplicar este cambio?",
+                            "Confirmar cambio global",
                             JOptionPane.DEFAULT_OPTION,
                             JOptionPane.QUESTION_MESSAGE,
                             null,
                             opciones,
-                            opciones[2]
+                            opciones[0]
                     );
 
-                    if (resp == 0) {
-                        // Cambiar a todos: sobrescribe la global y elimina dificultades personalizadas
-                        juego.setDificultad(nueva);
-                        perfilService.limpiarDificultadJuegoParaTodos(juego.getId());
-                        perfilService.guardarCambios(); // si tienes un método público (si no, mira Paso 3)
-                    } else if (resp == 1) {
-                        // Solo sin asignar: cambia global, NO toca overrides
-                        juego.setDificultad(nueva);
-                    } else {
-                        // No cambiar nada: revierte spinner y no guarda
+                    if (resp == 2 || resp == JOptionPane.CLOSED_OPTION) {
+                        // Cancelar: revertimos spinner y no aplicamos
                         sp.setValue(anterior);
+                        continue;
                     }
+
+                    // Siempre se actualiza dificultad GLOBAL del juego:
+                    juego.setDificultad(nueva);
+
+                    //  Si eligió aplicar a TODOS: sobrescribe overrides
+                    if (resp == 0) {
+                        perfilService.aplicarDificultadJuegoATodos(juego.getId(), nueva, false);
+                    }
+
+                    // Si eligió solo sin override: NO tocamos nada más (ellos usarán global automáticamente)
                 }
             }
         }
@@ -255,7 +263,7 @@ public class JuegosPanel extends JPanel {
             chk.setSelected(asignados != null && asignados.contains(idJuego));
             checkBoxesAsignacion.put(idJuego, chk);
 
-            int difInicial = seleccionado.getDificultadJuego(idJuego, 1);
+            int difInicial = seleccionado.getDificultadJuego(idJuego, Math.max(1, juego.getDificultad()));
             JSpinner sp = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
             spinnersDificultadAsignacion.put(idJuego, sp);
 
@@ -285,25 +293,31 @@ public class JuegosPanel extends JPanel {
             return;
         }
 
-        int idNino = seleccionado.getId();
-
         Set<Integer> juegosAsignados = new HashSet<>();
         Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
 
-        for (Juego juego : juegoService.obtenerTodos()) {
+        List<Juego> juegos = juegoService.obtenerTodos();
+
+        for (Juego juego : juegos) {
             int idJuego = juego.getId();
             JCheckBox chk = checkBoxesAsignacion.get(idJuego);
-            if (chk == null) continue;
-
-            if (chk.isSelected()) {
+            if (chk != null && chk.isSelected()) {
                 juegosAsignados.add(idJuego);
+
                 JSpinner sp = spinnersDificultadAsignacion.get(idJuego);
-                int dif = (sp != null) ? (Integer) sp.getValue() : juego.getDificultad();
-                dificultadPorJuego.put(idJuego, dif);
+                if (sp != null) {
+                    int valor = (Integer) sp.getValue();
+                    int difGlobal = Math.max(1, juego.getDificultad());
+
+                    // ✅ Solo guardamos si ES override
+                    if (valor != difGlobal) {
+                        dificultadPorJuego.put(idJuego, valor);
+                    }
+                }
             }
         }
 
-        perfilService.asignarJuegosConDificultad(idNino, juegosAsignados, dificultadPorJuego);
+        perfilService.asignarJuegosConDificultad(seleccionado.getId(), juegosAsignados, dificultadPorJuego);
         perfilService.guardarCambios();
 
         JOptionPane.showMessageDialog(this, "Asignación guardada para: " + seleccionado.getNombre());

@@ -12,6 +12,9 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class DashboardPanel extends JPanel {
 
@@ -51,8 +54,7 @@ public class DashboardPanel extends JPanel {
 
     private void inicializarTabla() {
         tablaModelo = new DefaultTableModel(
-                new Object[]{"Estudiante", "Juego", "Puntaje", "Fecha y hora"},
-                0
+                new Object[]{"Estudiante", "Juego", "Dificultad", "Puntaje", "Fecha", "Hora"}, 0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -112,13 +114,29 @@ public class DashboardPanel extends JPanel {
         }
 
         for (ResultadoJuego r : lista) {
-            String nombreJuego = String.valueOf(r.getJuego());
+            DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter fmtHora = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+
+            String nombreJuego = (r.getJuego() == null) ? "" : r.getJuego().getNombre();
+
+            LocalDateTime fh = r.getFechaHora();
+            String fecha = "";
+            String hora = "";
+            if (fh != null) {
+                fecha = fh.toLocalDate().format(fmtFecha);
+                hora = fh.toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(fmtHora);
+            }
+
             tablaModelo.addRow(new Object[]{
-                    r.getNombreEstudiante(),
-                    nombreJuego,
-                    r.getPuntaje(),
-                    r.getFechaHora()
+                r.getNombreEstudiante(),
+                nombreJuego,
+                r.getDificultad(),
+                r.getPuntaje(),
+                fecha,
+                hora
             });
+
         }
     }
 }

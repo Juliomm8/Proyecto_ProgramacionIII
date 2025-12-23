@@ -201,6 +201,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         resultadoService.registrarResultado(new ResultadoJuego(
                 nombre,
                 actividad.getJuego(),
+                actividad.getNivel(),
                 puntaje,
                 LocalDateTime.now()
         ));
