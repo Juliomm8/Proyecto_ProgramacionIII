@@ -8,10 +8,12 @@ public class ResultadoJuego {
     private final Juego juego;
     private final int puntaje;
     private final LocalDateTime fechaHora;
+    private final int dificultad;
 
-    public ResultadoJuego(String nombreEstudiante, Juego juego, int puntaje, LocalDateTime fechaHora) {
+    public ResultadoJuego(String nombreEstudiante, Juego juego, int dificultad, int puntaje, LocalDateTime fechaHora) {
         this.nombreEstudiante = nombreEstudiante;
         this.juego = juego;
+        this.dificultad = dificultad;
         this.puntaje = puntaje;
         this.fechaHora = fechaHora;
     }
@@ -30,6 +32,10 @@ public class ResultadoJuego {
 
     public LocalDateTime getFechaHora() {
         return fechaHora;
+    }
+
+    public int getDificultad() {
+        return dificultad;
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.jasgames.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Nino {
 
@@ -11,6 +13,7 @@ public class Nino {
     private String diagnostico;
     private int puntosTotales;
     private Set<Integer> juegosAsignados = new HashSet<>();
+    private Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
 
     public Nino(int id, String nombre, int edad, String diagnostico) {
         this.id = id;
@@ -50,6 +53,32 @@ public class Nino {
 
     public void agregarPuntos(int puntos) {
         this.puntosTotales += puntos;
+    }
+
+    public void setPuntosTotales(int puntosTotales) {
+        this.puntosTotales = puntosTotales;
+    }
+
+    public Map<Integer, Integer> getDificultadPorJuego() {
+        if (dificultadPorJuego == null) {
+            dificultadPorJuego = new HashMap<>();
+        }
+        return dificultadPorJuego;
+    }
+
+    public void setDificultadPorJuego(Map<Integer, Integer> dificultadPorJuego) {
+        this.dificultadPorJuego = (dificultadPorJuego == null) ? new HashMap<>() : dificultadPorJuego;
+    }
+
+    public int getDificultadJuego(int idJuego, int difDefault) {
+        Integer d = getDificultadPorJuego().get(idJuego);
+        return (d != null) ? d : difDefault;
+    }
+
+    public void setDificultadJuego(int idJuego, int dificultad) {
+        if (dificultad < 1) dificultad = 1;
+        if (dificultad > 5) dificultad = 5;
+        getDificultadPorJuego().put(idJuego, dificultad);
     }
 
     @Override

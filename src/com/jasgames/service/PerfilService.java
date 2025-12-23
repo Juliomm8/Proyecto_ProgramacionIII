@@ -28,8 +28,11 @@ public class PerfilService {
             .create();
 
     public PerfilService() {
-        // Al crear el servicio, cargamos lo que haya en el JSON
         cargarNinosDesdeArchivo();
+    }
+
+    public void guardarCambios() {
+        guardarNinosEnArchivo();
     }
 
     // =========================================================
@@ -176,10 +179,15 @@ public class PerfilService {
         return copia;
     }
 
+    public int getDificultadAsignada(int idNino, int idJuego, int difDefault) {
+        Nino nino = buscarNinoPorId(idNino);
+        if (nino == null) return difDefault;
+        return nino.getDificultadJuego(idJuego, difDefault);
+    }
+
     // =========================================================
     // PERSISTENCIA JSON
     // =========================================================
-
     /** Guarda la lista de niños en data/ninos.json */
     private void guardarNinosEnArchivo() {
         try {
@@ -220,4 +228,53 @@ public class PerfilService {
             e.printStackTrace();
         }
     }
+
+    public void asignarJuegosConDificultad(int idNino, Set<Integer> juegosIds, Map<Integer, Integer> dificultades) {
+        Nino nino = buscarNinoPorId(idNino);
+        if (nino == null) return;
+
+        Set<Integer> asignados = (juegosIds == null) ? new HashSet<>() : new HashSet<>(juegosIds);
+        nino.setJuegosAsignados(asignados);
+
+        // Si no me pasan dificultades, preservo las actuales (pero limpio las que ya no estén asignadas)
+        Map<Integer, Integer> difNueva;
+        if (dificultades != null) {
+            difNueva = new HashMap<>(dificultades);
+        } else {
+            difNueva = new HashMap<>(nino.getDificultadPorJuego());
+        }
+
+        // Quitar dificultades de juegos que ya no están asignados
+        difNueva.keySet().removeIf(idJuego -> !asignados.contains(idJuego));
+
+        nino.setDificultadPorJuego(difNueva);
+
+        guardarNinosEnArchivo();
+    }
+
+    public void limpiarDificultadJuegoParaTodos(int idJuego) {
+        for (Nino n : ninos) {
+            if (n.getDificultadPorJuego() != null) {
+                n.getDificultadPorJuego().remove(idJuego);
+            }
+        }
+        guardarNinosEnArchivo();
+    }
+
+    public void aplicarDificultadJuegoATodos(int idJuego, int nuevaDif, boolean soloSinOverride) {
+        for (Nino n : ninos) {
+            if (n.getJuegosAsignados() == null || !n.getJuegosAsignados().contains(idJuego)) continue;
+
+            Map<Integer, Integer> difs = n.getDificultadPorJuego();
+            boolean tieneOverride = (difs != null && difs.containsKey(idJuego));
+
+            if (soloSinOverride && tieneOverride) continue;
+
+            n.setDificultadJuego(idJuego, nuevaDif);
+        }
+
+        guardarNinosEnArchivo();
+    }
+
+
 }

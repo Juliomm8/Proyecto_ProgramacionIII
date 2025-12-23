@@ -30,6 +30,10 @@ public class Actividad {
         return puntos;
     }
 
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
+    }
+
     @Override
     public String toString() {
         return juego.getNombre() + " - Nivel " + nivel + " (" + puntos + " pts)";

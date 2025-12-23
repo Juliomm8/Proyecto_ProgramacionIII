@@ -9,6 +9,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
+import java.util.HashSet;
 
 public class PerfilesPanel extends JPanel {
 
@@ -161,6 +162,13 @@ public class PerfilesPanel extends JPanel {
                 return;
             }
 
+            if (perfilService.buscarNinoPorId(id) != null) {
+                JOptionPane.showMessageDialog(this,
+                        "Ya existe un niño con ese ID. Usa \"Actualizar\" para modificarlo.",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             Nino nino = new Nino(id, nombre, edad, diagnostico);
             perfilService.registrarNino(nino);
 
@@ -188,6 +196,9 @@ public class PerfilesPanel extends JPanel {
             }
 
             Nino actualizado = new Nino(id, nombre, edad, diagnostico);
+            actualizado.setPuntosTotales(existente.getPuntosTotales());
+            actualizado.setJuegosAsignados(new java.util.HashSet<>(existente.getJuegosAsignados()));
+
             perfilService.actualizarNino(actualizado);
 
             eliminarDeListModelPorId(id);
