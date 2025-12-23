@@ -45,6 +45,7 @@ public class JuegosPanel extends JPanel {
     private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
     private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
     private final Map<Integer, JSpinner> spinnersDificultad = new LinkedHashMap<>();
+    private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
 
     public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
@@ -129,6 +130,9 @@ public class JuegosPanel extends JPanel {
             JSpinner spDif = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
             spDif.setPreferredSize(new Dimension(55, spDif.getPreferredSize().height));
 
+            spDif.setEnabled(false);
+            spDif.setToolTipText("La dificultad se configura por niño en la columna derecha.");
+
             JPanel fila = new JPanel(new BorderLayout(8, 0));
             fila.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -181,58 +185,47 @@ public class JuegosPanel extends JPanel {
             if (chk != null) {
                 juego.setHabilitado(chk.isSelected());
             }
-
-            JSpinner sp = spinnersDificultad.get(juego.getId());
-            if (sp != null) {
-                Object v = sp.getValue();
-                if (v instanceof Integer) {
-                    juego.setDificultad((Integer) v);
-                }
-            }
         }
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Estados de los juegos actualizados.",
-                "Información",
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        JOptionPane.showMessageDialog(this, "Estados guardados. La dificultad se configura por niño.", "Info", JOptionPane.INFORMATION_MESSAGE);
 
-        // Si el estado cambia, actualizamos también la vista de asignaciones
         actualizarAsignacionesParaSeleccionado();
     }
 
     // ---------------------------------------------------------------------
     // DERECHA: asignar juegos habilitados a un niño
     // ---------------------------------------------------------------------
-
     /** Reconstruye la lista de checkboxes de asignación para el niño actual. */
     private void actualizarAsignacionesParaSeleccionado() {
-        Object item = cboNinos.getSelectedItem();
-        if (!(item instanceof Nino)) {
-            panelAsignacionContenido.removeAll();
-            panelAsignacionContenido.revalidate();
-            panelAsignacionContenido.repaint();
-            return;
-        }
-        Nino seleccionado = (Nino) item;
+        Nino seleccionado = (Nino) cboNinos.getSelectedItem();
+        if (seleccionado == null) return;
 
         panelAsignacionContenido.removeAll();
         checkBoxesAsignacion.clear();
+        spinnersDificultadAsignacion.clear();
 
-        Set<Integer> juegosAsignados = perfilService.getJuegosAsignados(seleccionado.getId());
+        Set<Integer> asignados = (seleccionado.getJuegosAsignados() != null)
+                ? seleccionado.getJuegosAsignados()
+                : Collections.emptySet();
 
         for (Juego juego : juegoService.obtenerTodos()) {
-            if (!juego.isHabilitado()) {
-                continue; // solo mostramos los juegos habilitados
-            }
+            if (!juego.isHabilitado()) continue;
+            int idJuego = juego.getId();
 
             JCheckBox chk = new JCheckBox(juego.getNombre());
-            chk.setSelected(juegosAsignados.contains(juego.getId()));
-            chk.setAlignmentX(Component.LEFT_ALIGNMENT);
+            chk.setSelected(asignados != null && asignados.contains(idJuego));
+            checkBoxesAsignacion.put(idJuego, chk);
 
-            panelAsignacionContenido.add(chk);
-            checkBoxesAsignacion.put(juego.getId(), chk);
+            int difInicial = seleccionado.getDificultadJuego(idJuego, 1);
+            JSpinner sp = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
+            spinnersDificultadAsignacion.put(idJuego, sp);
+
+            JPanel fila = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            fila.add(chk);
+            fila.add(new JLabel("Dificultad:"));
+            fila.add(sp);
+
+            panelAsignacionContenido.add(fila);
         }
 
         panelAsignacionContenido.revalidate();
@@ -241,35 +234,29 @@ public class JuegosPanel extends JPanel {
 
     /** Guarda la selección de juegos para el niño actualmente seleccionado. */
     private void onGuardarAsignacion() {
-        Object item = cboNinos.getSelectedItem();
-        if (!(item instanceof Nino)) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "No hay ningún niño seleccionado.",
-                    "Advertencia",
-                    JOptionPane.WARNING_MESSAGE
-            );
-            return;
-        }
-        Nino seleccionado = (Nino) item;
+        Nino seleccionado = (Nino) cboNinos.getSelectedItem();
+        if (seleccionado == null) return;
 
-        Set<Integer> nuevosAsignados = new HashSet<>();
-        for (Juego juego : juegoService.obtenerTodos()) {
-            JCheckBox chk = checkBoxesAsignacion.get(juego.getId());
-            if (chk != null && chk.isSelected()) {
-                nuevosAsignados.add(juego.getId());
+        Set<Integer> juegosAsignados = new HashSet<>();
+        Map<Integer, Integer> dificultadMap = new HashMap<>();
+
+        for (Map.Entry<Integer, JCheckBox> entry : checkBoxesAsignacion.entrySet()) {
+            int idJuego = entry.getKey();
+            JCheckBox chk = entry.getValue();
+
+            if (chk.isSelected()) {
+                juegosAsignados.add(idJuego);
+
+                JSpinner sp = spinnersDificultadAsignacion.get(idJuego);
+                int dif = (Integer) sp.getValue();
+                dificultadMap.put(idJuego, dif);
             }
         }
 
-        perfilService.asignarJuegos(seleccionado.getId(), nuevosAsignados);
+        perfilService.asignarJuegosConDificultad(seleccionado.getId(), juegosAsignados, dificultadMap);
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Asignación de juegos guardada para " + seleccionado.getNombre(),
-                "Información",
-                JOptionPane.INFORMATION_MESSAGE
-        );
     }
+
 
     /**
      * Devuelve los IDs de juegos asignados a un niño por su ID.

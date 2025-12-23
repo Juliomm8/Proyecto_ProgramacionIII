@@ -15,6 +15,8 @@ import com.jasgames.ui.juegos.JuegoListener;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.*;
@@ -46,8 +48,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private Nino ninoActual;
     private BaseJuegoPanel juegoEnCurso;
 
-
     private DefaultListModel<Juego> juegosListModel;
+    private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
+
 
     public EstudianteWindow(AppContext context, SeleccionUsuarioWindow seleccionUsuarioWindow) {
         this.context = context;
@@ -152,7 +155,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         }
 
         // Creamos una actividad (nivel puede ser 1 por ahora)
-        Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, 1, 0);
+        int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), 1);
+        Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
 
         // Instanciamos el panel del juego según su tipo
         if (juego.getTipo() == TipoJuego.COLORES) {

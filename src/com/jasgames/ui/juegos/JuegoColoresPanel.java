@@ -145,14 +145,12 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
     }
 
     private int calcularCantidadOpciones() {
-        // Por defecto 3 como en tu diseño.
-        // Si quieres que la dificultad del docente afecte: mapea 1..5 -> 3..5.
         int base = 3;
 
         Juego j = (actividadActual != null) ? actividadActual.getJuego() : null;
         if (j == null) return base;
 
-        int dif = j.getDificultad(); // 1..5
+        int dif = (actividadActual != null) ? actividadActual.getNivel() : 1;
         if (dif <= 2) return 3;
         if (dif <= 4) return 4;
         return 5;
@@ -283,7 +281,7 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
 
     private int calcularAciertosRequeridos() {
         Juego j = (actividadActual != null) ? actividadActual.getJuego() : null;
-        int dif = (j != null) ? j.getDificultad() : 1;
+        int dif = (actividadActual != null) ? actividadActual.getNivel() : 1;
 
         if (dif < 1) dif = 1;
         if (dif > 5) dif = 5;
