@@ -31,6 +31,10 @@ public class PerfilService {
         cargarNinosDesdeArchivo();
     }
 
+    public void guardarCambios() {
+        guardarNinosEnArchivo();
+    }
+
     // =========================================================
     // MÉTODOS QUE LA UI USA
     // =========================================================
@@ -247,4 +251,30 @@ public class PerfilService {
 
         guardarNinosEnArchivo();
     }
+
+    public void limpiarDificultadJuegoParaTodos(int idJuego) {
+        for (Nino n : ninos) {
+            if (n.getDificultadPorJuego() != null) {
+                n.getDificultadPorJuego().remove(idJuego);
+            }
+        }
+        guardarNinosEnArchivo();
+    }
+
+    public void aplicarDificultadJuegoATodos(int idJuego, int nuevaDif, boolean soloSinOverride) {
+        for (Nino n : ninos) {
+            if (n.getJuegosAsignados() == null || !n.getJuegosAsignados().contains(idJuego)) continue;
+
+            Map<Integer, Integer> difs = n.getDificultadPorJuego();
+            boolean tieneOverride = (difs != null && difs.containsKey(idJuego));
+
+            if (soloSinOverride && tieneOverride) continue;
+
+            n.setDificultadJuego(idJuego, nuevaDif);
+        }
+
+        guardarNinosEnArchivo();
+    }
+
+
 }

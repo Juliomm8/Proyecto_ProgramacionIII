@@ -28,6 +28,10 @@ public class JuegoService {
         ));
     }
 
+    public void guardar() {
+        // TODO: si luego quieres persistir juegos.json, aquí lo implementas.
+    }
+
     // ------------ CRUD JUEGOS ------------
     public void agregarJuego(Juego juego) {
         juegos.add(juego);

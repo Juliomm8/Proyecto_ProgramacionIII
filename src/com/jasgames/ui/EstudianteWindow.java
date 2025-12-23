@@ -155,7 +155,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         }
 
         // Creamos una actividad (nivel puede ser 1 por ahora)
-        int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), 1);
+        int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), juego.getDificultad());
         Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
 
         // Instanciamos el panel del juego según su tipo

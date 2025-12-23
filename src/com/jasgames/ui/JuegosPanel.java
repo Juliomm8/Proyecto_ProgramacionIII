@@ -29,7 +29,7 @@ public class JuegosPanel extends JPanel {
     private JPanel panelListaJuegos;
     private JButton btnGuardarEstadoJuegos;
     private JLabel lblSeleccionNino;
-    private JComboBox cboNinos;               // usaremos JComboBox<Nino>
+    private JComboBox cboNinos;
     private JLabel lblTituloAsignacion;
     private JScrollPane panelAsignacionJuegos;
     private JButton btnGuardarAsignacion;
@@ -180,17 +180,56 @@ public class JuegosPanel extends JPanel {
 
     private void onGuardarEstadosJuegos() {
         List<Juego> juegos = juegoService.obtenerTodos();
+
         for (Juego juego : juegos) {
+            // 1) Guardar habilitado/deshabilitado
             JCheckBox chk = checkBoxesJuegos.get(juego.getId());
             if (chk != null) {
                 juego.setHabilitado(chk.isSelected());
             }
+
+            // 2) Guardar dificultad global con confirmación
+            JSpinner sp = spinnersDificultad.get(juego.getId());
+            if (sp != null) {
+                int nueva = (Integer) sp.getValue();
+                int anterior = juego.getDificultad();
+
+                if (nueva != anterior) {
+                    Object[] opciones = {"Cambiar a todos", "Solo sin asignar", "No cambiar nada"};
+                    int resp = JOptionPane.showOptionDialog(
+                            this,
+                            "Vas a cambiar la dificultad GLOBAL de:\n\n" + juego.getNombre() +
+                                    "\n\n¿A quién se la aplicas?",
+                            "Confirmar cambio de dificultad",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            opciones,
+                            opciones[2]
+                    );
+
+                    if (resp == 0) {
+                        // Cambiar a todos: sobrescribe la global y elimina dificultades personalizadas
+                        juego.setDificultad(nueva);
+                        perfilService.limpiarDificultadJuegoParaTodos(juego.getId());
+                        perfilService.guardarCambios(); // si tienes un método público (si no, mira Paso 3)
+                    } else if (resp == 1) {
+                        // Solo sin asignar: cambia global, NO toca overrides
+                        juego.setDificultad(nueva);
+                    } else {
+                        // No cambiar nada: revierte spinner y no guarda
+                        sp.setValue(anterior);
+                    }
+                }
+            }
         }
 
-        JOptionPane.showMessageDialog(this, "Estados guardados. La dificultad se configura por niño.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        // Persistir juegos si estás guardándolos a archivo (recomendado)
+        juegoService.guardar();
 
-        actualizarAsignacionesParaSeleccionado();
+        JOptionPane.showMessageDialog(this, "Cambios guardados.");
     }
+
 
     // ---------------------------------------------------------------------
     // DERECHA: asignar juegos habilitados a un niño
@@ -232,35 +271,46 @@ public class JuegosPanel extends JPanel {
         panelAsignacionContenido.repaint();
     }
 
-    /** Guarda la selección de juegos para el niño actualmente seleccionado. */
+    /**
+     * Guarda la asignación de juegos (panel derecho) y la dificultad por niño.
+     *
+     * - Los juegos seleccionados se guardan en Nino.juegosAsignados.
+     * - La dificultad se guarda en Nino.dificultadPorJuego como override individual.
+     * - Si un juego queda desmarcado, también eliminamos su dificultad individual para ese niño.
+     */
     private void onGuardarAsignacion() {
         Nino seleccionado = (Nino) cboNinos.getSelectedItem();
-        if (seleccionado == null) return;
+        if (seleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona un niño primero.");
+            return;
+        }
+
+        int idNino = seleccionado.getId();
 
         Set<Integer> juegosAsignados = new HashSet<>();
-        Map<Integer, Integer> dificultadMap = new HashMap<>();
+        Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
 
-        for (Map.Entry<Integer, JCheckBox> entry : checkBoxesAsignacion.entrySet()) {
-            int idJuego = entry.getKey();
-            JCheckBox chk = entry.getValue();
+        for (Juego juego : juegoService.obtenerTodos()) {
+            int idJuego = juego.getId();
+            JCheckBox chk = checkBoxesAsignacion.get(idJuego);
+            if (chk == null) continue;
 
             if (chk.isSelected()) {
                 juegosAsignados.add(idJuego);
-
                 JSpinner sp = spinnersDificultadAsignacion.get(idJuego);
-                int dif = (Integer) sp.getValue();
-                dificultadMap.put(idJuego, dif);
+                int dif = (sp != null) ? (Integer) sp.getValue() : juego.getDificultad();
+                dificultadPorJuego.put(idJuego, dif);
             }
         }
 
-        perfilService.asignarJuegosConDificultad(seleccionado.getId(), juegosAsignados, dificultadMap);
+        perfilService.asignarJuegosConDificultad(idNino, juegosAsignados, dificultadPorJuego);
+        perfilService.guardarCambios();
 
+        JOptionPane.showMessageDialog(this, "Asignación guardada para: " + seleccionado.getNombre());
+        actualizarAsignacionesParaSeleccionado();
     }
 
-
-    /**
-     * Devuelve los IDs de juegos asignados a un niño por su ID.
-     */
+    /** Devuelve IDs de juegos asignados a un niño (útil para EstudianteWindow). */
     public Set<Integer> getJuegosAsignadosParaNino(int idNino) {
         return perfilService.getJuegosAsignados(idNino);
     }

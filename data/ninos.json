@@ -4,25 +4,38 @@
     "nombre": "Julio Mera",
     "edad": 7,
     "diagnostico": "TEA",
-    "puntosTotales": 3,
+    "puntosTotales": 110,
     "juegosAsignados": [
       1
-    ]
+    ],
+    "dificultadPorJuego": {
+      "1": 3
+    }
   },
   {
     "id": 2,
     "nombre": "Jeremy Tomaselly",
     "edad": 9,
     "diagnostico": "TEA",
-    "puntosTotales": 0,
-    "juegosAsignados": []
+    "puntosTotales": 41,
+    "juegosAsignados": [
+      1
+    ],
+    "dificultadPorJuego": {
+      "1": 5
+    }
   },
   {
     "id": 3,
     "nombre": "Samuel Cobo",
     "edad": 6,
     "diagnostico": "TEA y no solo eso muchas cosas mas",
-    "puntosTotales": 0,
-    "juegosAsignados": []
+    "puntosTotales": 11,
+    "juegosAsignados": [
+      1
+    ],
+    "dificultadPorJuego": {
+      "1": 4
+    }
   }
 ]
