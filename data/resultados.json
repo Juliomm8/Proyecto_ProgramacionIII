@@ -1,0 +1,82 @@
+[
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-30T02:25:16.855717300",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-30T02:25:24.109047100",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 4,
+    "nombreEstudiante": "Amelia Povea",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-30T02:25:45.384141300",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-30T02:25:58.541295700",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-30T02:30:56.802466800",
+    "dificultad": 4
+  }
+]

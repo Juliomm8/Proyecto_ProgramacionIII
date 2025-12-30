@@ -4,7 +4,7 @@
     "nombre": "Julio Mera",
     "edad": 7,
     "diagnostico": "TEA",
-    "puntosTotales": 123,
+    "puntosTotales": 125,
     "juegosAsignados": [
       1
     ],
@@ -19,7 +19,7 @@
     "nombre": "Jeremy Tomaselly",
     "edad": 9,
     "diagnostico": "TEA",
-    "puntosTotales": 41,
+    "puntosTotales": 46,
     "juegosAsignados": [
       1
     ],
@@ -34,7 +34,7 @@
     "nombre": "Samuel Cobo",
     "edad": 6,
     "diagnostico": "TEA y no solo eso muchas cosas mas",
-    "puntosTotales": 14,
+    "puntosTotales": 23,
     "juegosAsignados": [
       1
     ],
@@ -49,7 +49,7 @@
     "nombre": "Amelia Povea",
     "edad": 9,
     "diagnostico": "TEA",
-    "puntosTotales": 5,
+    "puntosTotales": 11,
     "juegosAsignados": [
       1
     ],
@@ -64,8 +64,10 @@
     "nombre": "Alisson Armas",
     "edad": 10,
     "diagnostico": "TEA",
-    "puntosTotales": 0,
-    "juegosAsignados": [],
+    "puntosTotales": 4,
+    "juegosAsignados": [
+      1
+    ],
     "dificultadPorJuego": {},
     "aula": "General",
     "avatar": "🐸"

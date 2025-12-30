@@ -1,1 +1,116 @@
 
+2025-12-30 00:58:50 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 00:58:52 | INGRESO_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 00:58:56 | SALIDA_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 00:58:56 | INGRESO_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 00:59:00 | SALIDA_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 00:59:01 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 00:59:02 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 00:59:04 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:11:26 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:11:28 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Amarilla
+2025-12-30 01:11:29 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Amarilla
+2025-12-30 01:11:29 | INGRESO_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 01:11:30 | SALIDA_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 01:11:32 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 01:11:33 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:11:33 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:11:44 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:12:29 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:12:31 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:12:32 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:12:37 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:12:38 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:12:43 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:12:52 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 01:12:56 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:13:20 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:13:21 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:13:22 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:13:36 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:13:45 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:13:54 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:20:08 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:20:09 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:20:10 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:20:12 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 01:20:15 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:20:28 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:20:30 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:20:31 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:20:32 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 01:20:33 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:23:27 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:23:52 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:23:53 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 01:23:55 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 01:23:56 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:26:04 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 01:26:05 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:26:06 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:27:21 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:27:23 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 01:30:11 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:30:13 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:30:19 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:30:21 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 01:30:22 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:30:22 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 01:30:25 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 01:30:27 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:30:29 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 01:34:29 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 01:34:31 | INGRESO_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 01:34:34 | SALIDA_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 01:34:36 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 01:34:36 | INGRESO_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 01:34:38 | SALIDA_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 01:34:45 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:35:02 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:35:10 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:35:25 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:45:30 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:45:56 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 01:53:36 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 01:53:51 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:05:27 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:05:46 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:06:06 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 02:06:10 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 02:06:12 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 02:06:15 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:06:24 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:10:13 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:20:38 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:24:55 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:25:01 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:25:02 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 02:25:03 | INGRESO_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 02:25:18 | SALIDA_ESTUDIANTE | id=3 nombre=Samuel Cobo aula=Aula Amarilla
+2025-12-30 02:25:19 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Amarilla
+2025-12-30 02:25:25 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Amarilla
+2025-12-30 02:25:27 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 02:25:28 | INGRESO_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:25:31 | SALIDA_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:25:32 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 02:25:32 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 02:25:46 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Morada
+2025-12-30 02:25:48 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 02:25:48 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 02:26:00 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 02:26:14 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:30:23 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:30:24 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 02:30:27 | INGRESO_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:30:29 | SALIDA_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:30:39 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:30:45 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:30:46 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 02:30:47 | INGRESO_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:30:58 | SALIDA_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 02:31:03 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:31:19 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:39:39 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:40:14 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 02:40:31 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 02:40:55 | LOGOUT_DOCENTE | usuario=admin

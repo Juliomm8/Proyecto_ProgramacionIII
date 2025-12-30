@@ -363,11 +363,14 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         int puntaje = actividad.getPuntos();
         lblValorPuntaje.setText(String.valueOf(puntaje));
 
+        Integer id = (ninoActual != null) ? ninoActual.getId() : null;
         String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
+        String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
-        // Guardar resultado en memoria (Dashboard lo verá)
         resultadoService.registrarResultado(new ResultadoJuego(
+                id,
                 nombre,
+                aula,
                 actividad.getJuego(),
                 actividad.getNivel(),
                 puntaje,
