@@ -122,3 +122,24 @@
 2025-12-30 02:52:36 | SELECCION_AULA | aula=Aula Azul
 2025-12-30 03:00:49 | LOGIN_DOCENTE | usuario=admin exito=true
 2025-12-30 03:01:08 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:26:46 | SELECCION_AULA | aula=Aula Azul
+2025-12-30 12:26:47 | INGRESO_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 12:26:49 | SALIDA_ESTUDIANTE | id=5 nombre=Alisson Armas aula=Aula Azul
+2025-12-30 12:27:07 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:28:29 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:36:31 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 12:36:33 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:37:07 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:38:17 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:38:51 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:39:37 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:39:51 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:39:52 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 12:39:54 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Roja
+2025-12-30 12:39:56 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Roja
+2025-12-30 12:48:23 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:48:45 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 12:56:19 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 12:56:40 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 13:05:42 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 13:06:52 | LOGOUT_DOCENTE | usuario=admin

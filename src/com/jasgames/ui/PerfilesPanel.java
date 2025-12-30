@@ -285,9 +285,9 @@ public class PerfilesPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "No existe un niño con ese ID", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
-            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "Aula Azul";
-            if (aula.isBlank()) aula = "Aula Azul";
+
+            String aula = (String) cbAula.getSelectedItem();
+            if (aula == null || aula.isBlank()) aula = "Aula Azul";
 
             String avatar = (String) cbAvatar.getSelectedItem();
             if (avatar == null || avatar.isBlank()) avatar = "🙂";

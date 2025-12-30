@@ -9,6 +9,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +43,20 @@ public class DashboardPanel extends JPanel {
     private JComboBox<String> cbOrden;
     private JTextField txtBuscar;
     private JButton btnLimpiar;
+    
+    // KPIs
+    private JPanel panelKpis;
+    private JLabel lblKpiPartidas;
+    private JLabel lblKpiPromedio;
+    private JLabel lblKpiMejor;
+    private JLabel lblKpiAulaActiva;
+    
+    private JPanel cardKpiAulaActiva;
+    private String ultimaAulaActiva = null;
+    
+    private JPanel cardKpiMejor;
+    private Integer ultimoIdMejor = null;
+    private String ultimoNombreMejor = null;
 
     private static final String[] AULAS_PREDEFINIDAS = {
             "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
@@ -55,6 +71,7 @@ public class DashboardPanel extends JPanel {
 
         inicializarTabla();
         construirFiltrosExtra();
+        construirKpis();
         recargarCombosFiltros(true);
         inicializarListeners();
 
@@ -122,6 +139,125 @@ public class DashboardPanel extends JPanel {
 
         panelFiltrosDashboard.revalidate();
         panelFiltrosDashboard.repaint();
+    }
+    
+    private void construirKpis() {
+        panelKpis = new JPanel(new GridLayout(1, 4, 12, 12));
+        panelKpis.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        lblKpiPartidas = crearKpi("Partidas", "0");
+        lblKpiPromedio = crearKpi("Promedio", "0");
+        lblKpiMejor = crearKpi("Mejor", "-");
+        lblKpiAulaActiva = crearKpi("Aula activa", "-");
+
+        panelKpis.add(wrapKpi(lblKpiPartidas));
+        panelKpis.add(wrapKpi(lblKpiPromedio));
+
+        cardKpiMejor = wrapKpi(lblKpiMejor);
+        panelKpis.add(cardKpiMejor);
+
+        cardKpiAulaActiva = wrapKpi(lblKpiAulaActiva);
+        panelKpis.add(cardKpiAulaActiva);
+
+        habilitarClickMejor();
+        habilitarClickAulaActiva();
+
+        // Insertarlo arriba de la tabla: en panelDashboard, justo antes del scrollResultados
+        // Como el .form puede variar, lo metemos en el CENTER con un contenedor vertical.
+        JPanel centro = new JPanel(new BorderLayout());
+        centro.add(panelKpis, BorderLayout.NORTH);
+        centro.add(scrollResultados, BorderLayout.CENTER);
+
+        // Reemplazamos la zona del scroll por el nuevo contenedor
+        // Quitamos y re-agregamos para no depender del .form
+        if (panelDashboard != null) {
+            panelDashboard.remove(scrollResultados);
+            panelDashboard.add(centro, BorderLayout.CENTER);
+            panelDashboard.revalidate();
+            panelDashboard.repaint();
+        }
+    }
+
+    private JLabel crearKpi(String titulo, String valor) {
+        JLabel lbl = new JLabel("<html><div style='text-align:center;'>" +
+                "<div style='font-size:12px;'>" + titulo + "</div>" +
+                "<div style='font-size:20px; font-weight:bold;'>" + valor + "</div>" +
+                "</div></html>", SwingConstants.CENTER);
+        return lbl;
+    }
+
+    private JPanel wrapKpi(JLabel lbl) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(210, 210, 210), 1, true),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        card.add(lbl, BorderLayout.CENTER);
+        return card;
+    }
+    
+    private void habilitarClickMejor() {
+        if (cardKpiMejor == null) return;
+
+        MouseAdapter click = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if ((ultimoIdMejor == null || ultimoIdMejor <= 0) &&
+                    (ultimoNombreMejor == null || ultimoNombreMejor.isBlank())) {
+                    return;
+                }
+
+                // Si hay ID, es el filtro más exacto; si no, usamos nombre
+                if (ultimoIdMejor != null && ultimoIdMejor > 0) {
+                    txtBuscar.setText(String.valueOf(ultimoIdMejor));
+                } else {
+                    txtBuscar.setText(ultimoNombreMejor);
+                }
+
+                actualizarTabla(false); // por si acaso (aunque el DocumentListener ya refresca)
+            }
+        };
+
+        // Para que el click funcione tanto en la tarjeta como en el texto
+        cardKpiMejor.setToolTipText("Click para filtrar por el estudiante con mejor puntaje");
+        cardKpiMejor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cardKpiMejor.addMouseListener(click);
+
+        if (lblKpiMejor != null) {
+            lblKpiMejor.setToolTipText("Click para filtrar por el estudiante con mejor puntaje");
+            lblKpiMejor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            lblKpiMejor.addMouseListener(click);
+        }
+    }
+    
+    private void habilitarClickAulaActiva() {
+        if (cardKpiAulaActiva == null) return;
+
+        cardKpiAulaActiva.setToolTipText("Click para filtrar por el aula más activa");
+        cardKpiAulaActiva.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        cardKpiAulaActiva.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (ultimaAulaActiva == null || ultimaAulaActiva.isBlank()) return;
+
+                seleccionarAulaEnFiltro(ultimaAulaActiva);
+                actualizarTabla(false);
+            }
+        });
+    }
+
+    private void seleccionarAulaEnFiltro(String aula) {
+        if (cbFiltroAula == null || aula == null || aula.isBlank()) return;
+
+        boolean existe = false;
+        for (int i = 0; i < cbFiltroAula.getItemCount(); i++) {
+            String item = cbFiltroAula.getItemAt(i);
+            if (item != null && item.equalsIgnoreCase(aula)) { existe = true; break; }
+        }
+        if (!existe) cbFiltroAula.addItem(aula);
+
+        cbFiltroAula.setSelectedItem(aula);
     }
 
     private void inicializarListeners() {
@@ -277,6 +413,8 @@ public class DashboardPanel extends JPanel {
             ).reversed();
         }
         lista.sort(comp);
+        
+        actualizarKpis(lista);
 
         // ----- 7) Pintar tabla -----
         DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -304,5 +442,65 @@ public class DashboardPanel extends JPanel {
                     hora
             });
         }
+    }
+    
+    private void actualizarKpis(List<ResultadoJuego> lista) {
+        if (lblKpiPartidas == null) return;
+
+        int total = lista.size();
+        int suma = 0;
+        ResultadoJuego mejor = null;
+
+        Map<String, Integer> conteoAula = new HashMap<>();
+
+        for (ResultadoJuego r : lista) {
+            suma += r.getPuntaje();
+
+            if (mejor == null || r.getPuntaje() > mejor.getPuntaje()) {
+                mejor = r;
+            }
+
+            String aula = (r.getAula() == null || r.getAula().isBlank()) ? "Sin aula" : r.getAula();
+            conteoAula.put(aula, conteoAula.getOrDefault(aula, 0) + 1);
+        }
+        
+        // Guardar "mejor" para el click
+        if (mejor != null) {
+            ultimoIdMejor = mejor.getIdEstudiante();
+            ultimoNombreMejor = mejor.getNombreEstudiante();
+        } else {
+            ultimoIdMejor = null;
+            ultimoNombreMejor = null;
+        }
+
+        int promedio = (total == 0) ? 0 : (suma / total);
+
+        String mejorTxt = (mejor == null)
+                ? "-"
+                : mejor.getPuntaje() + " • " + (mejor.getNombreEstudiante() == null ? "" : mejor.getNombreEstudiante());
+
+        String aulaActiva = "-";
+        ultimaAulaActiva = null;
+
+        int max = -1;
+        for (Map.Entry<String, Integer> e : conteoAula.entrySet()) {
+            if (e.getValue() > max) {
+                max = e.getValue();
+                ultimaAulaActiva = e.getKey(); // <-- clave para el click
+                aulaActiva = e.getKey() + " (" + e.getValue() + ")";
+            }
+        }
+
+        lblKpiPartidas.setText(kpiHtml("Partidas", String.valueOf(total)));
+        lblKpiPromedio.setText(kpiHtml("Promedio", String.valueOf(promedio)));
+        lblKpiMejor.setText(kpiHtml("Mejor", mejorTxt));
+        lblKpiAulaActiva.setText(kpiHtml("Aula activa", aulaActiva));
+    }
+
+    private String kpiHtml(String titulo, String valor) {
+        return "<html><div style='text-align:center;'>" +
+                "<div style='font-size:12px;'>" + titulo + "</div>" +
+                "<div style='font-size:18px; font-weight:bold;'>" + valor + "</div>" +
+                "</div></html>";
     }
 }
