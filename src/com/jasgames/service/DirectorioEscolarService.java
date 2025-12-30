@@ -25,7 +25,7 @@ public class DirectorioEscolarService {
     }
 
     public List<Nino> obtenerEstudiantesPorAula(String aula) {
-        String aulaFinal = (aula == null || aula.isBlank()) ? "General" : aula.trim();
+        String aulaFinal = (aula == null || aula.isBlank()) ? "Aula Azul" : aula.trim();
 
         return perfilService.obtenerTodosNinos().stream()
                 .filter(n -> n.getAula().equalsIgnoreCase(aulaFinal))

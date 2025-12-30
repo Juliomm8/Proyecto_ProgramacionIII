@@ -11,6 +11,10 @@ public class AccesoWindow extends JFrame {
 
     public AccesoWindow(AppContext context) {
         this.context = context;
+        
+        // Reset de sesiones al volver al menú principal
+        context.setDocenteSesion(null);
+        context.setNinoSesion(null);
 
         setTitle("JAS Games - Acceso");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

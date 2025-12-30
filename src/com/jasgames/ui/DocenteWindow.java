@@ -3,6 +3,7 @@ package com.jasgames.ui;
 import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
+import com.jasgames.ui.login.AccesoWindow;
 
 import javax.swing.*;
 
@@ -28,6 +29,22 @@ public class DocenteWindow extends JFrame {
         this.ventanaAnterior = ventanaAnterior;
         this.juegoService = context.getJuegoService();
         this.perfilService = context.getPerfilService();
+
+        // GUARD: no permitir entrar sin sesión docente
+        if (context.getDocenteSesion() == null) {
+            JOptionPane.showMessageDialog(
+                    ventanaAnterior,
+                    "Acceso denegado: primero inicia sesión como Docente.",
+                    "Seguridad",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
+            else new AccesoWindow(context).setVisible(true);
+
+            dispose();
+            return;
+        }
 
         setContentPane(mainPanel);
         setTitle("JAS Games - Modo Docente");
@@ -55,8 +72,6 @@ public class DocenteWindow extends JFrame {
     private void initListeners() {
         if (btnBackDocente != null) {
             btnBackDocente.addActionListener(e -> {
-                this.dispose();
-
                 context.setDocenteSesion(null);
                 if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
                 dispose();

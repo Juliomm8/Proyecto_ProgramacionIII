@@ -84,8 +84,9 @@ public class Nino {
     }
 
     public String getAula() {
-        if (aula == null || aula.isBlank()) return "General";
-        return aula;
+        if (aula == null || aula.isBlank()) return "Aula Azul";
+        if ("General".equalsIgnoreCase(aula.trim())) return "Aula Azul";
+        return aula.trim();
     }
 
     public void setAula(String aula) {

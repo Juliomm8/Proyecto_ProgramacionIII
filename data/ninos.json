@@ -4,13 +4,15 @@
     "nombre": "Julio Mera",
     "edad": 7,
     "diagnostico": "TEA",
-    "puntosTotales": 110,
+    "puntosTotales": 123,
     "juegosAsignados": [
       1
     ],
     "dificultadPorJuego": {
       "1": 5
-    }
+    },
+    "aula": "General",
+    "avatar": "🐼"
   },
   {
     "id": 2,
@@ -23,7 +25,9 @@
     ],
     "dificultadPorJuego": {
       "1": 2
-    }
+    },
+    "aula": "Aula Roja",
+    "avatar": "🐶"
   },
   {
     "id": 3,
@@ -36,6 +40,8 @@
     ],
     "dificultadPorJuego": {
       "1": 2
-    }
+    },
+    "aula": "Aula Amarilla",
+    "avatar": "🐙"
   }
 ]

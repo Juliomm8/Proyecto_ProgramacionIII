@@ -57,6 +57,14 @@ public class PerfilesPanel extends JPanel {
             "🐨","🐙","🐢","🦄","🐞"
     };
 
+    private static final String[] AULAS_PREDEFINIDAS = {
+            "Aula Azul",
+            "Aula Roja",
+            "Aula Verde",
+            "Aula Amarilla",
+            "Aula Morada"
+    };
+
     public PerfilesPanel(PerfilService perfilService) {
         this.perfilService = perfilService;
         initComponents();
@@ -118,8 +126,8 @@ public class PerfilesPanel extends JPanel {
         spEdadNino = new JSpinner(new SpinnerNumberModel(6, 3, 18, 1));
         txtDiagnosticoNino = new JTextField("TEA");
 
-        cbAula = new JComboBox<>();
-        cbAula.setEditable(true); // permite escribir "Aula Azul", "Aula Roja", etc.
+        cbAula = new JComboBox<>(AULAS_PREDEFINIDAS);
+        cbAula.setEditable(false);
 
         cbAvatar = new JComboBox<>(AVATARES);
 
@@ -311,8 +319,8 @@ public class PerfilesPanel extends JPanel {
         txtDiagnosticoNino.setText("TEA");
         txtBuscar.setText("");
         listaNinos.clearSelection();
-        
-        refrescarOpcionesAula("General");
+
+        refrescarOpcionesAula("Aula Azul");
         cbAvatar.setSelectedItem("🙂");
     }
 
@@ -371,11 +379,14 @@ public class PerfilesPanel extends JPanel {
         }
         cbAvatar.setSelectedItem(existe ? av : "🙂");
     }
-    
+
     private void refrescarOpcionesAula(String aulaPreferida) {
         java.util.LinkedHashSet<String> aulas = new java.util.LinkedHashSet<>();
-        aulas.add("General");
 
+        // 1) predefinidas primero
+        for (String a : AULAS_PREDEFINIDAS) aulas.add(a);
+
+        // 2) si en el JSON hay aulas extra, también se agregan (por compatibilidad)
         for (Nino n : perfilService.obtenerTodosNinos()) {
             String a = n.getAula();
             if (a != null && !a.isBlank()) aulas.add(a.trim());
@@ -384,17 +395,14 @@ public class PerfilesPanel extends JPanel {
         cbAula.removeAllItems();
         for (String a : aulas) cbAula.addItem(a);
 
-        String aulaFinal = (aulaPreferida == null || aulaPreferida.isBlank()) ? "General" : aulaPreferida.trim();
+        String aulaFinal = (aulaPreferida == null || aulaPreferida.isBlank()) ? "Aula Azul" : aulaPreferida.trim();
 
-        // Si el docente escribió un aula nueva, también la metemos
-        boolean existe = false;
-        for (int i = 0; i < cbAula.getItemCount(); i++) {
-            if (cbAula.getItemAt(i).equalsIgnoreCase(aulaFinal)) { existe = true; break; }
-        }
-        if (!existe) cbAula.addItem(aulaFinal);
+        // Si venía "General", lo convertimos
+        if ("General".equalsIgnoreCase(aulaFinal)) aulaFinal = "Aula Azul";
 
         cbAula.setSelectedItem(aulaFinal);
     }
+
 
     private void seleccionarEnLista(Nino nino) {
         for (int i = 0; i < listModel.size(); i++) {

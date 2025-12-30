@@ -12,6 +12,7 @@ import com.jasgames.service.ResultadoService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
 import com.jasgames.ui.juegos.JuegoColoresPanel;
 import com.jasgames.ui.juegos.JuegoListener;
+import com.jasgames.ui.login.AccesoWindow;
 
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -67,6 +68,11 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
         initModeloJuegos();
         initListeners();
+
+        // Si ya hay sesión (por flujo visual), aplicarla automáticamente
+        if (context.getNinoSesion() != null) {
+            aplicarSesionEstudiante(context.getNinoSesion());
+        }
     }
 
     public EstudianteWindow() {
@@ -76,21 +82,43 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     public EstudianteWindow(AppContext context, JFrame ventanaAnterior, Nino ninoSesion) {
         this(context, ventanaAnterior);
 
-        if (ninoSesion != null) {
-            this.ninoActual = ninoSesion;
+        Nino n = (ninoSesion != null) ? ninoSesion : context.getNinoSesion();
 
-            if (txtNombreEstudiante != null) {
-                txtNombreEstudiante.setText(ninoSesion.getNombre());
-                txtNombreEstudiante.setEditable(false);
-                txtNombreEstudiante.setEnabled(false); // evita teclado
-            }
+        // GUARD: no permitir entrar sin seleccionar estudiante
+        if (n == null) {
+            JOptionPane.showMessageDialog(
+                    ventanaAnterior,
+                    "Acceso denegado: selecciona un estudiante primero.",
+                    "Seguridad",
+                    JOptionPane.WARNING_MESSAGE
+            );
 
-            cargarJuegosAsignadosYHabilitados(ninoSesion);
+            if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
+            else new AccesoWindow(context).setVisible(true);
 
-            // opcional: seleccionar el primer juego automáticamente
-            if (juegosListModel != null && juegosListModel.getSize() > 0) {
-                listaJuegosEstudiante.setSelectedIndex(0);
-            }
+            dispose();
+            return;
+        }
+
+        aplicarSesionEstudiante(n);
+    }
+
+    private void aplicarSesionEstudiante(Nino nino) {
+        if (nino == null) return;
+
+        this.ninoActual = nino;
+        context.setNinoSesion(nino);
+
+        if (txtNombreEstudiante != null) {
+            txtNombreEstudiante.setText(nino.getNombre());
+            txtNombreEstudiante.setEditable(false);
+            txtNombreEstudiante.setEnabled(false);
+        }
+
+        cargarJuegosAsignadosYHabilitados(nino);
+
+        if (juegosListModel != null && juegosListModel.getSize() > 0) {
+            listaJuegosEstudiante.setSelectedIndex(0);
         }
     }
 
@@ -177,7 +205,10 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         }
 
         // Creamos una actividad (nivel puede ser 1 por ahora)
-        int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), juego.getDificultad());
+        // int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), juego.getDificultad());
+        // Usamos la dificultad del juego o la personalizada si existe
+        int nivel = ninoActual.getDificultadJuego(juego.getId(), juego.getDificultad());
+
         Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
 
         // Instanciamos el panel del juego según su tipo

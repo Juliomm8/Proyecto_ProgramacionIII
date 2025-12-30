@@ -41,19 +41,27 @@ public class LoginDocenteWindow extends JFrame {
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(8, 8, 8, 8);
         c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
+        c.anchor = GridBagConstraints.CENTER;
 
         c.gridx = 0; c.gridy = 0;
+        c.weightx = 0.0; // Label no necesita estirarse
         form.add(new JLabel("Usuario:"), c);
 
         c.gridx = 1;
-        txtUsuario = new JTextField();
+        c.weightx = 1.0;
+        txtUsuario = new JTextField(18);
+        txtUsuario.setPreferredSize(new Dimension(220, 28));
         form.add(txtUsuario, c);
 
         c.gridx = 0; c.gridy = 1;
+        c.weightx = 0.0;
         form.add(new JLabel("Contraseña:"), c);
 
         c.gridx = 1;
-        txtContrasena = new JPasswordField();
+        c.weightx = 1.0;
+        txtContrasena = new JPasswordField(18);
+        txtContrasena.setPreferredSize(new Dimension(220, 28));
         form.add(txtContrasena, c);
 
         lblEstado = new JLabel(" ");

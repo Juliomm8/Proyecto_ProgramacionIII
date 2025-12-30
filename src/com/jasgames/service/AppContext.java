@@ -8,6 +8,7 @@ public class AppContext {
     private final JuegoService juegoService;
     private final PerfilService perfilService;
     private final ResultadoService resultadoService;
+    private final AuditoriaService auditoriaService;
 
     private final AutenticacionService autenticacionService;
     private final DirectorioEscolarService directorioEscolarService;
@@ -20,6 +21,7 @@ public class AppContext {
         this.juegoService = new JuegoService();
         this.perfilService = new PerfilService();
         this.resultadoService = new ResultadoService();
+        this.auditoriaService = new AuditoriaService();
 
         this.autenticacionService = new AutenticacionService();
         this.directorioEscolarService = new DirectorioEscolarService(perfilService);
@@ -28,6 +30,7 @@ public class AppContext {
     public JuegoService getJuegoService() { return juegoService; }
     public PerfilService getPerfilService() { return perfilService; }
     public ResultadoService getResultadoService() { return resultadoService; }
+    public AuditoriaService getAuditoriaService() { return auditoriaService; }
 
     public AutenticacionService getAutenticacionService() { return autenticacionService; }
     public DirectorioEscolarService getDirectorioEscolarService() { return directorioEscolarService; }

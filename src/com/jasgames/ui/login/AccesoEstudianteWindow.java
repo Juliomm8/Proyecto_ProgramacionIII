@@ -8,6 +8,8 @@ import com.jasgames.ui.EstudianteWindow;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AccesoEstudianteWindow extends JFrame {
 
@@ -27,6 +29,27 @@ public class AccesoEstudianteWindow extends JFrame {
     private final JLabel lblTitulo = new JLabel("Selecciona tu aula", SwingConstants.CENTER);
     private final JButton btnAtras = new JButton("Atrás");
     private final JButton btnSalir = new JButton("Salir");
+
+    private static final Map<String, Color> COLOR_AULA = new HashMap<>();
+    static {
+        COLOR_AULA.put("Aula Azul", new Color(52, 152, 219));
+        COLOR_AULA.put("Aula Roja", new Color(231, 76, 60));
+        COLOR_AULA.put("Aula Verde", new Color(46, 204, 113));
+        COLOR_AULA.put("Aula Amarilla", new Color(241, 196, 15));
+        COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
+    }
+
+    private void aplicarEstiloAula(JButton btn, String aula) {
+        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166)); // gris si no coincide
+
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(false);
+        btn.setBackground(c);
+
+        if ("Aula Amarilla".equalsIgnoreCase(aula)) btn.setForeground(Color.BLACK);
+        else btn.setForeground(Color.WHITE);
+    }
 
     public AccesoEstudianteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
@@ -89,6 +112,7 @@ public class AccesoEstudianteWindow extends JFrame {
                 btn.setFocusPainted(false);
                 btn.addActionListener(e -> abrirAula(aula));
                 panelAulas.add(btn);
+                aplicarEstiloAula(btn, aula);
             }
 
             JScrollPane scroll = new JScrollPane(panelAulas);
