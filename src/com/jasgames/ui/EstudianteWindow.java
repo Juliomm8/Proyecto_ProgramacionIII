@@ -40,7 +40,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private JButton btnIniciarJuego;
 
     private final AppContext context;
-    private final SeleccionUsuarioWindow seleccionUsuarioWindow;
+    private final JFrame ventanaAnterior;
     private final JuegoService juegoService;
     private final PerfilService perfilService;
     private final ResultadoService resultadoService;
@@ -52,9 +52,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
 
 
-    public EstudianteWindow(AppContext context, SeleccionUsuarioWindow seleccionUsuarioWindow) {
+    public EstudianteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
-        this.seleccionUsuarioWindow = seleccionUsuarioWindow;
+        this.ventanaAnterior = ventanaAnterior;
         this.juegoService = context.getJuegoService();
         this.perfilService = context.getPerfilService();
         this.resultadoService = context.getResultadoService();
@@ -73,6 +73,27 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         this(new AppContext(), null);
     }
 
+    public EstudianteWindow(AppContext context, JFrame ventanaAnterior, Nino ninoSesion) {
+        this(context, ventanaAnterior);
+
+        if (ninoSesion != null) {
+            this.ninoActual = ninoSesion;
+
+            if (txtNombreEstudiante != null) {
+                txtNombreEstudiante.setText(ninoSesion.getNombre());
+                txtNombreEstudiante.setEditable(false);
+                txtNombreEstudiante.setEnabled(false); // evita teclado
+            }
+
+            cargarJuegosAsignadosYHabilitados(ninoSesion);
+
+            // opcional: seleccionar el primer juego automáticamente
+            if (juegosListModel != null && juegosListModel.getSize() > 0) {
+                listaJuegosEstudiante.setSelectedIndex(0);
+            }
+        }
+    }
+
     private void initModeloJuegos() {
         juegosListModel = new DefaultListModel<>();
         listaJuegosEstudiante.setModel(juegosListModel);
@@ -82,8 +103,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         if (btnBackEstudiante != null) {
             btnBackEstudiante.addActionListener(e -> {
                 this.dispose();
-                if (seleccionUsuarioWindow != null) {
-                    seleccionUsuarioWindow.setVisible(true);
+                context.setNinoSesion(null);
+                if (ventanaAnterior != null) {
+                    ventanaAnterior.setVisible(true);
                 }
             });
         }

@@ -46,6 +46,17 @@ public class PerfilesPanel extends JPanel {
     private JButton btnBuscarNino;
     private JButton btnOrdenar;
 
+    private JComboBox<String> cbAula;
+    private JComboBox<String> cbAvatar;
+
+    private static final String[] AVATARES = {
+            "😀","😃","😄","😁","😊",
+            "🙂","😎","🤩","🥳","😺",
+            "🐶","🐱","🐼","🐻","🐵",
+            "🦊","🐯","🦁","🐸","🐰",
+            "🐨","🐙","🐢","🦄","🐞"
+    };
+
     public PerfilesPanel(PerfilService perfilService) {
         this.perfilService = perfilService;
         initComponents();
@@ -100,12 +111,29 @@ public class PerfilesPanel extends JPanel {
         });
 
         // ---------- PANEL CENTRAL: FORMULARIO ----------
-        formPerfilesPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        formPerfilesPanel = new JPanel(new GridLayout(6, 2, 5, 5));
 
         txtIdNino = new JTextField();
         txtNombreNino = new JTextField();
         spEdadNino = new JSpinner(new SpinnerNumberModel(6, 3, 18, 1));
         txtDiagnosticoNino = new JTextField("TEA");
+
+        cbAula = new JComboBox<>();
+        cbAula.setEditable(true); // permite escribir "Aula Azul", "Aula Roja", etc.
+
+        cbAvatar = new JComboBox<>(AVATARES);
+
+        // Hacer el emoji más grande en el combo
+        cbAvatar.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 22f));
+                return lbl;
+            }
+        });
 
         formPerfilesPanel.add(new JLabel("ID:"));
         formPerfilesPanel.add(txtIdNino);
@@ -115,6 +143,10 @@ public class PerfilesPanel extends JPanel {
         formPerfilesPanel.add(spEdadNino);
         formPerfilesPanel.add(new JLabel("Diagnóstico:"));
         formPerfilesPanel.add(txtDiagnosticoNino);
+        formPerfilesPanel.add(new JLabel("Aula:"));
+        formPerfilesPanel.add(cbAula);
+        formPerfilesPanel.add(new JLabel("Avatar:"));
+        formPerfilesPanel.add(cbAvatar);
 
         add(formPerfilesPanel, BorderLayout.CENTER);
 
@@ -148,6 +180,7 @@ public class PerfilesPanel extends JPanel {
         for (Nino n : perfilService.obtenerTodosNinos()) {
             listModel.addElement(n);
         }
+        refrescarOpcionesAula("General");
     }
 
     private void registrarNino() {
@@ -170,10 +203,22 @@ public class PerfilesPanel extends JPanel {
             }
 
             Nino nino = new Nino(id, nombre, edad, diagnostico);
+            
+            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "General";
+            if (aula.isBlank()) aula = "General";
+
+            String avatar = (String) cbAvatar.getSelectedItem();
+            if (avatar == null || avatar.isBlank()) avatar = "🙂";
+
+            nino.setAula(aula);
+            nino.setAvatar(avatar);
+            
             perfilService.registrarNino(nino);
 
             eliminarDeListModelPorId(id);
             listModel.addElement(nino);
+            
+            refrescarOpcionesAula(aula);
 
             limpiarCampos();
 
@@ -194,11 +239,21 @@ public class PerfilesPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "No existe un niño con ese ID", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            
+            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "General";
+            if (aula.isBlank()) aula = "General";
+
+            String avatar = (String) cbAvatar.getSelectedItem();
+            if (avatar == null || avatar.isBlank()) avatar = "🙂";
 
             Nino actualizado = new Nino(id, nombre, edad, diagnostico);
             actualizado.setPuntosTotales(existente.getPuntosTotales());
             actualizado.setJuegosAsignados(new java.util.HashSet<>(existente.getJuegosAsignados()));
             actualizado.setDificultadPorJuego(new java.util.HashMap<>(existente.getDificultadPorJuego()));
+            
+            actualizado.setAula(aula);
+            actualizado.setAvatar(avatar);
+            refrescarOpcionesAula(aula);
 
             perfilService.actualizarNino(actualizado);
 
@@ -256,6 +311,9 @@ public class PerfilesPanel extends JPanel {
         txtDiagnosticoNino.setText("TEA");
         txtBuscar.setText("");
         listaNinos.clearSelection();
+        
+        refrescarOpcionesAula("General");
+        cbAvatar.setSelectedItem("🙂");
     }
 
     private void buscarNino() {
@@ -303,6 +361,39 @@ public class PerfilesPanel extends JPanel {
         txtNombreNino.setText(nino.getNombre());
         spEdadNino.setValue(nino.getEdad());
         txtDiagnosticoNino.setText(nino.getDiagnostico());
+        
+        refrescarOpcionesAula(nino.getAula());
+
+        String av = nino.getAvatar();
+        boolean existe = false;
+        for (int i = 0; i < cbAvatar.getItemCount(); i++) {
+            if (cbAvatar.getItemAt(i).equals(av)) { existe = true; break; }
+        }
+        cbAvatar.setSelectedItem(existe ? av : "🙂");
+    }
+    
+    private void refrescarOpcionesAula(String aulaPreferida) {
+        java.util.LinkedHashSet<String> aulas = new java.util.LinkedHashSet<>();
+        aulas.add("General");
+
+        for (Nino n : perfilService.obtenerTodosNinos()) {
+            String a = n.getAula();
+            if (a != null && !a.isBlank()) aulas.add(a.trim());
+        }
+
+        cbAula.removeAllItems();
+        for (String a : aulas) cbAula.addItem(a);
+
+        String aulaFinal = (aulaPreferida == null || aulaPreferida.isBlank()) ? "General" : aulaPreferida.trim();
+
+        // Si el docente escribió un aula nueva, también la metemos
+        boolean existe = false;
+        for (int i = 0; i < cbAula.getItemCount(); i++) {
+            if (cbAula.getItemAt(i).equalsIgnoreCase(aulaFinal)) { existe = true; break; }
+        }
+        if (!existe) cbAula.addItem(aulaFinal);
+
+        cbAula.setSelectedItem(aulaFinal);
     }
 
     private void seleccionarEnLista(Nino nino) {
