@@ -16,6 +16,7 @@ import com.jasgames.ui.login.AccesoWindow;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,18 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
     
     private boolean salidaRegistrada = false;
+    
+    private JButton btnCambiarNino;
+    private JLabel lblAvatarSesion;
+
+    private static final Map<String, Color> COLOR_AULA = new HashMap<>();
+    static {
+        COLOR_AULA.put("Aula Azul", new Color(52, 152, 219));
+        COLOR_AULA.put("Aula Roja", new Color(231, 76, 60));
+        COLOR_AULA.put("Aula Verde", new Color(46, 204, 113));
+        COLOR_AULA.put("Aula Amarilla", new Color(241, 196, 15));
+        COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
+    }
 
 
     public EstudianteWindow(AppContext context, JFrame ventanaAnterior) {
@@ -73,6 +86,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
         initModeloJuegos();
         initListeners();
+        
+        initUxSesion();
+        mostrarModoBusqueda(); // por defecto (si aún no hay sesión visual)
         
         addWindowListener(new WindowAdapter() {
             @Override
@@ -116,6 +132,57 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         aplicarSesionEstudiante(n);
     }
     
+    private void initUxSesion() {
+        if (panelDatosEstudiante == null) return;
+
+        lblAvatarSesion = new JLabel("🙂");
+        lblAvatarSesion.setFont(lblAvatarSesion.getFont().deriveFont(Font.PLAIN, 28f));
+        lblAvatarSesion.setVisible(false);
+
+        btnCambiarNino = new JButton("Cambiar niño");
+        btnCambiarNino.setFont(btnCambiarNino.getFont().deriveFont(Font.BOLD, 14f));
+        btnCambiarNino.setVisible(false);
+        btnCambiarNino.addActionListener(e -> {
+            if (btnBackEstudiante != null) btnBackEstudiante.doClick();
+        });
+
+        // Se agregan a la derecha (panelDatosEstudiante es FlowLayout)
+        panelDatosEstudiante.add(lblAvatarSesion, 0);
+        panelDatosEstudiante.add(btnCambiarNino);
+
+        panelDatosEstudiante.revalidate();
+        panelDatosEstudiante.repaint();
+    }
+
+    private void mostrarModoBusqueda() {
+        if (lblNombreEstudiante != null) lblNombreEstudiante.setVisible(true);
+        if (txtNombreEstudiante != null) {
+            txtNombreEstudiante.setVisible(true);
+            txtNombreEstudiante.setEnabled(true);
+            txtNombreEstudiante.setEditable(true);
+        }
+
+        if (lblAvatarSesion != null) lblAvatarSesion.setVisible(false);
+        if (btnCambiarNino != null) btnCambiarNino.setVisible(false);
+
+        if (btnBackEstudiante != null) btnBackEstudiante.setText("← Volver");
+        if (lblTituloEstudiante != null) lblTituloEstudiante.setText("Modo Estudiante");
+
+        aplicarTemaAula(null);
+    }
+
+    private void aplicarTemaAula(String aula) {
+        if (panelHeaderEstudiante == null) return;
+
+        if (aula == null || aula.isBlank()) {
+            panelHeaderEstudiante.setBorder(null);
+            return;
+        }
+
+        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+        panelHeaderEstudiante.setBorder(BorderFactory.createMatteBorder(0, 0, 6, 0, c));
+    }
+    
     private void registrarSalidaSiAplica() {
         if (salidaRegistrada) return;
 
@@ -147,6 +214,24 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         if (juegosListModel != null && juegosListModel.getSize() > 0) {
             listaJuegosEstudiante.setSelectedIndex(0);
         }
+        
+        // MODO VISUAL: ocultar búsqueda por teclado y mostrar sesión
+        if (lblNombreEstudiante != null) lblNombreEstudiante.setVisible(false);
+        if (txtNombreEstudiante != null) txtNombreEstudiante.setVisible(false);
+
+        if (lblAvatarSesion != null) {
+            lblAvatarSesion.setText(nino.getAvatar());
+            lblAvatarSesion.setVisible(true);
+        }
+
+        if (btnCambiarNino != null) btnCambiarNino.setVisible(true);
+
+        if (btnBackEstudiante != null) btnBackEstudiante.setText("Salir");
+        if (lblTituloEstudiante != null) lblTituloEstudiante.setText(nino.getAula() + " • " + nino.getNombre());
+
+        aplicarTemaAula(nino.getAula());
+        panelHeaderEstudiante.revalidate();
+        panelHeaderEstudiante.repaint();
     }
 
     private void initModeloJuegos() {

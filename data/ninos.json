@@ -9,7 +9,7 @@
       1
     ],
     "dificultadPorJuego": {
-      "1": 5
+      "1": 3
     },
     "aula": "Aula Amarilla",
     "avatar": "🦄"
@@ -24,7 +24,7 @@
       1
     ],
     "dificultadPorJuego": {
-      "1": 2
+      "1": 3
     },
     "aula": "Aula Roja",
     "avatar": "🐶"
@@ -39,9 +39,35 @@
       1
     ],
     "dificultadPorJuego": {
-      "1": 2
+      "1": 3
     },
     "aula": "Aula Amarilla",
     "avatar": "🐙"
+  },
+  {
+    "id": 4,
+    "nombre": "Amelia Povea",
+    "edad": 9,
+    "diagnostico": "TEA",
+    "puntosTotales": 5,
+    "juegosAsignados": [
+      1
+    ],
+    "dificultadPorJuego": {
+      "1": 5
+    },
+    "aula": "Aula Morada",
+    "avatar": "😁"
+  },
+  {
+    "id": 5,
+    "nombre": "Alisson Armas",
+    "edad": 10,
+    "diagnostico": "TEA",
+    "puntosTotales": 0,
+    "juegosAsignados": [],
+    "dificultadPorJuego": {},
+    "aula": "General",
+    "avatar": "🐸"
   }
 ]

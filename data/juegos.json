@@ -3,7 +3,7 @@
     "id": 1,
     "nombre": "Discriminación de Colores",
     "tipo": "COLORES",
-    "dificultad": 1,
+    "dificultad": 3,
     "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
     "habilitado": true
   }

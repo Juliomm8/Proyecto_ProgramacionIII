@@ -6,6 +6,7 @@ import com.jasgames.service.DirectorioEscolarService;
 import com.jasgames.ui.EstudianteWindow;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.HashMap;
@@ -25,6 +26,8 @@ public class AccesoEstudianteWindow extends JFrame {
 
     private final JPanel cardAulas = new JPanel(new BorderLayout());
     private final JPanel cardEstudiantes = new JPanel(new BorderLayout());
+    
+    private JPanel header;
 
     private final JLabel lblTitulo = new JLabel("Selecciona tu aula", SwingConstants.CENTER);
     private final JButton btnAtras = new JButton("Atrás");
@@ -39,6 +42,33 @@ public class AccesoEstudianteWindow extends JFrame {
         COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
     }
 
+    private Color colorAula(String aula) {
+        return COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166)); // gris default
+    }
+
+    private Color fondoSuave(Color c) {
+        // Mezcla con blanco para un fondo pastel (más suave)
+        int r = (c.getRed() + 255) / 2;
+        int g = (c.getGreen() + 255) / 2;
+        int b = (c.getBlue() + 255) / 2;
+        return new Color(r, g, b);
+    }
+
+    private void aplicarEstiloFicha(JButton ficha, String aula) {
+        Color c = colorAula(aula);
+
+        ficha.setOpaque(true);
+        ficha.setContentAreaFilled(true);
+        ficha.setBorderPainted(true);
+
+        // Fondo pastel + borde grueso del color del aula
+        ficha.setBackground(fondoSuave(c));
+        Border borde = BorderFactory.createLineBorder(c, 6, true);
+        ficha.setBorder(borde);
+
+        ficha.setForeground(Color.BLACK);
+    }
+
     private void aplicarEstiloAula(JButton btn, String aula) {
         Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166)); // gris si no coincide
 
@@ -49,6 +79,20 @@ public class AccesoEstudianteWindow extends JFrame {
 
         if ("Aula Amarilla".equalsIgnoreCase(aula)) btn.setForeground(Color.BLACK);
         else btn.setForeground(Color.WHITE);
+    }
+    
+    private void aplicarBarraAulaHeader(String aula) {
+        if (header == null) return;
+
+        if (aula == null || aula.isBlank()) {
+            header.setBorder(null);
+            return;
+        }
+
+        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 8, 0, c));
+        header.revalidate();
+        header.repaint();
     }
 
     public AccesoEstudianteWindow(AppContext context, JFrame ventanaAnterior) {
@@ -69,20 +113,20 @@ public class AccesoEstudianteWindow extends JFrame {
         JPanel root = new JPanel(new BorderLayout(10, 10));
         root.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JPanel header = new JPanel(new BorderLayout(10, 10));
+        this.header = new JPanel(new BorderLayout(10, 10));
         lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 22f));
-        header.add(lblTitulo, BorderLayout.CENTER);
+        this.header.add(lblTitulo, BorderLayout.CENTER);
 
         JPanel izquierda = new JPanel(new FlowLayout(FlowLayout.LEFT));
         btnAtras.setEnabled(false);
         izquierda.add(btnAtras);
-        header.add(izquierda, BorderLayout.WEST);
+        this.header.add(izquierda, BorderLayout.WEST);
 
         JPanel derecha = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         derecha.add(btnSalir);
-        header.add(derecha, BorderLayout.EAST);
+        this.header.add(derecha, BorderLayout.EAST);
 
-        root.add(header, BorderLayout.NORTH);
+        root.add(this.header, BorderLayout.NORTH);
 
         cards.add(cardAulas, CARD_AULAS);
         cards.add(cardEstudiantes, CARD_ESTUDIANTES);
@@ -123,6 +167,9 @@ public class AccesoEstudianteWindow extends JFrame {
         lblTitulo.setText("Selecciona tu aula");
         btnAtras.setEnabled(false);
         cardLayout.show(cards, CARD_AULAS);
+        
+        aplicarBarraAulaHeader(null);
+        
         cardAulas.revalidate();
         cardAulas.repaint();
     }
@@ -146,6 +193,9 @@ public class AccesoEstudianteWindow extends JFrame {
                 JButton ficha = new JButton(formatoFicha(n));
                 ficha.setFont(ficha.getFont().deriveFont(Font.BOLD, 16f));
                 ficha.setFocusPainted(false);
+                
+                aplicarEstiloFicha(ficha, n.getAula());
+                
                 ficha.addActionListener(e -> seleccionarEstudiante(n));
                 panelEstudiantes.add(ficha);
             }
@@ -158,6 +208,9 @@ public class AccesoEstudianteWindow extends JFrame {
         lblTitulo.setText("Aula: " + aula);
         btnAtras.setEnabled(true);
         cardLayout.show(cards, CARD_ESTUDIANTES);
+        
+        aplicarBarraAulaHeader(aula);
+        
         cardEstudiantes.revalidate();
         cardEstudiantes.repaint();
     }
@@ -166,7 +219,7 @@ public class AccesoEstudianteWindow extends JFrame {
         String avatar = n.getAvatar();
         String nombre = n.getNombre();
         return "<html><div style='text-align:center;'>" +
-                "<span style='font-size:30px;'>" + avatar + "</span><br/>" +
+                "<span style='font-size:40px;'>" + avatar + "</span><br/>" +
                 "<span style='font-size:16px;'>" + nombre + "</span>" +
                 "</div></html>";
     }
@@ -189,6 +242,8 @@ public class AccesoEstudianteWindow extends JFrame {
         lblTitulo.setText("Selecciona tu aula");
         btnAtras.setEnabled(false);
         cardLayout.show(cards, CARD_AULAS);
+        
+        aplicarBarraAulaHeader(null);
     }
 
     private void salir() {
