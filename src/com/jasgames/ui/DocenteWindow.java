@@ -79,6 +79,7 @@ public class DocenteWindow extends JFrame {
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
         tabbedPanePrincipal.addTab("Perfiles", new PerfilesPanel(perfilService));
         tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService()));
+        tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
     }
 
 

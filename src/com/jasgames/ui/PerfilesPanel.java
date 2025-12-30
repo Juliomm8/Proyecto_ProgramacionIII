@@ -188,7 +188,7 @@ public class PerfilesPanel extends JPanel {
         for (Nino n : perfilService.obtenerTodosNinos()) {
             listModel.addElement(n);
         }
-        refrescarOpcionesAula("General");
+        refrescarOpcionesAula("Aula Azul");
     }
 
     private void registrarNino() {
@@ -212,8 +212,8 @@ public class PerfilesPanel extends JPanel {
 
             Nino nino = new Nino(id, nombre, edad, diagnostico);
             
-            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "General";
-            if (aula.isBlank()) aula = "General";
+            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "Aula Azul";
+            if (aula.isBlank()) aula = "Aula Azul";
 
             String avatar = (String) cbAvatar.getSelectedItem();
             if (avatar == null || avatar.isBlank()) avatar = "🙂";
@@ -248,8 +248,8 @@ public class PerfilesPanel extends JPanel {
                 return;
             }
             
-            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "General";
-            if (aula.isBlank()) aula = "General";
+            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "Aula Azul";
+            if (aula.isBlank()) aula = "Aula Azul";
 
             String avatar = (String) cbAvatar.getSelectedItem();
             if (avatar == null || avatar.isBlank()) avatar = "🙂";

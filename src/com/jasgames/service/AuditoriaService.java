@@ -51,4 +51,23 @@ public class AuditoriaService {
     public void salidaEstudiante(int ninoId, String nombre) {
         registrar("SALIDA_ESTUDIANTE", "id=" + ninoId + " nombre=" + nombre);
     }
+
+    public String leerUltimasLineas(int maxLineas) {
+        try {
+            Path path = Paths.get("data/auditoria.log");
+            if (!Files.exists(path)) return "Aún no hay registros de auditoría.";
+
+            java.util.List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            int from = Math.max(0, lines.size() - maxLineas);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = from; i < lines.size(); i++) {
+                sb.append(lines.get(i)).append(System.lineSeparator());
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "Error leyendo auditoría: " + e.getMessage();
+        }
+    }
+
 }
