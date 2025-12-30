@@ -276,5 +276,36 @@ public class PerfilService {
         guardarNinosEnArchivo();
     }
 
+    public int contarNinosEnAula(String aula) {
+        if (aula == null) return 0;
+        int c = 0;
+        for (Nino n : ninos) {
+            if (n.getAula().equalsIgnoreCase(aula.trim())) c++;
+        }
+        return c;
+    }
+
+    public void migrarAula(String aulaOrigen, String aulaDestino) {
+        if (aulaOrigen == null || aulaDestino == null) return;
+
+        String o = aulaOrigen.trim();
+        String d = aulaDestino.trim();
+
+        for (Nino n : ninos) {
+            if (n.getAula().equalsIgnoreCase(o)) {
+                n.setAula(d);
+            }
+        }
+        guardarNinosEnArchivo();
+    }
+
+    public Set<String> obtenerAulasEnUso() {
+        Set<String> set = new LinkedHashSet<>();
+        for (Nino n : ninos) {
+            String a = n.getAula();
+            if (a != null && !a.isBlank()) set.add(a.trim());
+        }
+        return set;
+    }
 
 }

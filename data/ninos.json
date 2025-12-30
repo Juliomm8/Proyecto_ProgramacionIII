@@ -9,7 +9,7 @@
       1
     ],
     "dificultadPorJuego": {
-      "1": 3
+      "1": 1
     },
     "aula": "Aula Roja",
     "avatar": "🦄"
@@ -27,7 +27,7 @@
       "1": 3
     },
     "aula": "Aula Roja",
-    "avatar": "🐶"
+    "avatar": "🦊"
   },
   {
     "id": 3,
@@ -56,7 +56,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Verde",
     "avatar": "😁"
   },
   {
@@ -64,7 +64,7 @@
     "nombre": "Alisson Armas",
     "edad": 10,
     "diagnostico": "TEA",
-    "puntosTotales": 4,
+    "puntosTotales": 9,
     "juegosAsignados": [
       1
     ],

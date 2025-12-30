@@ -9,6 +9,7 @@ public class AppContext {
     private final PerfilService perfilService;
     private final ResultadoService resultadoService;
     private final AuditoriaService auditoriaService;
+    private final AulaService aulaService;
 
     private final AutenticacionService autenticacionService;
     private final DirectorioEscolarService directorioEscolarService;
@@ -20,6 +21,7 @@ public class AppContext {
     public AppContext() {
         this.juegoService = new JuegoService();
         this.perfilService = new PerfilService();
+        this.aulaService = new AulaService(perfilService);
         this.resultadoService = new ResultadoService();
         this.auditoriaService = new AuditoriaService();
 
@@ -40,4 +42,6 @@ public class AppContext {
 
     public Nino getNinoSesion() { return ninoSesion; }
     public void setNinoSesion(Nino ninoSesion) { this.ninoSesion = ninoSesion; }
+    public AulaService getAulaService() { return aulaService; }
+
 }

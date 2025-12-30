@@ -18,6 +18,7 @@ import java.util.function.IntConsumer;
 public class AulasPanel extends JPanel {
 
     private final PerfilService perfilService;
+    private final com.jasgames.service.AulaService aulaService;
     private final IntConsumer onAbrirPerfil;
 
     private final DefaultListModel<String> aulasModel = new DefaultListModel<>();
@@ -45,21 +46,9 @@ public class AulasPanel extends JPanel {
     private List<Nino> cacheNinos = new ArrayList<>();
     private final Map<String, Integer> conteoPorAula = new HashMap<>();
 
-    private static final String[] AULAS_PREDEFINIDAS = {
-            "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
-    };
-
-    private static final Map<String, Color> COLOR_AULA = new LinkedHashMap<>();
-    static {
-        COLOR_AULA.put("Aula Azul", new Color(52, 152, 219));
-        COLOR_AULA.put("Aula Roja", new Color(231, 76, 60));
-        COLOR_AULA.put("Aula Verde", new Color(46, 204, 113));
-        COLOR_AULA.put("Aula Amarilla", new Color(241, 196, 15));
-        COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
-    }
-
     public AulasPanel(AppContext context, IntConsumer onAbrirPerfil) {
         this.perfilService = context.getPerfilService();
+        this.aulaService = context.getAulaService();
         this.onAbrirPerfil = onAbrirPerfil;
 
         setLayout(new BorderLayout(10, 10));
@@ -95,6 +84,18 @@ public class AulasPanel extends JPanel {
         controles.add(new JLabel("Orden:"));
         controles.add(cbOrden);
         controles.add(btnRefrescar);
+        
+        JButton btnNuevaAula = new JButton("Nueva aula");
+        JButton btnColorAula = new JButton("Color");
+        JButton btnEliminarAula = new JButton("Eliminar aula");
+        
+        btnNuevaAula.addActionListener(e -> crearAulaDialog());
+        btnColorAula.addActionListener(e -> cambiarColorDialog());
+        btnEliminarAula.addActionListener(e -> eliminarAulaDialog());
+        
+        controles.add(btnNuevaAula);
+        controles.add(btnColorAula);
+        controles.add(btnEliminarAula);
 
         header.add(controles, BorderLayout.EAST);
         return header;
@@ -146,7 +147,7 @@ public class AulasPanel extends JPanel {
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setOpaque(true);
 
-                Color base = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+                Color base = aulaService.colorDeAula(aula);
                 Color suave = fondoSuave(base);
 
                 if (isSelected) {
@@ -174,7 +175,7 @@ public class AulasPanel extends JPanel {
                 JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
                 String aula = String.valueOf(tablaModel.getValueAt(row, 3)); // columna "Aula"
-                Color base = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+                Color base = aulaService.colorDeAula(aula);
 
                 if (!isSelected) {
                     c.setBackground(fondoSuave(base));
@@ -269,24 +270,14 @@ public class AulasPanel extends JPanel {
 
         // Modelo
         aulasModel.clear();
-        for (String a : AULAS_PREDEFINIDAS) aulasModel.addElement(a);
+        List<String> nombres = aulaService.obtenerNombres();
+        for (String a : nombres) aulasModel.addElement(a);
 
-        // Aulas extras por compatibilidad (si existieran)
-        Set<String> extras = new LinkedHashSet<>();
-        for (Nino n : cacheNinos) extras.add(n.getAula());
-        for (String a : extras) {
-            boolean ya = false;
-            for (int i = 0; i < aulasModel.size(); i++) {
-                if (aulasModel.get(i).equalsIgnoreCase(a)) { ya = true; break; }
-            }
-            if (!ya) aulasModel.addElement(a);
-        }
-
-        // Selección: mantener si se puede; si no, Aula Azul
-        if (seleccionActual != null) {
+        // Selección: mantener si se puede; si no, la primera
+        if (seleccionActual != null && nombres.contains(seleccionActual)) {
             listAulas.setSelectedValue(seleccionActual, true);
-        } else {
-            listAulas.setSelectedValue("Aula Azul", true);
+        } else if (!nombres.isEmpty()) {
+            listAulas.setSelectedIndex(0);
         }
     }
 
@@ -294,7 +285,11 @@ public class AulasPanel extends JPanel {
         tablaModel.setRowCount(0);
 
         String aulaSel = listAulas.getSelectedValue();
-        if (aulaSel == null || aulaSel.isBlank()) aulaSel = "Aula Azul";
+        if (aulaSel == null || aulaSel.isBlank()) {
+            lblTituloAula.setText("Aulas");
+            lblResumen.setText("Selecciona un aula para ver estudiantes.");
+            return;
+        }
 
         String q = (txtBuscar.getText() == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
         String orden = (String) cbOrden.getSelectedItem();
@@ -348,7 +343,7 @@ public class AulasPanel extends JPanel {
     }
 
     private void aplicarBarraAula(String aula) {
-        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+        Color c = aulaService.colorDeAula(aula);
         Border borde = BorderFactory.createMatteBorder(0, 0, 6, 0, c);
         setBorder(BorderFactory.createCompoundBorder(
                 borde,
@@ -363,5 +358,93 @@ public class AulasPanel extends JPanel {
         int g = (c.getGreen() + 255) / 2;
         int b = (c.getBlue() + 255) / 2;
         return new Color(r, g, b);
+    }
+    
+    private void crearAulaDialog() {
+        JTextField txt = new JTextField(16);
+        Color elegido = JColorChooser.showDialog(this, "Color del aula", new Color(52,152,219));
+        if (elegido == null) return;
+
+        JPanel p = new JPanel(new GridLayout(2,1,6,6));
+        p.add(new JLabel("Nombre del aula:"));
+        p.add(txt);
+
+        int ok = JOptionPane.showConfirmDialog(this, p, "Nueva aula", JOptionPane.OK_CANCEL_OPTION);
+        if (ok != JOptionPane.OK_OPTION) return;
+
+        String nombre = txt.getText().trim();
+        try {
+            aulaService.crearAula(nombre, com.jasgames.service.AulaService.toHex(elegido));
+            refrescarDatos();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cambiarColorDialog() {
+        String aulaSel = listAulas.getSelectedValue();
+        if (aulaSel == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Color actual = aulaService.colorDeAula(aulaSel);
+        Color nuevo = JColorChooser.showDialog(this, "Nuevo color para " + aulaSel, actual);
+        if (nuevo == null) return;
+
+        try {
+            aulaService.cambiarColor(aulaSel, com.jasgames.service.AulaService.toHex(nuevo));
+            refrescarDatos();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void eliminarAulaDialog() {
+        String aulaSel = listAulas.getSelectedValue();
+        if (aulaSel == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int cant = perfilService.contarNinosEnAula(aulaSel);
+
+        String destino = null;
+        if (cant > 0) {
+            List<String> opciones = new ArrayList<>(aulaService.obtenerNombres());
+            opciones.removeIf(a -> a.equalsIgnoreCase(aulaSel));
+
+            if (opciones.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Crea otra aula primero para migrar estudiantes.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            destino = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Este aula tiene " + cant + " estudiantes.\n¿A qué aula los migramos?",
+                    "Migrar y eliminar",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones.toArray(),
+                    opciones.get(0)
+            );
+            if (destino == null) return;
+        }
+
+        int ok = JOptionPane.showConfirmDialog(
+                this,
+                "¿Eliminar el aula \"" + aulaSel + "\"?" + (cant > 0 ? "\nLos estudiantes se moverán a: " + destino : ""),
+                "Confirmar",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (ok != JOptionPane.YES_OPTION) return;
+
+        try {
+            aulaService.eliminarAula(aulaSel, destino, perfilService);
+            refrescarDatos();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
