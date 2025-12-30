@@ -18,14 +18,14 @@ public class DocenteWindow extends JFrame {
     private JPanel tabDashboardPanel;
 
     private final AppContext context;
-    private final SeleccionUsuarioWindow seleccionUsuarioWindow;
+    private final JFrame ventanaAnterior;
 
     private final JuegoService juegoService;
     private final PerfilService perfilService;
 
-    public DocenteWindow(AppContext context, SeleccionUsuarioWindow seleccionUsuarioWindow) {
+    public DocenteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
-        this.seleccionUsuarioWindow = seleccionUsuarioWindow;
+        this.ventanaAnterior = ventanaAnterior;
         this.juegoService = context.getJuegoService();
         this.perfilService = context.getPerfilService();
 
@@ -57,9 +57,9 @@ public class DocenteWindow extends JFrame {
             btnBackDocente.addActionListener(e -> {
                 this.dispose();
 
-                if (seleccionUsuarioWindow != null) {
-                    seleccionUsuarioWindow.setVisible(true);
-                }
+                context.setDocenteSesion(null);
+                if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
+                dispose();
             });
         }
     }
