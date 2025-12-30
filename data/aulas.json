@@ -1,0 +1,38 @@
+[
+  {
+    "nombre": "Aula Azul",
+    "colorHex": "#3498DB"
+  },
+  {
+    "nombre": "Aula Roja",
+    "colorHex": "#E74C3C"
+  },
+  {
+    "nombre": "Aula Verde",
+    "colorHex": "#2ECC71"
+  },
+  {
+    "nombre": "Aula Amarilla",
+    "colorHex": "#F1C40F"
+  },
+  {
+    "nombre": "Aula Cian",
+    "colorHex": "#00FFFF"
+  },
+  {
+    "nombre": "Aula Morada",
+    "colorHex": "#9933FF"
+  },
+  {
+    "nombre": "Aula Naranja",
+    "colorHex": "#FF9900"
+  },
+  {
+    "nombre": "Aula Rosa",
+    "colorHex": "#FF00FF"
+  },
+  {
+    "nombre": "Aula Celeste",
+    "colorHex": "#BAFFFF"
+  }
+]

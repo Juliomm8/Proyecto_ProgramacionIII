@@ -1,0 +1,2818 @@
+[
+  {
+    "idEstudiante": 17,
+    "nombreEstudiante": "Camila Romero",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-01T22:44:26",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 28,
+    "nombreEstudiante": "Bruno Salazar",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-02T01:52:52",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-02T12:52:41",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-02T15:25:05",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-02T15:34:34",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 11,
+    "fechaHora": "2025-12-03T01:58:32",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-03T23:06:50",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-03T23:09:08",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-04T04:08:16",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-04T16:08:51",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-04T16:38:18",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-04T18:33:17",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-04T20:31:07",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-04T20:51:03",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-05T05:20:11",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-05T07:31:03",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-05T11:14:34",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-05T11:44:46",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-05T12:58:10",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 19,
+    "nombreEstudiante": "Renata Silva",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-05T20:24:54",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-06T03:36:55",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 16,
+    "nombreEstudiante": "Sebastián Herrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-06T13:56:39",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 11,
+    "fechaHora": "2025-12-06T18:20:07",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-06T20:55:16",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-06T22:44:13",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 12,
+    "nombreEstudiante": "Benjamín Flores",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-07T05:23:34",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 16,
+    "nombreEstudiante": "Sebastián Herrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-07T11:03:29",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 28,
+    "nombreEstudiante": "Bruno Salazar",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-07T11:05:15",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-07T20:27:37",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-08T01:13:02",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-08T03:19:27",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-08T11:40:47",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-08T13:35:06",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-08T18:01:51",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 26,
+    "nombreEstudiante": "Joaquín Paredes",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-08T19:23:21",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 28,
+    "nombreEstudiante": "Bruno Salazar",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-08T19:50:37",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-08T22:22:25",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-08T22:59:05",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-09T00:31:26",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-09T03:22:28",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 14,
+    "nombreEstudiante": "Lucas Andrade",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-09T08:17:27",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 16,
+    "nombreEstudiante": "Sebastián Herrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-09T11:29:18",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-10T00:02:47",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-10T03:43:46",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-10T03:51:31",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-10T07:42:54",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-10T11:47:45",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-10T23:44:53",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-11T02:21:28",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-11T14:36:07",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-11T16:58:48",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 4,
+    "nombreEstudiante": "Amelia Povea",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-11T17:02:01",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-11T17:36:14",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 16,
+    "nombreEstudiante": "Sebastián Herrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-11T21:56:49",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-12T05:14:15",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 26,
+    "nombreEstudiante": "Joaquín Paredes",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-12T05:47:42",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-12T10:44:11",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-12T17:38:30",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-12T18:01:56",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 4,
+    "nombreEstudiante": "Amelia Povea",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-12T19:24:07",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-12T19:49:08",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 19,
+    "nombreEstudiante": "Renata Silva",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-13T03:28:15",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 26,
+    "nombreEstudiante": "Joaquín Paredes",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-13T03:58:01",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-13T04:15:44",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-13T08:06:21",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-13T12:34:38",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-13T14:03:57",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-13T21:00:08",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-14T01:12:00",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-14T04:59:02",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 26,
+    "nombreEstudiante": "Joaquín Paredes",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-14T14:33:47",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-14T17:52:34",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-14T18:08:43",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-14T18:21:20",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-14T19:05:28",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-14T20:11:32",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 11,
+    "fechaHora": "2025-12-14T21:12:15",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-15T01:23:26",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-15T02:38:06",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-15T04:53:50",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-15T07:34:41",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-15T07:47:53",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-15T12:21:49",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-15T17:09:07",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-15T21:31:18",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-15T21:54:02",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 17,
+    "nombreEstudiante": "Camila Romero",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-15T23:22:09",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-16T00:27:28",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-16T03:34:23",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-16T05:14:30",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-16T06:23:37",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-16T14:03:02",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-16T15:38:24",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-16T16:35:51",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-16T23:31:54",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-17T08:42:39",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-17T09:30:17",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-17T17:53:53",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-17T19:18:58",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-17T19:59:00",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-17T20:57:04",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-17T23:29:04",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-18T02:45:16",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 17,
+    "nombreEstudiante": "Camila Romero",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-18T04:31:18",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 14,
+    "nombreEstudiante": "Lucas Andrade",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-18T09:49:43",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-18T12:03:55",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-18T12:47:11",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-18T16:52:40",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 16,
+    "nombreEstudiante": "Sebastián Herrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-19T13:15:51",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-19T17:44:10",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-19T20:09:59",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-19T21:41:36",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-20T05:46:24",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-20T16:14:47",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-20T20:57:23",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-20T22:53:53",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-21T01:06:42",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-21T03:45:36",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-21T06:35:15",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-21T07:40:50",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-21T12:52:40",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 14,
+    "nombreEstudiante": "Lucas Andrade",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-21T16:11:42",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 12,
+    "nombreEstudiante": "Benjamín Flores",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-21T23:19:52",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-22T01:11:20",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-22T02:17:28",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 8,
+    "nombreEstudiante": "Valentina Ruiz",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-22T04:44:16",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-22T11:50:34",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-22T12:02:37",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-22T14:01:33",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-22T14:25:24",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 28,
+    "nombreEstudiante": "Bruno Salazar",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-22T16:59:38",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-22T19:14:04",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-22T19:48:26",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 4,
+    "nombreEstudiante": "Amelia Povea",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-22T20:17:05",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 17,
+    "nombreEstudiante": "Camila Romero",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-23T15:38:06",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 15,
+    "nombreEstudiante": "Emilia Mora",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-24T03:56:49",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 3,
+    "nombreEstudiante": "Samuel Cobo",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-24T07:03:12",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 13,
+    "nombreEstudiante": "Isabella Castillo",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-24T09:02:08",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 19,
+    "nombreEstudiante": "Renata Silva",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-24T10:41:19",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 11,
+    "fechaHora": "2025-12-24T20:17:55",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 14,
+    "nombreEstudiante": "Lucas Andrade",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-24T21:48:50",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 25,
+    "nombreEstudiante": "Mía Cabrera",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-25T12:47:11",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-25T17:51:47",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-25T21:23:54",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-26T00:08:36",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 12,
+    "nombreEstudiante": "Benjamín Flores",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 14,
+    "fechaHora": "2025-12-26T11:27:52",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 12,
+    "nombreEstudiante": "Benjamín Flores",
+    "aula": "Aula Amarilla",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-27T02:48:48",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 20,
+    "nombreEstudiante": "Nicolás Ríos",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-27T06:18:44",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 9,
+    "nombreEstudiante": "Thiago Pérez",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-27T08:44:11",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-27T11:01:00",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-27T11:20:31",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-27T12:25:19",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 4,
+    "nombreEstudiante": "Amelia Povea",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 0,
+    "fechaHora": "2025-12-27T13:49:50",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-27T17:08:30",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 5,
+    "fechaHora": "2025-12-28T00:34:03",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 19,
+    "nombreEstudiante": "Renata Silva",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-28T01:14:56",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 7,
+    "nombreEstudiante": "Sofía López",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-28T04:33:08",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 19,
+    "nombreEstudiante": "Renata Silva",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 11,
+    "fechaHora": "2025-12-28T04:50:33",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 10,
+    "nombreEstudiante": "Martina Torres",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 4,
+    "fechaHora": "2025-12-28T05:56:14",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-28T07:31:01",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 6,
+    "nombreEstudiante": "Mateo García",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 3,
+    "fechaHora": "2025-12-28T15:56:06",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 2,
+    "fechaHora": "2025-12-28T21:01:07",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-28T22:30:04",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 5,
+    "nombreEstudiante": "Alisson Armas",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-28T23:43:11",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 12,
+    "fechaHora": "2025-12-28T23:55:22",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 9,
+    "fechaHora": "2025-12-29T04:49:59",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-29T06:42:18",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 24,
+    "nombreEstudiante": "Ian Navarro",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-29T07:22:35",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 21,
+    "nombreEstudiante": "Victoria Paz",
+    "aula": "Aula Rosa",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 1,
+    "fechaHora": "2025-12-29T08:16:42",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 27,
+    "nombreEstudiante": "Zoe Villalba",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-29T19:49:55",
+    "dificultad": 5
+  },
+  {
+    "idEstudiante": 2,
+    "nombreEstudiante": "Jeremy Tomaselly",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 7,
+    "fechaHora": "2025-12-29T21:34:56",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 23,
+    "nombreEstudiante": "Aitana León",
+    "aula": "Aula Verde",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 6,
+    "fechaHora": "2025-12-29T23:09:16",
+    "dificultad": 4
+  },
+  {
+    "idEstudiante": 18,
+    "nombreEstudiante": "Gael Medina",
+    "aula": "Aula Morada",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 8,
+    "fechaHora": "2025-12-30T02:16:58",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 22,
+    "nombreEstudiante": "Dylan Ortiz",
+    "aula": "Aula Celeste",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 15,
+    "fechaHora": "2025-12-30T03:50:24",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 13,
+    "fechaHora": "2025-12-30T18:43:59",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 11,
+    "nombreEstudiante": "Daniela Vega",
+    "aula": "Aula Naranja",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 10,
+    "fechaHora": "2025-12-30T18:48:43",
+    "dificultad": 1
+  }
+]

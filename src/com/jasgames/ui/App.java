@@ -1,18 +1,18 @@
 package com.jasgames.ui;
 
 import com.jasgames.service.AppContext;
+import com.jasgames.ui.login.AccesoWindow;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class App {
-
     private JPanel mainWindow;
-    
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             AppContext context = new AppContext();
-            SeleccionUsuarioWindow seleccion = new SeleccionUsuarioWindow(context);
-            seleccion.setVisible(true);
+            new AccesoWindow(context).setVisible(true);
         });
     }
 }

@@ -1,0 +1,183 @@
+package com.jasgames.service;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.jasgames.model.Aula;
+
+import java.awt.Color;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+
+public class AulaService {
+
+    private static final String ARCHIVO_AULAS = "data/aulas.json";
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    private final List<Aula> aulas = new ArrayList<>();
+
+    public AulaService(PerfilService perfilService) {
+        cargar();
+        inicializarSiVacio();
+        sincronizarConAulasDeNinos(perfilService); // por compatibilidad si existían aulas en ninos.json
+        guardar();
+    }
+
+    public List<Aula> obtenerTodas() {
+        return new ArrayList<>(aulas);
+    }
+
+    public List<String> obtenerNombres() {
+        List<String> out = new ArrayList<>();
+        for (Aula a : aulas) out.add(a.getNombre());
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
+    }
+
+    public Aula buscarPorNombre(String nombre) {
+        if (nombre == null) return null;
+        for (Aula a : aulas) {
+            if (a.getNombre() != null && a.getNombre().equalsIgnoreCase(nombre.trim())) return a;
+        }
+        return null;
+    }
+
+    public Color colorDeAula(String nombreAula) {
+        Aula a = buscarPorNombre(nombreAula);
+        if (a == null) return new Color(149, 165, 166);
+        return parseHex(a.getColorHex());
+    }
+
+    public void crearAula(String nombre, String colorHex) {
+        String n = normalizarNombre(nombre);
+        if (n.isBlank()) throw new IllegalArgumentException("Nombre de aula vacío.");
+
+        if (buscarPorNombre(n) != null) throw new IllegalArgumentException("Esa aula ya existe.");
+
+        aulas.add(new Aula(n, normalizarHex(colorHex)));
+        guardar();
+    }
+
+    public void cambiarColor(String nombreAula, String colorHex) {
+        Aula a = buscarPorNombre(nombreAula);
+        if (a == null) throw new IllegalArgumentException("No existe esa aula.");
+        a.setColorHex(normalizarHex(colorHex));
+        guardar();
+    }
+
+    /**
+     * Elimina aula. Si hay niños en esa aula, migra a aulaDestino (obligatorio).
+     * Por seguridad, no permite dejar el sistema sin "Aula Azul".
+     */
+    public void eliminarAula(String aulaEliminar, String aulaDestino, PerfilService perfilService) {
+        Aula a = buscarPorNombre(aulaEliminar);
+        if (a == null) throw new IllegalArgumentException("No existe esa aula.");
+
+        // Guard rail: mantener Aula Azul siempre (porque Nino.getAula() usa ese default)
+        if ("Aula Azul".equalsIgnoreCase(a.getNombre())) {
+            throw new IllegalArgumentException("No se puede eliminar Aula Azul (es el aula por defecto del sistema).");
+        }
+
+        int cant = perfilService.contarNinosEnAula(a.getNombre());
+
+        if (cant > 0) {
+            if (aulaDestino == null || aulaDestino.isBlank())
+                throw new IllegalArgumentException("Debes elegir un aula destino para migrar estudiantes.");
+
+            if (aulaDestino.equalsIgnoreCase(a.getNombre()))
+                throw new IllegalArgumentException("El aula destino no puede ser la misma.");
+
+            if (buscarPorNombre(aulaDestino) == null)
+                throw new IllegalArgumentException("El aula destino no existe.");
+
+            perfilService.migrarAula(a.getNombre(), aulaDestino);
+        }
+
+        aulas.removeIf(x -> x.getNombre() != null && x.getNombre().equalsIgnoreCase(a.getNombre()));
+        guardar();
+    }
+
+    // ----------------- Interno -----------------
+
+    private void cargar() {
+        aulas.clear();
+        Path p = Paths.get(ARCHIVO_AULAS);
+        if (!Files.exists(p)) return;
+
+        try {
+            String json = Files.readString(p, StandardCharsets.UTF_8);
+            if (json == null || json.isBlank()) return;
+
+            Type tipo = new TypeToken<List<Aula>>(){}.getType();
+            List<Aula> cargadas = gson.fromJson(json, tipo);
+            if (cargadas != null) aulas.addAll(cargadas);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardar() {
+        try {
+            Path p = Paths.get(ARCHIVO_AULAS);
+            Path dir = p.getParent();
+            if (dir != null) Files.createDirectories(dir);
+            Files.writeString(p, gson.toJson(aulas), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void inicializarSiVacio() {
+        // Si no hay archivo o viene vacío, crea base
+        if (aulas.isEmpty()) {
+            aulas.add(new Aula("Aula Azul", "#3498DB"));
+            aulas.add(new Aula("Aula Roja", "#E74C3C"));
+            aulas.add(new Aula("Aula Verde", "#2ECC71"));
+            aulas.add(new Aula("Aula Amarilla", "#F1C40F"));
+            aulas.add(new Aula("Aula Morada", "#9B59B6"));
+        }
+
+        // asegurar Aula Azul siempre
+        if (buscarPorNombre("Aula Azul") == null) {
+            aulas.add(new Aula("Aula Azul", "#3498DB"));
+        }
+    }
+
+    private void sincronizarConAulasDeNinos(PerfilService perfilService) {
+        // Si en ninos.json existían aulas extra, se agregan con color gris por defecto
+        Set<String> aulasEnNinos = perfilService.obtenerAulasEnUso();
+        for (String nombre : aulasEnNinos) {
+            if (buscarPorNombre(nombre) == null) {
+                aulas.add(new Aula(nombre, "#95A5A6")); // gris
+            }
+        }
+    }
+
+    private String normalizarNombre(String n) {
+        return (n == null) ? "" : n.trim();
+    }
+
+    private String normalizarHex(String hex) {
+        if (hex == null || hex.isBlank()) return "#95A5A6";
+        String h = hex.trim().toUpperCase(Locale.ROOT);
+        if (!h.startsWith("#")) h = "#" + h;
+        return h;
+    }
+
+    private Color parseHex(String hex) {
+        try {
+            String h = normalizarHex(hex);
+            return Color.decode(h);
+        } catch (Exception e) {
+            return new Color(149, 165, 166);
+        }
+    }
+
+    public static String toHex(Color c) {
+        if (c == null) return "#95A5A6";
+        return String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
+    }
+}

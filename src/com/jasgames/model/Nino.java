@@ -14,6 +14,8 @@ public class Nino {
     private int puntosTotales;
     private Set<Integer> juegosAsignados = new HashSet<>();
     private Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
+    private String aula;
+    private String avatar;
 
     public Nino(int id, String nombre, int edad, String diagnostico) {
         this.id = id;
@@ -79,6 +81,25 @@ public class Nino {
         if (dificultad < 1) dificultad = 1;
         if (dificultad > 5) dificultad = 5;
         getDificultadPorJuego().put(idJuego, dificultad);
+    }
+
+    public String getAula() {
+        if (aula == null || aula.isBlank()) return "Aula Azul";
+        if ("General".equalsIgnoreCase(aula.trim())) return "Aula Azul";
+        return aula.trim();
+    }
+
+    public void setAula(String aula) {
+        this.aula = aula;
+    }
+
+    public String getAvatar() {
+        if (avatar == null || avatar.isBlank()) return "🙂";
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
     @Override

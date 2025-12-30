@@ -18,6 +18,10 @@ public class Juego {
         this.descripcion = descripcion;
     }
 
+    public Juego() {
+        this.habilitado = true;
+    }
+
     public int getId() {
         return id;
     }
@@ -70,4 +74,5 @@ public class Juego {
     public String toString() {
         return nombre;
     }
+
 }

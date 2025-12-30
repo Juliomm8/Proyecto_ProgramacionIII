@@ -1,21 +1,43 @@
 package com.jasgames.service;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Actividad;
 import com.jasgames.model.Juego;
 import com.jasgames.model.TipoJuego;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class JuegoService {
 
+    private static final String ARCHIVO_JUEGOS = "data/juegos.json";
+
     private final List<Juego> juegos;
     private final Queue<Actividad> colaActividades;
+
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
 
     public JuegoService() {
         this.juegos = new ArrayList<>();
         this.colaActividades = new LinkedList<>();
 
-        cargarJuegosIniciales();
+        // 1) Intentar cargar desde data/juegos.json
+        boolean cargado = cargarJuegosDesdeArchivo();
+
+        // 2) Si no existe o está vacío, cargamos los iniciales y lo guardamos
+        if (!cargado) {
+            cargarJuegosIniciales();
+            guardar(); // crea data/juegos.json en la primera ejecución
+        }
     }
 
     private void cargarJuegosIniciales() {
@@ -28,8 +50,51 @@ public class JuegoService {
         ));
     }
 
+    /** Guarda juegos (incluye habilitado y dificultad global) en data/juegos.json */
     public void guardar() {
-        // TODO: si luego quieres persistir juegos.json, aquí lo implementas.
+        try {
+            Path pathArchivo = Paths.get(ARCHIVO_JUEGOS);
+            Path carpeta = pathArchivo.getParent();
+            if (carpeta != null) {
+                Files.createDirectories(carpeta); // crea "data" si no existe
+            }
+
+            String json = gson.toJson(juegos);
+            Files.writeString(pathArchivo, json, StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Carga juegos desde data/juegos.json. Devuelve true si cargó algo válido. */
+    private boolean cargarJuegosDesdeArchivo() {
+        Path pathArchivo = Paths.get(ARCHIVO_JUEGOS);
+        if (!Files.exists(pathArchivo)) return false;
+
+        try {
+            String json = Files.readString(pathArchivo, StandardCharsets.UTF_8);
+            if (json == null || json.isBlank()) return false;
+
+            Type tipoLista = new TypeToken<List<Juego>>() {}.getType();
+            List<Juego> cargados = gson.fromJson(json, tipoLista);
+
+            if (cargados == null || cargados.isEmpty()) return false;
+
+            // Normalizar por seguridad
+            for (Juego j : cargados) {
+                if (j.getDificultad() < 1) j.setDificultad(1);
+                if (j.getDificultad() > 5) j.setDificultad(5);
+            }
+
+            juegos.clear();
+            juegos.addAll(cargados);
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // ------------ CRUD JUEGOS ------------

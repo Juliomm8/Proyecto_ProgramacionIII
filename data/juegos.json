@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "nombre": "Discriminación de Colores",
+    "tipo": "COLORES",
+    "dificultad": 4,
+    "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+    "habilitado": true
+  }
+]
