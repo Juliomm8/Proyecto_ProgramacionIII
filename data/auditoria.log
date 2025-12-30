@@ -167,3 +167,19 @@
 2025-12-30 15:13:00 | SELECCION_AULA | aula=Aula Verde
 2025-12-30 15:13:01 | INGRESO_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Verde
 2025-12-30 15:13:04 | SALIDA_ESTUDIANTE | id=4 nombre=Amelia Povea aula=Aula Verde
+2025-12-30 17:10:16 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 17:12:14 | LOGOUT_DOCENTE | usuario=admin
+2025-12-30 17:12:27 | SELECCION_AULA | aula=Aula Celeste
+2025-12-30 17:12:28 | INGRESO_ESTUDIANTE | id=22 nombre=Dylan Ortiz aula=Aula Celeste
+2025-12-30 17:12:29 | SALIDA_ESTUDIANTE | id=22 nombre=Dylan Ortiz aula=Aula Celeste
+2025-12-30 17:12:44 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 17:12:45 | INGRESO_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 17:12:46 | SALIDA_ESTUDIANTE | id=2 nombre=Jeremy Tomaselly aula=Aula Roja
+2025-12-30 17:12:48 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-30 17:12:50 | SELECCION_AULA | aula=Aula Morada
+2025-12-30 17:12:53 | SELECCION_AULA | aula=Aula Verde
+2025-12-30 17:12:55 | SELECCION_AULA | aula=Aula Celeste
+2025-12-30 17:12:56 | SELECCION_AULA | aula=Aula Roja
+2025-12-30 17:13:07 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-30 17:13:10 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-30 17:14:19 | LOGOUT_DOCENTE | usuario=admin

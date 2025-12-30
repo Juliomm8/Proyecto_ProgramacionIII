@@ -18,5 +18,21 @@
   {
     "nombre": "Aula Cian",
     "colorHex": "#00FFFF"
+  },
+  {
+    "nombre": "Aula Morada",
+    "colorHex": "#9933FF"
+  },
+  {
+    "nombre": "Aula Naranja",
+    "colorHex": "#FF9900"
+  },
+  {
+    "nombre": "Aula Rosa",
+    "colorHex": "#FF00FF"
+  },
+  {
+    "nombre": "Aula Celeste",
+    "colorHex": "#BAFFFF"
   }
 ]
