@@ -64,6 +64,22 @@ public class PerfilesPanel extends JPanel {
             "Aula Amarilla",
             "Aula Morada"
     };
+    
+    private static final java.util.Map<String, java.awt.Color> COLOR_AULA = new java.util.LinkedHashMap<>();
+    static {
+        COLOR_AULA.put("Aula Azul", new java.awt.Color(52, 152, 219));
+        COLOR_AULA.put("Aula Roja", new java.awt.Color(231, 76, 60));
+        COLOR_AULA.put("Aula Verde", new java.awt.Color(46, 204, 113));
+        COLOR_AULA.put("Aula Amarilla", new java.awt.Color(241, 196, 15));
+        COLOR_AULA.put("Aula Morada", new java.awt.Color(155, 89, 182));
+    }
+
+    private java.awt.Color fondoSuave(java.awt.Color c) {
+        int r = (c.getRed() + 255) / 2;
+        int g = (c.getGreen() + 255) / 2;
+        int b = (c.getBlue() + 255) / 2;
+        return new java.awt.Color(r, g, b);
+    }
 
     public PerfilesPanel(PerfilService perfilService) {
         this.perfilService = perfilService;
@@ -128,6 +144,28 @@ public class PerfilesPanel extends JPanel {
 
         cbAula = new JComboBox<>(AULAS_PREDEFINIDAS);
         cbAula.setEditable(false);
+        
+        cbAula.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                String aula = (value == null) ? "" : value.toString();
+                Color base = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+                lbl.setOpaque(true);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 14f));
+
+                if (isSelected) {
+                    lbl.setBackground(base);
+                    lbl.setForeground("Aula Amarilla".equalsIgnoreCase(aula) ? Color.BLACK : Color.WHITE);
+                } else {
+                    lbl.setBackground(fondoSuave(base));
+                    lbl.setForeground(Color.BLACK);
+                }
+                return lbl;
+            }
+        });
 
         cbAvatar = new JComboBox<>(AVATARES);
 
@@ -211,9 +249,9 @@ public class PerfilesPanel extends JPanel {
             }
 
             Nino nino = new Nino(id, nombre, edad, diagnostico);
-            
-            String aula = (cbAula.getEditor().getItem() != null) ? cbAula.getEditor().getItem().toString().trim() : "Aula Azul";
-            if (aula.isBlank()) aula = "Aula Azul";
+
+            String aula = (String) cbAula.getSelectedItem();
+            if (aula == null || aula.isBlank()) aula = "Aula Azul";
 
             String avatar = (String) cbAvatar.getSelectedItem();
             if (avatar == null || avatar.isBlank()) avatar = "🙂";

@@ -4,7 +4,9 @@ import com.jasgames.service.AppContext;
 
 import javax.swing.*;
 
+@Deprecated
 public class SeleccionUsuarioWindow extends JFrame {
+    // Legacy: reemplazado por AccesoWindow (ui.login)
     private JPanel panelSeleccionUsuario;
     private JLabel lblTituloSeleccion;
     private JPanel panelBotonesSeleccion;
