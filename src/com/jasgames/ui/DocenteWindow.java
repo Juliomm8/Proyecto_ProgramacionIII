@@ -5,6 +5,9 @@ import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 import com.jasgames.ui.login.AccesoWindow;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 import javax.swing.*;
 
 public class DocenteWindow extends JFrame {
@@ -52,6 +55,16 @@ public class DocenteWindow extends JFrame {
         setSize(1100, 800);
         setLocationRelativeTo(null);
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (context.getDocenteSesion() != null) {
+                    context.getAuditoriaService().logoutDocente(context.getDocenteSesion().getUsuario());
+                }
+                context.setDocenteSesion(null);
+            }
+        });
+
         initTabs();
         initListeners();
     }
@@ -72,6 +85,11 @@ public class DocenteWindow extends JFrame {
     private void initListeners() {
         if (btnBackDocente != null) {
             btnBackDocente.addActionListener(e -> {
+                // AUDITORÍA: logout docente
+                if (context.getDocenteSesion() != null) {
+                    context.getAuditoriaService().logoutDocente(context.getDocenteSesion().getUsuario());
+                }
+
                 context.setDocenteSesion(null);
                 if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
                 dispose();

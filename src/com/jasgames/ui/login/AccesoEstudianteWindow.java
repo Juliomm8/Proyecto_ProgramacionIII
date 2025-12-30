@@ -128,6 +128,9 @@ public class AccesoEstudianteWindow extends JFrame {
     }
 
     private void abrirAula(String aula) {
+        // AUDITORÍA: selección de aula
+        context.getAuditoriaService().seleccionAula(aula);
+
         List<Nino> estudiantes = directorio.obtenerEstudiantesPorAula(aula);
         cardEstudiantes.removeAll();
 
@@ -169,6 +172,12 @@ public class AccesoEstudianteWindow extends JFrame {
     }
 
     private void seleccionarEstudiante(Nino nino) {
+        // AUDITORÍA: ingreso estudiante
+        context.getAuditoriaService().registrar(
+                "INGRESO_ESTUDIANTE",
+                "id=" + nino.getId() + " nombre=" + nino.getNombre() + " aula=" + nino.getAula()
+        );
+
         context.setNinoSesion(nino);
 
         EstudianteWindow w = new EstudianteWindow(context, this, nino);

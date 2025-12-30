@@ -22,6 +22,9 @@ import java.util.Set;
 
 import javax.swing.*;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 public class EstudianteWindow extends JFrame implements JuegoListener {
     private JPanel panelEstudianteMain;
     private JPanel panelHeaderEstudiante;
@@ -51,6 +54,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
     private DefaultListModel<Juego> juegosListModel;
     private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
+    
+    private boolean salidaRegistrada = false;
 
 
     public EstudianteWindow(AppContext context, JFrame ventanaAnterior) {
@@ -68,6 +73,14 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
         initModeloJuegos();
         initListeners();
+        
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                registrarSalidaSiAplica();
+                context.setNinoSesion(null);
+            }
+        });
 
         // Si ya hay sesión (por flujo visual), aplicarla automáticamente
         if (context.getNinoSesion() != null) {
@@ -102,6 +115,20 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
         aplicarSesionEstudiante(n);
     }
+    
+    private void registrarSalidaSiAplica() {
+        if (salidaRegistrada) return;
+
+        Nino n = (ninoActual != null) ? ninoActual : context.getNinoSesion();
+        if (n != null) {
+            context.getAuditoriaService().registrar(
+                    "SALIDA_ESTUDIANTE",
+                    "id=" + n.getId() + " nombre=" + n.getNombre() + " aula=" + n.getAula()
+            );
+        }
+
+        salidaRegistrada = true;
+    }
 
     private void aplicarSesionEstudiante(Nino nino) {
         if (nino == null) return;
@@ -130,8 +157,11 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private void initListeners() {
         if (btnBackEstudiante != null) {
             btnBackEstudiante.addActionListener(e -> {
-                this.dispose();
+                registrarSalidaSiAplica();
                 context.setNinoSesion(null);
+
+                dispose();
+
                 if (ventanaAnterior != null) {
                     ventanaAnterior.setVisible(true);
                 }

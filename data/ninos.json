@@ -11,8 +11,8 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "General",
-    "avatar": "🐼"
+    "aula": "Aula Amarilla",
+    "avatar": "🦄"
   },
   {
     "id": 2,
@@ -34,7 +34,7 @@
     "nombre": "Samuel Cobo",
     "edad": 6,
     "diagnostico": "TEA y no solo eso muchas cosas mas",
-    "puntosTotales": 11,
+    "puntosTotales": 14,
     "juegosAsignados": [
       1
     ],

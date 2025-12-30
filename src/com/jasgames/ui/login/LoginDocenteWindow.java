@@ -95,6 +95,8 @@ public class LoginDocenteWindow extends JFrame {
         }
 
         Optional<Docente> docenteOpt = context.getAutenticacionService().login(usuario, contrasena);
+        context.getAuditoriaService().loginDocente(usuario, docenteOpt.isPresent());
+
         if (docenteOpt.isEmpty()) {
             lblEstado.setText("Credenciales incorrectas.");
             return;
