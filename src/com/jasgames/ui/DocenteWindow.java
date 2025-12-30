@@ -26,6 +26,8 @@ public class DocenteWindow extends JFrame {
 
     private final JuegoService juegoService;
     private final PerfilService perfilService;
+    
+    private PerfilesPanel perfilesPanel;
 
     public DocenteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
@@ -77,7 +79,15 @@ public class DocenteWindow extends JFrame {
         tabbedPanePrincipal.removeAll();
 
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
-        tabbedPanePrincipal.addTab("Perfiles", new PerfilesPanel(perfilService));
+
+        perfilesPanel = new PerfilesPanel(perfilService);
+        tabbedPanePrincipal.addTab("Perfiles", perfilesPanel);
+
+        tabbedPanePrincipal.addTab("Aulas", new AulasPanel(context, (int idNino) -> {
+            tabbedPanePrincipal.setSelectedComponent(perfilesPanel);
+            perfilesPanel.seleccionarNinoPorId(idNino);
+        }));
+
         tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService()));
         tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
     }

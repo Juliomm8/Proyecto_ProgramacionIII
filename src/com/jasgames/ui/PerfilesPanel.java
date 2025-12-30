@@ -460,4 +460,33 @@ public class PerfilesPanel extends JPanel {
             }
         }
     }
+    
+    public void seleccionarNinoPorId(int id) {
+        // Si la lista está vacía o no lo encuentra, recarga desde el service
+        if (listModel == null || listModel.isEmpty()) {
+            cargarNinosDesdeService();
+        }
+
+        for (int i = 0; i < listModel.size(); i++) {
+            Nino n = listModel.get(i);
+            if (n != null && n.getId() == id) {
+                listaNinos.setSelectedIndex(i);
+                listaNinos.ensureIndexIsVisible(i);
+                mostrarNinoEnFormulario(n);
+                return;
+            }
+        }
+
+        // Reintento tras recargar (por si cambió el JSON)
+        cargarNinosDesdeService();
+        for (int i = 0; i < listModel.size(); i++) {
+            Nino n = listModel.get(i);
+            if (n != null && n.getId() == id) {
+                listaNinos.setSelectedIndex(i);
+                listaNinos.ensureIndexIsVisible(i);
+                mostrarNinoEnFormulario(n);
+                return;
+            }
+        }
+    }
 }
