@@ -198,6 +198,7 @@ public class PerfilesPanel extends JPanel {
             Nino actualizado = new Nino(id, nombre, edad, diagnostico);
             actualizado.setPuntosTotales(existente.getPuntosTotales());
             actualizado.setJuegosAsignados(new java.util.HashSet<>(existente.getJuegosAsignados()));
+            actualizado.setDificultadPorJuego(new java.util.HashMap<>(existente.getDificultadPorJuego()));
 
             perfilService.actualizarNino(actualizado);
 
