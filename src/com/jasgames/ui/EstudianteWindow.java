@@ -12,6 +12,7 @@ import com.jasgames.service.ResultadoService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
 import com.jasgames.ui.juegos.JuegoColoresPanel;
 import com.jasgames.ui.juegos.JuegoListener;
+import com.jasgames.ui.juegos.JuegoPanelFactory;
 import com.jasgames.ui.login.AccesoWindow;
 
 import java.awt.*;
@@ -36,7 +37,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private JTextField txtNombreEstudiante;
     private JPanel panelSeleccionJuego;
     private JLabel lblSeleccionJuego;
-    private JList listaJuegosEstudiante;
+    private JList<Juego> listaJuegosEstudiante;
     private JScrollPane scrollJuegosEstudiante;
     private JPanel panelJuegoEstudiante;
     private JLabel lblPuntajeActual;
@@ -313,24 +314,27 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             if (ninoActual == null) return;
         }
 
-        Juego juego = (Juego) listaJuegosEstudiante.getSelectedValue();
+        Juego juego = listaJuegosEstudiante.getSelectedValue();
         if (juego == null) {
             JOptionPane.showMessageDialog(this, "Selecciona un juego de la lista.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Creamos una actividad (nivel puede ser 1 por ahora)
-        // int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), juego.getDificultad());
-        // Usamos la dificultad del juego o la personalizada si existe
         int nivel = ninoActual.getDificultadJuego(juego.getId(), juego.getDificultad());
 
-        Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
+        // Id estable en int (evita overflow)
+        int actividadId = (int) (System.currentTimeMillis() & 0x7fffffff);
+        Actividad actividad = new Actividad(actividadId, juego, nivel, 0);
 
-        // Instanciamos el panel del juego según su tipo
-        if (juego.getTipo() == TipoJuego.COLORES) {
-            juegoEnCurso = new JuegoColoresPanel(actividad, this);
-        } else {
-            JOptionPane.showMessageDialog(this, "Tipo de juego no implementado aún: " + juego.getTipo(), "Aviso", JOptionPane.WARNING_MESSAGE);
+        // Crear panel por ID (escalable)
+        juegoEnCurso = JuegoPanelFactory.crearPanel(actividad, this);
+        if (juegoEnCurso == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Juego no implementado aún (id=" + juego.getId() + ")",
+                    "Aviso",
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 

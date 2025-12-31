@@ -1,345 +1,275 @@
 package com.jasgames.ui.juegos;
 
 import com.jasgames.model.Actividad;
-import com.jasgames.model.Juego;
+import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
+import com.jasgames.ui.juegos.framework.AccesibleUI;
+import com.jasgames.ui.juegos.framework.Paletas;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
+import javax.swing.Timer;
 
 /**
- * Minijuego 1: Discriminación visual por colores.
+ * Minijuego 1: Discriminación de Colores (clickeable en lienzo)
  *
- * - UI minimalista.
- * - Círculos dibujados con Graphics2D (no botones).
- * - Feedback positivo inmediato y errores neutrales.
+ * - Objetivo visual: se muestra un círculo grande del color objetivo (arriba).
+ * - Opciones: círculos clickeables en el lienzo (abajo).
+ * - Error: NO cambia la ronda; el círculo incorrecto se apaga (fade + disable).
+ * - Acierto: pulso/latido 2 veces y pasa a la siguiente ronda.
+ * - Termina al completar 5 rondas correctas. Puntaje final fijo: 100.
  */
-public class JuegoColoresPanel extends BaseJuegoPanel {
+public class JuegoColoresPanel extends JuegoRondasPanel {
 
-    // ===== Campos “esperados” por el .form =====
-    private JPanel panelJuegoColores;
-    private JPanel panelInstruccion;
-    private JLabel lblInstruccion;
-    private JLabel lblFeedback;
-    private JPanel panelLienzo;
-
-    // ===== Lienzo real donde se dibujan los círculos =====
-    private LienzoColores lienzo;
-
-    // ===== Datos del juego (arrays paralelos como definiste) =====
-    private Color[] opciones;
-    private Rectangle[] zonasClick;
-    private String[] nombresOpciones;
-
-    private Color colorObjetivo;
-    private String nombreObjetivo;
-
-    private boolean finalizado;
-    private int intentos;
-
-    // Para dibujar un borde suave de selección
-    private int ultimoIndiceClick = -1;
-    private boolean ultimoClickCorrecto = false;
+    private static final int RONDAS_META = 5;
 
     private final Random random = new Random();
 
-    private int aciertosActuales;
-    private int aciertosRequeridos;
-    private boolean bloqueadoTemporal;
+    private LienzoColores lienzo;
 
-    private int ultimoObjetivo = -1;
+    private List<Paletas.ColorNombre> paletaCompleta;
 
-    // Paleta base (puedes ampliar luego)
-    private static final Color ROJO = new Color(220, 40, 40);
-    private static final Color AZUL = new Color(55, 110, 220);
-    private static final Color VERDE = new Color(60, 170, 90);
-    private static final Color AMARILLO = new Color(240, 205, 60);
-    private static final Color NARANJA = new Color(240, 140, 50);
-    private static final Color MORADO = new Color(150, 85, 210);
+    private List<OpcionColor> opciones;
+    private OpcionColor objetivo;
 
-    private static final OpcionColor[] PALETA = new OpcionColor[]{
-            new OpcionColor("ROJO", ROJO),
-            new OpcionColor("AZUL", AZUL),
-            new OpcionColor("VERDE", VERDE),
-            new OpcionColor("AMARILLO", AMARILLO),
-            new OpcionColor("NARANJA", NARANJA),
-            new OpcionColor("MORADO", MORADO)
-    };
+    private Dimension dimensionCache;
+
+    // Para pulso: queremos resaltar solo el objetivo + el correcto
+    private OpcionColor ultimoCorrecto;
 
     public JuegoColoresPanel(Actividad actividad, JuegoListener listener) {
         super(actividad, listener);
-        initUI();
-        // Dejar el panel listo de una vez (si el botón “Iniciar” lo reinicia, no pasa nada)
-        iniciarJuego();
-    }
 
-    // ---------------------------------------------------------------------
-    // UI
-    // ---------------------------------------------------------------------
+        setInstruccion("Toca el círculo que coincide con el color objetivo");
 
-    private void initUI() {
-        // “this” ya tiene BorderLayout por BaseJuegoPanel
-
-        panelJuegoColores = new JPanel(new BorderLayout(10, 10));
-        panelJuegoColores.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panelJuegoColores.setOpaque(false);
-        add(panelJuegoColores, BorderLayout.CENTER);
-
-        // ===== NORTH: Instrucción + feedback =====
-        panelInstruccion = new JPanel(new GridLayout(2, 1, 0, 6));
-        panelInstruccion.setOpaque(false);
-
-        lblInstruccion = new JLabel("Toca el color", SwingConstants.CENTER);
-        lblInstruccion.setFont(lblInstruccion.getFont().deriveFont(Font.BOLD, 26f));
-
-        lblFeedback = new JLabel(" ", SwingConstants.CENTER);
-        lblFeedback.setFont(lblFeedback.getFont().deriveFont(Font.PLAIN, 16f));
-
-        panelInstruccion.add(lblInstruccion);
-        panelInstruccion.add(lblFeedback);
-        panelJuegoColores.add(panelInstruccion, BorderLayout.NORTH);
-
-        // ===== CENTER: contenedor del lienzo =====
-        panelLienzo = new JPanel(new BorderLayout());
-        panelLienzo.setBackground(Color.WHITE);
-        panelLienzo.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
-        panelLienzo.setOpaque(true);
+        paletaCompleta = Paletas.coloresConNombre();
 
         lienzo = new LienzoColores();
         lienzo.setOpaque(false);
-        panelLienzo.add(lienzo, BorderLayout.CENTER);
+        setTablero(lienzo);
 
-        panelJuegoColores.add(panelLienzo, BorderLayout.CENTER);
+        // No ponemos panel de respuestas (para que no parezca el juego 2)
+        JPanel vacio = new JPanel();
+        vacio.setOpaque(false);
+        vacio.setPreferredSize(new Dimension(10, 10));
+        setPanelRespuestas(vacio);
+
+        iniciarJuego();
     }
-
-    // ---------------------------------------------------------------------
-    // Lógica del juego
-    // ---------------------------------------------------------------------
 
     @Override
-    public void iniciarJuego() {
-        finalizado = false;
-        intentos = 0;
+    protected void onAntesDeIniciar() {
+        setFeedback(" ");
+        opciones = new ArrayList<>();
+        objetivo = null;
+        ultimoCorrecto = null;
+        dimensionCache = null;
+    }
 
-        aciertosActuales = 0;
-        aciertosRequeridos = calcularAciertosRequeridos();
-        bloqueadoTemporal = false;
+    @Override
+    protected void onAntesDeSalir() {
+        if (opciones != null) {
+            for (OpcionColor op : opciones) {
+                if (op != null && op.fadeTimer != null && op.fadeTimer.isRunning()) op.fadeTimer.stop();
+            }
+        }
+    }
 
-        ultimoIndiceClick = -1;
-        ultimoClickCorrecto = false;
-        ultimoObjetivo = -1;
+    @Override
+    protected int getRondasMetaPorNivel(int nivel) {
+        return RONDAS_META; // siempre 5 rondas
+    }
 
-        lblFeedback.setText(" ");
+    @Override
+    protected int calcularPuntosFinales() {
+        return 100; // fijo: completó = 100
+    }
 
-        int numOpciones = calcularCantidadOpciones();
-        prepararRonda(numOpciones);       // genera opciones[] y zonasClick[]
-        elegirNuevoObjetivo();            // elige color objetivo (sin repetir)
-        actualizarInstruccion();
+    @Override
+    protected void prepararNuevaRonda() {
+        setBloqueado(false);
+        setFeedback(" ");
 
+        int nivel = getNivelSeguro();
+        int cantidadOpciones = cantidadOpcionesPorNivel(nivel);
+
+        // Elegir subconjunto de paleta por nivel (evita saturación en niveles bajos)
+        List<Paletas.ColorNombre> base = paletaPorNivel(nivel);
+
+        // Seleccionar opciones únicas
+        Collections.shuffle(base, random);
+        List<Paletas.ColorNombre> seleccion = base.subList(0, Math.min(cantidadOpciones, base.size()));
+
+        for (OpcionColor op : opciones) {
+            if (op.fadeTimer != null && op.fadeTimer.isRunning()) op.fadeTimer.stop();
+        }
+
+        opciones.clear();
+        for (Paletas.ColorNombre item : seleccion) {
+            opciones.add(new OpcionColor(item));
+        }
+
+        // Elegir objetivo entre las opciones
+        objetivo = opciones.get(random.nextInt(opciones.size()));
+        ultimoCorrecto = null;
+
+        // Forzar recálculo de layout
+        dimensionCache = null;
         lienzo.repaint();
     }
 
-    private int calcularCantidadOpciones() {
-        int base = 3;
-
-        Juego j = (actividadActual != null) ? actividadActual.getJuego() : null;
-        if (j == null) return base;
-
-        int dif = (actividadActual != null) ? actividadActual.getNivel() : 1;
-        if (dif <= 2) return 3;
-        if (dif <= 4) return 4;
-        return 5;
+    private int getNivelSeguro() {
+        int nivel = (actividadActual != null) ? actividadActual.getNivel() : 1;
+        if (nivel < 1) nivel = 1;
+        if (nivel > 5) nivel = 5;
+        return nivel;
     }
 
-    private void prepararRonda(int n) {
-        // Selección aleatoria sin repetición de la paleta
-        List<OpcionColor> lista = new ArrayList<>();
-        Collections.addAll(lista, PALETA);
-        Collections.shuffle(lista, random);
+    private int cantidadOpcionesPorNivel(int nivel) {
+        // Mantenerlo simple y escalable
+        switch (nivel) {
+            case 1: return 3;
+            case 2: return 4;
+            case 3: return 5;
+            case 4: return 6;
+            default: return 8; // nivel 5
+        }
+    }
 
-        int cant = Math.min(n, lista.size());
+    private List<Paletas.ColorNombre> paletaPorNivel(int nivel) {
+        // Define una curva suave: pocos colores al inicio, más después.
+        // Puedes ajustar si quieres.
+        List<Paletas.ColorNombre> p = new ArrayList<>(paletaCompleta);
 
-        opciones = new Color[cant];
-        zonasClick = new Rectangle[cant];
-        nombresOpciones = new String[cant];
+        if (nivel == 1) {
+            return Arrays.asList(
+                    encontrar("Rojo"), encontrar("Azul"), encontrar("Verde")
+            );
+        }
+        if (nivel == 2) {
+            return Arrays.asList(
+                    encontrar("Rojo"), encontrar("Azul"), encontrar("Verde"), encontrar("Amarillo")
+            );
+        }
+        if (nivel == 3) {
+            return Arrays.asList(
+                    encontrar("Rojo"), encontrar("Azul"), encontrar("Verde"),
+                    encontrar("Amarillo"), encontrar("Naranja")
+            );
+        }
+        if (nivel == 4) {
+            return Arrays.asList(
+                    encontrar("Rojo"), encontrar("Azul"), encontrar("Verde"),
+                    encontrar("Amarillo"), encontrar("Naranja"), encontrar("Morado")
+            );
+        }
+        // nivel 5: toda la paleta
+        return p;
+    }
 
-        for (int i = 0; i < cant; i++) {
-            OpcionColor oc = lista.get(i);
-            opciones[i] = oc.color;
-            nombresOpciones[i] = oc.nombre;
-            zonasClick[i] = new Rectangle(); // se llenará en paintComponent
+    private Paletas.ColorNombre encontrar(String nombre) {
+        for (Paletas.ColorNombre c : paletaCompleta) {
+            if (c.nombre.equalsIgnoreCase(nombre)) return c;
+        }
+        return paletaCompleta.get(0);
+    }
+
+    // ---------------------------------------------------------------------
+    // Modelo interno
+    // ---------------------------------------------------------------------
+    private static class OpcionColor {
+        final Paletas.ColorNombre item;
+        boolean enabled = true;
+        float alpha = 1f;
+
+        // Layout
+        int cx, cy, r;
+
+        // Fade timer
+        Timer fadeTimer;
+
+        OpcionColor(Paletas.ColorNombre item) {
+            this.item = item;
         }
 
-        int idxObjetivo = random.nextInt(cant);
-        colorObjetivo = opciones[idxObjetivo];
-        nombreObjetivo = nombresOpciones[idxObjetivo];
-    }
+        boolean contains(int x, int y) {
+            int dx = x - cx;
+            int dy = y - cy;
+            return dx * dx + dy * dy <= r * r;
+        }
 
-    private void actualizarInstruccion() {
-        String hex = toHex(colorObjetivo);
+        void fadeOutAndDisable(JComponent repaintTarget) {
+            if (!enabled) return;
+            enabled = false;
 
-        // Swing HTML es simple pero suficiente para colorear la palabra clave.
-        lblInstruccion.setText(
-                "<html>Toca el color <font color='" + hex + "'><b>" + nombreObjetivo + "</b></font></html>"
-        );
-    }
+            if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
+            alpha = 1f;
 
-    private void onCirculoSeleccionado(int indice) {
-        if (finalizado || bloqueadoTemporal) return;
-        if (indice < 0 || indice >= opciones.length) return;
-
-        intentos++;
-        bloqueadoTemporal = true;
-
-        ultimoIndiceClick = indice;
-        ultimoClickCorrecto = opciones[indice].equals(colorObjetivo);
-
-        if (ultimoClickCorrecto) {
-            aciertosActuales++;
-
-            // Guardamos progreso en la actividad (por si finaliza forzado)
-            if (actividadActual != null) {
-                actividadActual.setPuntos(aciertosActuales);
-            }
-
-            lblFeedback.setText("¡Muy bien! " + aciertosActuales + "/" + aciertosRequeridos);
-
-            // ¿Ya cumplió meta?
-            if (aciertosActuales >= aciertosRequeridos) {
-                finalizado = true;
-
-                new Timer(650, e -> {
+            fadeTimer = new Timer(35, e -> {
+                alpha -= 0.08f;
+                if (alpha <= 0.25f) {
+                    alpha = 0.25f;
                     ((Timer) e.getSource()).stop();
-                    finalizarJuego(aciertosActuales); // puntaje final = aciertos
-                }).start();
-
-                lienzo.repaint();
-                return;
-            }
-
-            // Si no terminó, pasa a la siguiente ronda
-            new Timer(500, e -> {
-                ((Timer) e.getSource()).stop();
-                lblFeedback.setText(" ");
-                avanzarARondaSiguiente();
-            }).start();
-
-        } else {
-            // Error neutro: no hay castigo, solo avanzamos a otra ronda
-            lblFeedback.setText("Intenta de nuevo");
-
-            new Timer(500, e -> {
-                ((Timer) e.getSource()).stop();
-                lblFeedback.setText(" ");
-                avanzarARondaSiguiente();
-            }).start();
+                }
+                if (repaintTarget != null) repaintTarget.repaint();
+            });
+            fadeTimer.start();
         }
-
-        lienzo.repaint();
-    }
-
-
-    private void avanzarARondaSiguiente() {
-        // Limpia selección visual
-        ultimoIndiceClick = -1;
-        ultimoClickCorrecto = false;
-
-        // Nuevo objetivo (puedes dejar las mismas opciones para estabilidad TEA)
-        elegirNuevoObjetivo();
-        actualizarInstruccion();
-
-        bloqueadoTemporal = false;
-        lienzo.repaint();
-    }
-
-    private void elegirNuevoObjetivo() {
-        if (opciones == null || opciones.length == 0) return;
-
-        int idxObjetivo;
-        if (opciones.length == 1) {
-            idxObjetivo = 0;
-        } else {
-            do {
-                idxObjetivo = random.nextInt(opciones.length);
-            } while (idxObjetivo == ultimoObjetivo);
-        }
-
-        ultimoObjetivo = idxObjetivo;
-        colorObjetivo = opciones[idxObjetivo];
-        nombreObjetivo = nombresOpciones[idxObjetivo];
-    }
-
-    private int calcularPuntaje() {
-        // Simple: 1 punto por acertar. (Luego puedes hacer: más puntos según dificultad)
-        return 1;
-    }
-
-    private int calcularAciertosRequeridos() {
-        Juego j = (actividadActual != null) ? actividadActual.getJuego() : null;
-        int dif = (actividadActual != null) ? actividadActual.getNivel() : 1;
-
-        if (dif < 1) dif = 1;
-        if (dif > 5) dif = 5;
-
-        return 5 + (dif - 1) * 2;
     }
 
     // ---------------------------------------------------------------------
-    // Lienzo: dibujo + detección de clic
+    // Lienzo: muestra objetivo + opciones clickeables
     // ---------------------------------------------------------------------
-
     private class LienzoColores extends JPanel {
-
-        // Ajustes de accesibilidad (puedes cambiarlos fácil)
-        private static final int PADDING = 30;
-        private static final int GAP = 30;
-        private static final int DIAMETRO_MAX = 170;
-        private static final int DIAMETRO_MIN = 110;
 
         LienzoColores() {
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mousePressed(MouseEvent e) {
-                    manejarClick(e.getX(), e.getY());
+                    if (isBloqueado()) return;
+
+                    Dimension d = new Dimension(LienzoColores.this.getWidth(), LienzoColores.this.getHeight());
+                    if (dimensionCache == null || !dimensionCache.equals(d)) {
+                        layoutOpciones(d.width, d.height);
+                        dimensionCache = d;
+                    }
+
+                    if (objetivo == null || opciones == null || opciones.isEmpty()) return;
+
+                    Point p = e.getPoint();
+
+                    OpcionColor click = null;
+                    for (OpcionColor op : opciones) {
+                        if (op.enabled && op.contains(p.x, p.y)) {
+                            click = op;
+                            break;
+                        }
+                    }
+                    if (click == null) return;
+
+                    if (click == objetivo) {
+                        // NO hacer setBloqueado(true) aquí (el framework lo hace)
+                        // NO deshabilitar opciones aquí (el bloqueo del framework evita multi-click)
+                        ultimoCorrecto = click;
+
+                        marcarAciertoConPulso(LienzoColores.this, null);
+                    } else {
+                        marcarErrorNeutro("Intenta de nuevo");
+                        click.fadeOutAndDisable(LienzoColores.this);
+                    }
                 }
             });
-        }
 
-        private void manejarClick(int x, int y) {
-            if (zonasClick == null || opciones == null) return;
-
-            Point p = new Point(x, y);
-            for (int i = 0; i < zonasClick.length; i++) {
-                Rectangle r = zonasClick[i];
-                if (r == null) continue;
-
-                // 1) Caja invisible (Rectangle)
-                if (!r.contains(p)) continue;
-
-                // 2) Afinamos: que realmente esté dentro del círculo
-                int cx = r.x + r.width / 2;
-                int cy = r.y + r.height / 2;
-                int radio = r.width / 2;
-
-                int dx = x - cx;
-                int dy = y - cy;
-                if ((dx * dx + dy * dy) <= (radio * radio)) {
-                    onCirculoSeleccionado(i);
-                }
-                return;
-            }
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            if (opciones == null || opciones.length == 0) return;
+            if (objetivo == null || opciones == null) return;
 
             Graphics2D g2 = (Graphics2D) g.create();
             try {
@@ -347,64 +277,165 @@ public class JuegoColoresPanel extends BaseJuegoPanel {
 
                 int w = getWidth();
                 int h = getHeight();
+                if (w <= 0 || h <= 0) return;
 
-                int n = opciones.length;
-
-                // Distribución horizontal centrada
-                int disponibleW = w - (2 * PADDING) - ((n - 1) * GAP);
-                int diam = disponibleW / n;
-                diam = Math.max(DIAMETRO_MIN, Math.min(DIAMETRO_MAX, diam));
-
-                int totalW = (diam * n) + ((n - 1) * GAP);
-                int startX = (w - totalW) / 2;
-                int y = (h - diam) / 2;
-
-                for (int i = 0; i < n; i++) {
-                    int x = startX + i * (diam + GAP);
-
-                    // Guardamos la zona clickeable (Rectangle invisible)
-                    if (zonasClick != null && i < zonasClick.length) {
-                        zonasClick[i].setBounds(x, y, diam, diam);
-                    }
-
-                    // Círculo relleno
-                    g2.setColor(opciones[i]);
-                    g2.fillOval(x, y, diam, diam);
-
-                    // Borde neutro
-                    g2.setStroke(new BasicStroke(3f));
-                    g2.setColor(new Color(70, 70, 70, 140));
-                    g2.drawOval(x, y, diam, diam);
-
-                    // Borde extra si fue el último click
-                    if (i == ultimoIndiceClick) {
-                        g2.setStroke(new BasicStroke(6f));
-                        g2.setColor(ultimoClickCorrecto
-                                ? new Color(60, 180, 90, 180)   // verde suave
-                                : new Color(120, 120, 120, 120) // gris suave
-                        );
-                        g2.drawOval(x - 4, y - 4, diam + 8, diam + 8);
-                    }
+                // Recalcular layout si cambia tamaño
+                Dimension d = new Dimension(w, h);
+                if (dimensionCache == null || !dimensionCache.equals(d)) {
+                    layoutOpciones(w, h);
+                    dimensionCache = d;
                 }
+
+                // Fondo claro
+                g2.setColor(Color.WHITE);
+                g2.fillRect(0, 0, w, h);
+
+                // Zonas: objetivo arriba, opciones abajo
+                int topH = (int) (h * 0.34);
+                int bottomY = topH;
+
+                // Texto corto (no depender de lectura)
+                g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+                g2.setColor(new Color(90, 90, 90));
+                String t = "Busca este color:";
+                int tw = g2.getFontMetrics().stringWidth(t);
+                g2.drawString(t, (w - tw) / 2, 26);
+
+                // Dibujo del objetivo: círculo grande centrado
+                int targetR = Math.min(w, topH) / 4;
+                targetR = clamp(targetR, 55, 95);
+
+                int targetCx = w / 2;
+                int targetCy = topH / 2 + 10;
+
+                boolean pulsoActivo = (getPulsoScale() != 1.0);
+                boolean resaltarTarget = pulsoActivo; // pulso al acertar
+
+                int tr = resaltarTarget ? (int) Math.round(targetR * getPulsoScale()) : targetR;
+
+                dibujarCirculo(g2, objetivo.item.color, targetCx, targetCy, tr, 1f, true);
+
+                // Opciones: círculos clickeables
+                for (OpcionColor op : opciones) {
+                    boolean resaltar = pulsoActivo && (op == ultimoCorrecto);
+                    int r = resaltar ? (int) Math.round(op.r * getPulsoScale()) : op.r;
+
+                    dibujarCirculo(g2, op.item.color, op.cx, op.cy, r, op.alpha, op.enabled);
+                }
+
+                // Línea sutil separando zonas
+                g2.setColor(new Color(235, 235, 235));
+                g2.fillRect(0, bottomY, w, 2);
 
             } finally {
                 g2.dispose();
             }
         }
-    }
 
-    private static String toHex(Color c) {
-        if (c == null) return "#000000";
-        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
-    }
+        private void layoutOpciones(int w, int h) {
+            int nivel = getNivelSeguro();
+            int n = opciones.size();
 
-    private static class OpcionColor {
-        final String nombre;
-        final Color color;
+            int topH = (int) (h * 0.34);
+            int availableH = h - topH;
 
-        OpcionColor(String nombre, Color color) {
-            this.nombre = nombre;
-            this.color = color;
+            // Decidir grid según nivel para que siempre sea limpio
+            int rows, cols;
+            switch (nivel) {
+                case 1:
+                    rows = 1; cols = 3;
+                    break;
+                case 2:
+                    rows = 2; cols = 2;
+                    break;
+                case 3:
+                    rows = 2; cols = 3;
+                    break;
+                case 4:
+                    rows = 2; cols = 3;
+                    break;
+                default:
+                    rows = 2; cols = 4; // 8 opciones
+            }
+
+            // Padding y tamaño de celda
+            int paddingX = 50;
+            int paddingY = 35;
+
+            int gridW = Math.max(1, w - 2 * paddingX);
+            int gridH = Math.max(1, availableH - 2 * paddingY);
+
+            int cellW = gridW / cols;
+            int cellH = gridH / rows;
+
+            int r = (int) (Math.min(cellW, cellH) * 0.33);
+            r = clamp(r, 45, 85);
+
+            // Generar posiciones en orden, centrando si sobran celdas
+            List<Point> puntos = new ArrayList<>();
+            for (int rr = 0; rr < rows; rr++) {
+                for (int cc = 0; cc < cols; cc++) {
+                    int cx = paddingX + cc * cellW + cellW / 2;
+                    int cy = topH + paddingY + rr * cellH + cellH / 2;
+                    puntos.add(new Point(cx, cy));
+                }
+            }
+
+            // Si hay más celdas que opciones, escoger posiciones centradas (las del medio)
+            // Esto evita que 5 opciones queden “esquinadas”.
+            List<Point> usados = seleccionarPuntosCentrados(puntos, n);
+
+            for (int i = 0; i < opciones.size(); i++) {
+                OpcionColor op = opciones.get(i);
+                Point p = usados.get(i);
+                op.cx = p.x;
+                op.cy = p.y;
+                op.r = r;
+            }
+        }
+
+        private List<Point> seleccionarPuntosCentrados(List<Point> all, int n) {
+            if (all.size() == n) return all;
+
+            // Ordenar por cercanía al centro
+            Point center = new Point(getWidth() / 2, getHeight() / 2);
+            List<Point> sorted = new ArrayList<>(all);
+            sorted.sort(Comparator.comparingInt(p -> dist2(p, center)));
+
+            List<Point> picked = sorted.subList(0, n);
+            // Mantener orden estable para que no se sienta “random” el layout
+            return new ArrayList<>(picked);
+        }
+
+        private int dist2(Point a, Point b) {
+            int dx = a.x - b.x;
+            int dy = a.y - b.y;
+            return dx * dx + dy * dy;
+        }
+
+        private void dibujarCirculo(Graphics2D g2, Color fill, int cx, int cy, int r, float alpha, boolean enabled) {
+            int x = cx - r;
+            int y = cy - r;
+            int d = r * 2;
+
+            // alpha
+            Composite old = g2.getComposite();
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+            // relleno sólido
+            g2.setColor(fill);
+            g2.fillOval(x, y, d, d);
+
+            // borde
+            g2.setStroke(new BasicStroke(AccesibleUI.STROKE_GRUESO));
+            g2.setColor(enabled ? AccesibleUI.BORDE_ACTIVO : AccesibleUI.BORDE_INACTIVO);
+            g2.drawOval(x + 2, y + 2, d - 4, d - 4);
+
+            g2.setComposite(old);
+        }
+
+        private int clamp(int v, int min, int max) {
+            return Math.max(min, Math.min(max, v));
         }
     }
 }
