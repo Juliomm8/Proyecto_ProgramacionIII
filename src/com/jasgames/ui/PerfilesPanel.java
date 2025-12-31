@@ -3,6 +3,7 @@ package com.jasgames.ui;
 import com.jasgames.model.CriterioOrdenNino;
 import com.jasgames.model.Nino;
 import com.jasgames.service.PerfilService;
+import com.jasgames.service.AulaService;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -23,6 +24,7 @@ public class PerfilesPanel extends JPanel {
     private JLabel lblBuscar;
 
     private final PerfilService perfilService;
+    private final AulaService aulaService;
 
     // Lista
     private DefaultListModel<Nino> listModel;
@@ -57,23 +59,6 @@ public class PerfilesPanel extends JPanel {
             "🐨","🐙","🐢","🦄","🐞"
     };
 
-    private static final String[] AULAS_PREDEFINIDAS = {
-            "Aula Azul",
-            "Aula Roja",
-            "Aula Verde",
-            "Aula Amarilla",
-            "Aula Morada"
-    };
-    
-    private static final java.util.Map<String, java.awt.Color> COLOR_AULA = new java.util.LinkedHashMap<>();
-    static {
-        COLOR_AULA.put("Aula Azul", new java.awt.Color(52, 152, 219));
-        COLOR_AULA.put("Aula Roja", new java.awt.Color(231, 76, 60));
-        COLOR_AULA.put("Aula Verde", new java.awt.Color(46, 204, 113));
-        COLOR_AULA.put("Aula Amarilla", new java.awt.Color(241, 196, 15));
-        COLOR_AULA.put("Aula Morada", new java.awt.Color(155, 89, 182));
-    }
-
     private java.awt.Color fondoSuave(java.awt.Color c) {
         int r = (c.getRed() + 255) / 2;
         int g = (c.getGreen() + 255) / 2;
@@ -81,10 +66,16 @@ public class PerfilesPanel extends JPanel {
         return new java.awt.Color(r, g, b);
     }
 
-    public PerfilesPanel(PerfilService perfilService) {
+    public PerfilesPanel(PerfilService perfilService, AulaService aulaService) {
         this.perfilService = perfilService;
+        this.aulaService = aulaService;
         initComponents();
         cargarNinosDesdeService();
+    }
+
+    // Back-compat (por si alguna pantalla antigua lo instancia directo)
+    public PerfilesPanel(PerfilService perfilService) {
+        this(perfilService, new AulaService(perfilService));
     }
 
     // ---------------------- UI ----------------------
@@ -142,7 +133,7 @@ public class PerfilesPanel extends JPanel {
         spEdadNino = new JSpinner(new SpinnerNumberModel(6, 3, 18, 1));
         txtDiagnosticoNino = new JTextField("TEA");
 
-        cbAula = new JComboBox<>(AULAS_PREDEFINIDAS);
+        cbAula = new JComboBox<>(new String[0]);
         cbAula.setEditable(false);
         
         cbAula.setRenderer(new DefaultListCellRenderer() {
@@ -151,7 +142,7 @@ public class PerfilesPanel extends JPanel {
                                                           boolean isSelected, boolean cellHasFocus) {
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 String aula = (value == null) ? "" : value.toString();
-                Color base = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+                Color base = (aulaService != null) ? aulaService.colorDeAula(aula) : new Color(149, 165, 166);
                 lbl.setOpaque(true);
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 14f));
@@ -421,21 +412,23 @@ public class PerfilesPanel extends JPanel {
     private void refrescarOpcionesAula(String aulaPreferida) {
         java.util.LinkedHashSet<String> aulas = new java.util.LinkedHashSet<>();
 
-        // 1) predefinidas primero
-        for (String a : AULAS_PREDEFINIDAS) aulas.add(a);
+        // 1) Canon: aulas.json (AulaService)
+        if (aulaService != null) {
+            aulas.addAll(aulaService.obtenerNombres());
+        }
 
-        // 2) si en el JSON hay aulas extra, también se agregan (por compatibilidad)
+        // 2) compatibilidad: si en ninos.json hay aulas extra, también se agregan
         for (Nino n : perfilService.obtenerTodosNinos()) {
             String a = n.getAula();
             if (a != null && !a.isBlank()) aulas.add(a.trim());
         }
 
+        if (aulas.isEmpty()) aulas.add("Aula Azul");
+
         cbAula.removeAllItems();
         for (String a : aulas) cbAula.addItem(a);
 
         String aulaFinal = (aulaPreferida == null || aulaPreferida.isBlank()) ? "Aula Azul" : aulaPreferida.trim();
-
-        // Si venía "General", lo convertimos
         if ("General".equalsIgnoreCase(aulaFinal)) aulaFinal = "Aula Azul";
 
         cbAula.setSelectedItem(aulaFinal);

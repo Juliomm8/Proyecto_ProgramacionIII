@@ -8,20 +8,41 @@ import java.util.stream.Collectors;
 public class DirectorioEscolarService {
 
     private final PerfilService perfilService;
+    private final AulaService aulaService;
 
-    public DirectorioEscolarService(PerfilService perfilService) {
+    /**
+     * Canon: AulaService (aulas.json). Compat: si hay aulas en ninos.json que no existan en aulas.json,
+     * también se listan.
+     */
+    public DirectorioEscolarService(PerfilService perfilService, AulaService aulaService) {
         this.perfilService = perfilService;
+        this.aulaService = aulaService;
+    }
+
+    // Back-compat (por si alguna pantalla antigua lo usa)
+    public DirectorioEscolarService(PerfilService perfilService) {
+        this(perfilService, null);
     }
 
     public List<String> obtenerAulas() {
-        return perfilService.obtenerTodosNinos().stream()
+        LinkedHashSet<String> aulas = new LinkedHashSet<>();
+
+        // 1) Canon: aulas.json
+        if (aulaService != null) {
+            aulas.addAll(aulaService.obtenerNombres());
+        }
+
+        // 2) Compatibilidad: aulas que existan en ninos.json
+        aulas.addAll(perfilService.obtenerTodosNinos().stream()
                 .map(Nino::getAula)
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
-                .distinct()
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+
+        if (aulas.isEmpty()) aulas.add("Aula Azul");
+
+        return new ArrayList<>(aulas);
     }
 
     public List<Nino> obtenerEstudiantesPorAula(String aula) {

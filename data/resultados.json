@@ -1100,7 +1100,7 @@
       "habilitado": true
     },
     "puntaje": 5,
-    "fechaHora": "2025-12-14T01:12:00",
+    "fechaHora": "2025-12-14T01:12",
     "dificultad": 3
   },
   {
@@ -1596,7 +1596,7 @@
       "habilitado": true
     },
     "puntaje": 8,
-    "fechaHora": "2025-12-17T19:59:00",
+    "fechaHora": "2025-12-17T19:59",
     "dificultad": 5
   },
   {
@@ -2396,7 +2396,7 @@
       "habilitado": true
     },
     "puntaje": 15,
-    "fechaHora": "2025-12-27T11:01:00",
+    "fechaHora": "2025-12-27T11:01",
     "dificultad": 2
   },
   {
@@ -2813,6 +2813,22 @@
     },
     "puntaje": 10,
     "fechaHora": "2025-12-30T18:48:43",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Roja",
+    "juego": {
+      "id": 2,
+      "nombre": "Cuenta y Conecta",
+      "tipo": "NUMEROS",
+      "dificultad": 1,
+      "descripcion": "Cuenta las figuras y toca el número correcto. 5 rondas completadas \u003d 100 puntos.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T00:11:14.099233",
     "dificultad": 1
   }
 ]

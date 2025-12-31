@@ -6,5 +6,13 @@
     "dificultad": 4,
     "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
     "habilitado": true
+  },
+  {
+    "id": 2,
+    "nombre": "Cuenta y Conecta",
+    "tipo": "NUMEROS",
+    "dificultad": 1,
+    "descripcion": "Cuenta las figuras y toca el número correcto. 5 rondas completadas \u003d 100 puntos.",
+    "habilitado": true
   }
 ]

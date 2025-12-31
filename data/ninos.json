@@ -4,14 +4,15 @@
     "nombre": "Julio Mera",
     "edad": 3,
     "diagnostico": "Dificultad sensorial",
-    "puntosTotales": 48,
+    "puntosTotales": 148,
     "juegosAsignados": [
-      1
+      1,
+      2
     ],
     "dificultadPorJuego": {
       "1": 2
     },
-    "aula": "Aula Roja",
+    "aula": "Aula Azul",
     "avatar": "🦁"
   },
   {
@@ -26,7 +27,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Roja",
+    "aula": "Aula Azul",
     "avatar": "😎"
   },
   {
@@ -56,7 +57,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Verde",
+    "aula": "Aula Amarilla",
     "avatar": "😃"
   },
   {
@@ -101,7 +102,7 @@
     "dificultadPorJuego": {
       "1": 3
     },
-    "aula": "Aula Naranja",
+    "aula": "Aula Azul",
     "avatar": "🐻"
   },
   {
@@ -116,7 +117,7 @@
     "dificultadPorJuego": {
       "1": 3
     },
-    "aula": "Aula Roja",
+    "aula": "Aula Azul",
     "avatar": "😎"
   },
   {
@@ -131,7 +132,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Naranja",
+    "aula": "Aula Azul",
     "avatar": "😄"
   },
   {
@@ -146,7 +147,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Roja",
+    "aula": "Aula Azul",
     "avatar": "🐸"
   },
   {
@@ -161,7 +162,7 @@
     "dificultadPorJuego": {
       "1": 1
     },
-    "aula": "Aula Naranja",
+    "aula": "Aula Azul",
     "avatar": "😊"
   },
   {
@@ -191,7 +192,7 @@
     "dificultadPorJuego": {
       "1": 2
     },
-    "aula": "Aula Rosa",
+    "aula": "Aula Azul",
     "avatar": "🦄"
   },
   {
@@ -206,7 +207,7 @@
     "dificultadPorJuego": {
       "1": 1
     },
-    "aula": "Aula Naranja",
+    "aula": "Aula Azul",
     "avatar": "🦁"
   },
   {
@@ -221,7 +222,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Verde",
+    "aula": "Aula Amarilla",
     "avatar": "🐧"
   },
   {
@@ -251,7 +252,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Amarilla",
+    "aula": "Aula Prueba",
     "avatar": "🐨"
   },
   {
@@ -281,7 +282,7 @@
     "dificultadPorJuego": {
       "1": 2
     },
-    "aula": "Aula Celeste",
+    "aula": "Aula Amarilla",
     "avatar": "🐧"
   },
   {
@@ -311,7 +312,7 @@
     "dificultadPorJuego": {
       "1": 2
     },
-    "aula": "Aula Rosa",
+    "aula": "Aula Azul",
     "avatar": "🐵"
   },
   {
@@ -326,7 +327,7 @@
     "dificultadPorJuego": {
       "1": 1
     },
-    "aula": "Aula Celeste",
+    "aula": "Aula Amarilla",
     "avatar": "😁"
   },
   {
@@ -341,8 +342,8 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Verde",
-    "avatar": "🦋"
+    "aula": "Aula Morada",
+    "avatar": "🙂"
   },
   {
     "id": 24,
@@ -356,7 +357,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Roja",
+    "aula": "Aula Azul",
     "avatar": "🐧"
   },
   {
@@ -401,7 +402,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Verde",
+    "aula": "Aula Amarilla",
     "avatar": "🐯"
   },
   {
@@ -416,7 +417,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Verde",
+    "aula": "Aula Amarilla",
     "avatar": "🐰"
   }
 ]

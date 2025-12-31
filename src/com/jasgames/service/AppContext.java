@@ -26,7 +26,7 @@ public class AppContext {
         this.auditoriaService = new AuditoriaService();
 
         this.autenticacionService = new AutenticacionService();
-        this.directorioEscolarService = new DirectorioEscolarService(perfilService);
+        this.directorioEscolarService = new DirectorioEscolarService(perfilService, aulaService);
     }
 
     public JuegoService getJuegoService() { return juegoService; }

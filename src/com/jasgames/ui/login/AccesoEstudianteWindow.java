@@ -9,8 +9,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AccesoEstudianteWindow extends JFrame {
 
@@ -33,17 +31,8 @@ public class AccesoEstudianteWindow extends JFrame {
     private final JButton btnAtras = new JButton("Atrás");
     private final JButton btnSalir = new JButton("Salir");
 
-    private static final Map<String, Color> COLOR_AULA = new HashMap<>();
-    static {
-        COLOR_AULA.put("Aula Azul", new Color(52, 152, 219));
-        COLOR_AULA.put("Aula Roja", new Color(231, 76, 60));
-        COLOR_AULA.put("Aula Verde", new Color(46, 204, 113));
-        COLOR_AULA.put("Aula Amarilla", new Color(241, 196, 15));
-        COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
-    }
-
     private Color colorAula(String aula) {
-        return COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166)); // gris default
+        return context.getAulaService().colorDeAula(aula);
     }
 
     private Color fondoSuave(Color c) {
@@ -70,7 +59,7 @@ public class AccesoEstudianteWindow extends JFrame {
     }
 
     private void aplicarEstiloAula(JButton btn, String aula) {
-        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166)); // gris si no coincide
+        Color c = colorAula(aula);
 
         btn.setOpaque(true);
         btn.setContentAreaFilled(true);
@@ -89,7 +78,7 @@ public class AccesoEstudianteWindow extends JFrame {
             return;
         }
 
-        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+        Color c = colorAula(aula);
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 8, 0, c));
         header.revalidate();
         header.repaint();
