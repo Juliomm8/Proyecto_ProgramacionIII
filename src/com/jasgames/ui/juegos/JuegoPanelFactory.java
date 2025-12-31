@@ -2,10 +2,6 @@ package com.jasgames.ui.juegos;
 
 import com.jasgames.model.Actividad;
 
-/**
- * Centraliza el mapeo: ID de juego -> Panel.
- * Así EstudianteWindow no se llena de if/else.
- */
 public final class JuegoPanelFactory {
 
     private JuegoPanelFactory() {}
@@ -15,10 +11,13 @@ public final class JuegoPanelFactory {
 
         int idJuego = actividad.getJuego().getId();
 
-        return switch (idJuego) {
-            case 1 -> new JuegoColoresPanel(actividad, listener);
-            case 2 -> new JuegoCuentaConectaPanel(actividad, listener);
-            default -> null;
-        };
+        switch (idJuego) {
+            case 1:
+                return new JuegoColoresPanel(actividad, listener);
+            case 2:
+                return new JuegoCuentaConectaPanel(actividad, listener);
+            default:
+                return null;
+        }
     }
 }

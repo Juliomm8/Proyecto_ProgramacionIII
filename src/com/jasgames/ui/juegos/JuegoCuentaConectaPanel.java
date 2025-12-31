@@ -1,6 +1,7 @@
 package com.jasgames.ui.juegos;
 
 import com.jasgames.model.Actividad;
+import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,108 +12,54 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Minijuego 2: Cuenta y Conecta
- *
- * - Arriba: pizarra con N figuras (1 forma + 1 color por ronda).
- * - Abajo: 3 opciones de números. Si falla, la opción se desvanece (se apaga) y sigue intentando.
- * - Si acierta: pulso (latido) 2 veces y pasa de ronda.
- * - Termina al completar 5 rondas correctas. Puntaje final fijo: 100.
- */
-public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
+public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
 
     private static final int RONDAS_META = 5;
     private static final int NUM_OPCIONES = 3;
 
     private final Random random = new Random();
 
-    private JPanel panelRoot;
-    private JLabel lblInstruccion;
-    private JLabel lblProgreso;
-    private JLabel lblFeedback;
-
-    private JPanel panelPizarra;
     private JPanel panelRespuestas;
-
     private LienzoCuentaConecta lienzo;
     private OpcionNumeroButton[] botones;
 
-    private int rondasCorrectas;
     private int numeroObjetivo;
     private Forma formaActual;
     private Color colorActual;
 
-    private boolean bloqueado;
-
-    // Animación de pulso
-    private double escalaPulso = 1.0;
-    private Timer timerPulso;
-    private int pasoPulso;
-    private Runnable onPulsoTermina;
-
-    // Cache de posiciones (especialmente útil para nivel 5 / nube)
-    private List<Point> centrosCache = null;
-    private Dimension dimensionCache = null;
-
-    // Paleta sólida, alto contraste
-    private static final Color[] PALETA = new Color[]{
-            new Color(55, 110, 220),  // azul
-            new Color(220, 40, 40),   // rojo
-            new Color(60, 170, 90),   // verde
-            new Color(240, 140, 50),  // naranja
-            new Color(150, 85, 210),  // morado
-            new Color(40, 40, 40)     // casi negro
-    };
+    private List<Point> centrosCache;
+    private Dimension dimensionCache;
 
     private enum Forma { CIRCULO, CUADRADO, ESTRELLA }
 
+    private static final Color[] PALETA = new Color[]{
+            new Color(55, 110, 220),
+            new Color(220, 40, 40),
+            new Color(60, 170, 90),
+            new Color(240, 140, 50),
+            new Color(150, 85, 210),
+            new Color(40, 40, 40)
+    };
+
     public JuegoCuentaConectaPanel(Actividad actividad, JuegoListener listener) {
         super(actividad, listener);
-        initUI();
-        iniciarJuego();
-    }
 
-    private void initUI() {
-        panelRoot = new JPanel(new BorderLayout(12, 12));
-        panelRoot.setOpaque(false);
-        panelRoot.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        add(panelRoot, BorderLayout.CENTER);
-
-        // Cabecera: instrucción + progreso + feedback
-        JPanel panelTop = new JPanel(new GridLayout(3, 1, 0, 6));
-        panelTop.setOpaque(false);
-
-        lblInstruccion = new JLabel("Cuenta las figuras y toca el número correcto", SwingConstants.CENTER);
-        lblInstruccion.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24));
-
-        lblProgreso = new JLabel("Ronda 1/" + RONDAS_META, SwingConstants.CENTER);
-        lblProgreso.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
-
-        lblFeedback = new JLabel(" ", SwingConstants.CENTER);
-        lblFeedback.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
-
-        panelTop.add(lblInstruccion);
-        panelTop.add(lblProgreso);
-        panelTop.add(lblFeedback);
-
-        panelRoot.add(panelTop, BorderLayout.NORTH);
-
-        // Pizarra (centro)
-        panelPizarra = new JPanel(new BorderLayout());
-        panelPizarra.setBackground(Color.WHITE);
-        panelPizarra.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
-        panelPizarra.setOpaque(true);
+        setInstruccion("Cuenta las figuras y toca el número correcto");
 
         lienzo = new LienzoCuentaConecta();
         lienzo.setOpaque(false);
+        setTablero(lienzo);
 
-        panelPizarra.add(lienzo, BorderLayout.CENTER);
-        panelRoot.add(panelPizarra, BorderLayout.CENTER);
+        panelRespuestas = construirPanelRespuestas();
+        setPanelRespuestas(panelRespuestas);
 
-        // Respuestas (abajo)
-        panelRespuestas = new JPanel(new GridLayout(1, 3, 18, 0));
-        panelRespuestas.setOpaque(false);
-        panelRespuestas.setBorder(BorderFactory.createEmptyBorder(10, 40, 0, 40));
+        iniciarJuego();
+    }
+
+    private JPanel construirPanelRespuestas() {
+        JPanel p = new JPanel(new GridLayout(1, 3, 18, 0));
+        p.setOpaque(false);
+        p.setBorder(BorderFactory.createEmptyBorder(10, 40, 0, 40));
 
         botones = new OpcionNumeroButton[NUM_OPCIONES];
         for (int i = 0; i < NUM_OPCIONES; i++) {
@@ -120,28 +67,34 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
             btn.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 56));
             btn.addActionListener(this::onOpcionClick);
             botones[i] = btn;
-            panelRespuestas.add(btn);
+            p.add(btn);
         }
-
-        panelRoot.add(panelRespuestas, BorderLayout.SOUTH);
+        return p;
     }
 
     @Override
-    public void iniciarJuego() {
-        rondasCorrectas = 0;
-        bloqueado = false;
-
-        detenerTimerPulso();
-        escalaPulso = 1.0;
-
-        lblFeedback.setText(" ");
-        actualizarProgreso();
-        nuevaRonda();
+    protected void onAntesDeIniciar() {
+        setBloqueado(false);
+        numeroObjetivo = 0;
+        centrosCache = null;
+        dimensionCache = null;
+        setFeedback(" ");
     }
 
-    private void nuevaRonda() {
-        bloqueado = false;
-        lblFeedback.setText(" ");
+    @Override
+    protected int getRondasMetaPorNivel(int nivel) {
+        return RONDAS_META; // siempre 5 rondas
+    }
+
+    @Override
+    protected int calcularPuntosFinales() {
+        return 100; // fijo: completó la actividad = 100
+    }
+
+    @Override
+    protected void prepararNuevaRonda() {
+        setBloqueado(false);
+        setFeedback(" ");
 
         int nivel = getNivelSeguro();
         int max = maxNumeroPorNivel(nivel);
@@ -150,90 +103,33 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
         formaActual = Forma.values()[random.nextInt(Forma.values().length)];
         colorActual = PALETA[random.nextInt(PALETA.length)];
 
-        // Opciones
         List<Integer> opciones = generarOpciones(numeroObjetivo, max);
         for (int i = 0; i < NUM_OPCIONES; i++) {
             botones[i].reset(opciones.get(i));
         }
 
-        // Reset cache posiciones
         centrosCache = null;
         dimensionCache = null;
-        escalaPulso = 1.0;
 
         lienzo.repaint();
     }
 
     private void onOpcionClick(ActionEvent e) {
-        if (bloqueado) return;
+        if (isBloqueado()) return;
 
         OpcionNumeroButton btn = (OpcionNumeroButton) e.getSource();
         int valor = btn.getValor();
 
         if (valor == numeroObjetivo) {
-            bloqueado = true;
-
-            // Bloquea todas las opciones durante la animación
+            // deshabilita inputs ya mismo (y el template maneja el bloqueado)
             for (OpcionNumeroButton b : botones) b.setEnabled(false);
 
-            lblFeedback.setText("¡Muy bien!");
-
-            iniciarPulso(() -> {
-                rondasCorrectas++;
-                actualizarProgreso();
-
-                if (rondasCorrectas >= RONDAS_META) {
-                    // Puntaje fijo por completar
-                    finalizarJuego(100);
-                } else {
-                    nuevaRonda();
-                }
-            });
-
+            // acierto: pulso + next round / finalizar
+            marcarAciertoConPulso(lienzo, null);
         } else {
-            // Error neutro: apaga el botón incorrecto y sigue intentando
-            lblFeedback.setText("Intenta de nuevo");
+            marcarErrorNeutro("Intenta de nuevo");
             btn.fadeOutAndDisable();
         }
-    }
-
-    private void iniciarPulso(Runnable alTerminar) {
-        detenerTimerPulso();
-        onPulsoTermina = alTerminar;
-        pasoPulso = 0;
-
-        // 2 latidos rápidos (sube/baja 2 veces)
-        final double[] secuencia = new double[]{
-                1.00, 1.06, 1.10, 1.06, 1.00,
-                1.06, 1.10, 1.06, 1.00
-        };
-
-        timerPulso = new Timer(45, ev -> {
-            escalaPulso = secuencia[pasoPulso];
-            lienzo.repaint();
-
-            pasoPulso++;
-            if (pasoPulso >= secuencia.length) {
-                detenerTimerPulso();
-                escalaPulso = 1.0;
-                lienzo.repaint();
-                if (onPulsoTermina != null) onPulsoTermina.run();
-            }
-        });
-
-        timerPulso.start();
-    }
-
-    private void detenerTimerPulso() {
-        if (timerPulso != null && timerPulso.isRunning()) {
-            timerPulso.stop();
-        }
-        timerPulso = null;
-    }
-
-    private void actualizarProgreso() {
-        int mostrada = Math.min(rondasCorrectas + 1, RONDAS_META);
-        lblProgreso.setText("Ronda " + mostrada + "/" + RONDAS_META);
     }
 
     private int getNivelSeguro() {
@@ -244,13 +140,13 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
     }
 
     private int maxNumeroPorNivel(int nivel) {
-        return switch (nivel) {
-            case 1 -> 3;
-            case 2 -> 5;
-            case 3 -> 9;
-            case 4 -> 12;
-            default -> 15; // nivel 5
-        };
+        switch (nivel) {
+            case 1: return 3;
+            case 2: return 5;
+            case 3: return 9;
+            case 4: return 12;
+            default: return 15;
+        }
     }
 
     private List<Integer> generarOpciones(int correcto, int max) {
@@ -258,12 +154,10 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
         set.add(correcto);
 
         while (set.size() < NUM_OPCIONES) {
-            int v = random.nextInt(max) + 1;
-            set.add(v);
+            set.add(random.nextInt(max) + 1);
         }
 
         List<Integer> lista = new ArrayList<>(set);
-        // mezclar para no dejar siempre el correcto en la misma posición
         for (int i = lista.size() - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);
             int tmp = lista.get(i);
@@ -273,15 +167,12 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
         return lista;
     }
 
-    // ---------------------------------------------------------------------
-    // Lienzo (dibujo de figuras)
-    // ---------------------------------------------------------------------
+    // -------------------- Lienzo --------------------
     private class LienzoCuentaConecta extends JPanel {
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-
             if (numeroObjetivo <= 0) return;
 
             Graphics2D g2 = (Graphics2D) g.create();
@@ -293,7 +184,6 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
                 int nivel = getNivelSeguro();
 
                 int size = calcularTamFigura(w, h, numeroObjetivo, nivel);
-
                 List<Point> centros = obtenerCentros(numeroObjetivo, nivel, w, h, size);
 
                 Color borde = new Color(70, 70, 70, 160);
@@ -303,7 +193,7 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
                     int cx = c.x;
                     int cy = c.y;
 
-                    int s = (int) Math.round(size * escalaPulso);
+                    int s = (int) Math.round(size * getPulsoScale());
                     int x = cx - (s / 2);
                     int y = cy - (s / 2);
 
@@ -329,7 +219,6 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
                         }
                     }
                 }
-
             } finally {
                 g2.dispose();
             }
@@ -339,7 +228,6 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
             int padding = 40;
 
             if (nivel == 1) {
-                // 1..3 en línea, grande
                 int gap = 30;
                 int disponibleW = Math.max(1, w - (2 * padding) - ((n - 1) * gap));
                 int s = disponibleW / n;
@@ -348,8 +236,7 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
             }
 
             if (nivel >= 2 && nivel <= 4) {
-                // grid
-                int rows = (nivel == 2) ? 2 : (nivel == 3 ? 3 : 3);
+                int rows = (nivel == 2) ? 2 : 3;
                 int cols = (nivel == 2) ? 3 : (nivel == 3 ? 3 : 4);
 
                 int cellW = Math.max(1, (w - 2 * padding) / cols);
@@ -359,7 +246,6 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
                 return clamp(s, 60, 140);
             }
 
-            // nivel 5: nube
             double area = (double) (Math.max(1, w - 2 * padding)) * (Math.max(1, h - 2 * padding));
             int s = (int) Math.sqrt(area / (n * 8.0));
             return clamp(s, 45, 95);
@@ -367,24 +253,14 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
 
         private List<Point> obtenerCentros(int n, int nivel, int w, int h, int size) {
             Dimension d = new Dimension(w, h);
-            if (centrosCache != null && d.equals(dimensionCache)) {
-                return centrosCache;
-            }
+            if (centrosCache != null && d.equals(dimensionCache)) return centrosCache;
 
             List<Point> centros;
-
-            if (nivel == 1) {
-                centros = centrosLinea(n, w, h, size);
-            } else if (nivel == 2) {
-                centros = centrosGrid(n, w, h, 2, 3);
-            } else if (nivel == 3) {
-                centros = centrosGrid(n, w, h, 3, 3);
-            } else if (nivel == 4) {
-                // 4x3 = 4 columnas, 3 filas
-                centros = centrosGrid(n, w, h, 3, 4);
-            } else {
-                centros = centrosNube(n, w, h, size);
-            }
+            if (nivel == 1) centros = centrosLinea(n, w, h, size);
+            else if (nivel == 2) centros = centrosGrid(n, w, h, 2, 3);
+            else if (nivel == 3) centros = centrosGrid(n, w, h, 3, 3);
+            else if (nivel == 4) centros = centrosGrid(n, w, h, 3, 4);
+            else centros = centrosNube(n, w, h, size);
 
             centrosCache = centros;
             dimensionCache = d;
@@ -392,24 +268,18 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
         }
 
         private List<Point> centrosLinea(int n, int w, int h, int size) {
-            int padding = 40;
             int gap = 30;
-
             int totalW = n * size + (n - 1) * gap;
             int startX = (w - totalW) / 2 + size / 2;
             int y = h / 2;
 
             List<Point> pts = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                int x = startX + i * (size + gap);
-                pts.add(new Point(x, y));
-            }
+            for (int i = 0; i < n; i++) pts.add(new Point(startX + i * (size + gap), y));
             return pts;
         }
 
         private List<Point> centrosGrid(int n, int w, int h, int rows, int cols) {
             int padding = 40;
-
             int gridW = w - 2 * padding;
             int gridH = h - 2 * padding;
 
@@ -436,14 +306,11 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
 
             List<Point> pts = new ArrayList<>();
             int tries = 0;
-            int maxTries = 5000;
 
-            int minX = padding;
-            int maxX = Math.max(minX + 1, w - padding);
-            int minY = padding;
-            int maxY = Math.max(minY + 1, h - padding);
+            int minX = padding, maxX = Math.max(minX + 1, w - padding);
+            int minY = padding, maxY = Math.max(minY + 1, h - padding);
 
-            while (pts.size() < n && tries < maxTries) {
+            while (pts.size() < n && tries < 5000) {
                 int x = minX + random.nextInt(Math.max(1, maxX - minX));
                 int y = minY + random.nextInt(Math.max(1, maxY - minY));
 
@@ -451,27 +318,19 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
                 for (Point q : pts) {
                     int dx = x - q.x;
                     int dy = y - q.y;
-                    if (dx * dx + dy * dy < minDist * minDist) {
-                        ok = false;
-                        break;
-                    }
+                    if (dx * dx + dy * dy < minDist * minDist) { ok = false; break; }
                 }
-
                 if (ok) pts.add(new Point(x, y));
                 tries++;
             }
 
-            // Fallback si por tamaño/ventana no cupo bien: grid 5x3 (cap 15)
-            if (pts.size() < n) {
-                return centrosGrid(n, w, h, 3, 5);
-            }
-
+            if (pts.size() < n) return centrosGrid(n, w, h, 3, 5); // fallback (hasta 15)
             return pts;
         }
 
         private Polygon crearEstrella(int cx, int cy, int rOuter, int rInner, int puntas) {
             Polygon p = new Polygon();
-            double ang = -Math.PI / 2; // arriba
+            double ang = -Math.PI / 2;
             double step = Math.PI / puntas;
 
             for (int i = 0; i < puntas * 2; i++) {
@@ -489,11 +348,8 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // Botón circular con fade-out
-    // ---------------------------------------------------------------------
+    // -------------------- Botón circular con fade --------------------
     private static class OpcionNumeroButton extends JButton {
-
         private int valor;
         private float alpha = 1f;
         private Timer fadeTimer;
@@ -507,13 +363,11 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
             setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
 
-        int getValor() {
-            return valor;
-        }
+        int getValor() { return valor; }
 
         void reset(int nuevoValor) {
-            this.valor = nuevoValor;
-            this.alpha = 1f;
+            valor = nuevoValor;
+            alpha = 1f;
             setEnabled(true);
             if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
             repaint();
@@ -521,12 +375,11 @@ public class JuegoCuentaConectaPanel extends BaseJuegoPanel {
 
         void fadeOutAndDisable() {
             if (!isEnabled()) return;
-
             setEnabled(false);
 
             if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
-
             alpha = 1f;
+
             fadeTimer = new Timer(35, e -> {
                 alpha -= 0.08f;
                 if (alpha <= 0.25f) {

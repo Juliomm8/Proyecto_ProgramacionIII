@@ -320,14 +320,13 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             return;
         }
 
-        // Creamos una actividad (nivel puede ser 1 por ahora)
-        // int nivel = perfilService.getDificultadAsignada(ninoActual.getId(), juego.getId(), juego.getDificultad());
-        // Usamos la dificultad del juego o la personalizada si existe
         int nivel = ninoActual.getDificultadJuego(juego.getId(), juego.getDificultad());
 
-        Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
+        // Id estable en int (evita overflow)
+        int actividadId = (int) (System.currentTimeMillis() & 0x7fffffff);
+        Actividad actividad = new Actividad(actividadId, juego, nivel, 0);
 
-        // Crear panel usando factory
+        // Crear panel por ID (escalable)
         juegoEnCurso = JuegoPanelFactory.crearPanel(actividad, this);
         if (juegoEnCurso == null) {
             JOptionPane.showMessageDialog(

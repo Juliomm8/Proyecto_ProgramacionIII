@@ -37,7 +37,6 @@ public class JuegoService {
             guardar();
         }
 
-        // Asegura que existan los juegos mínimos aunque el json venga viejo
         asegurarJuegosMinimos();
     }
 
@@ -62,17 +61,6 @@ public class JuegoService {
     private void asegurarJuegosMinimos() {
         boolean changed = false;
 
-        if (buscarPorId(1) == null) {
-            agregarJuego(new Juego(
-                    1,
-                    "Discriminación de Colores",
-                    TipoJuego.COLORES,
-                    1,
-                    "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error."
-            ));
-            changed = true;
-        }
-
         if (buscarPorId(2) == null) {
             agregarJuego(new Juego(
                     2,
@@ -88,9 +76,7 @@ public class JuegoService {
     }
 
     private Juego buscarPorId(int id) {
-        for (Juego j : juegos) {
-            if (j.getId() == id) return j;
-        }
+        for (Juego j : juegos) if (j.getId() == id) return j;
         return null;
     }
 
