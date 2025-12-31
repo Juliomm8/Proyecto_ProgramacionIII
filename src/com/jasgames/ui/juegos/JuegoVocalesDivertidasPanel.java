@@ -7,6 +7,7 @@ import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
     private static final String[] VOCALES = new String[]{"A", "E", "I", "O", "U"};
 
     private final Random random = new Random();
+    private final Map<String, ImageIcon> imageCache = new HashMap<>();
 
     // UI
     private LienzoVocales lienzo;
@@ -80,6 +82,15 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
         panelRespuestas = construirPanelRespuestas();
         setPanelRespuestas(panelRespuestas);
         // NO llamar iniciarJuego() aquí (se inicia desde EstudianteWindow)
+    }
+    
+    private ImageIcon cargarIconoClasspath(String resourcePath) {
+        if (resourcePath == null || resourcePath.isEmpty()) return null;
+
+        return imageCache.computeIfAbsent(resourcePath, p -> {
+            java.net.URL url = getClass().getResource(p); // p debe empezar con "/"
+            return (url != null) ? new ImageIcon(url) : null;
+        });
     }
 
     private JPanel construirPanelRespuestas() {
@@ -273,39 +284,39 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
         List<ItemVocal> l = new ArrayList<>();
 
         // A
-        l.add(new ItemVocal("A", "AVIÓN", null));
-        l.add(new ItemVocal("A", "ÁRBOL", null));
-        l.add(new ItemVocal("A", "ABEJA", null));
-        l.add(new ItemVocal("A", "ARAÑA", null));
-        l.add(new ItemVocal("A", "AZUL", null));
+        l.add(new ItemVocal("A", "AVIÓN", "/assets/vocales/avion.png"));
+        l.add(new ItemVocal("A", "ÁRBOL", "/assets/vocales/arbol.png"));
+        l.add(new ItemVocal("A", "ABEJA", "/assets/vocales/abeja.png"));
+        l.add(new ItemVocal("A", "ARAÑA", "/assets/vocales/arana.png"));
+        l.add(new ItemVocal("A", "AZUL", "/assets/vocales/azul.png"));
 
         // E
-        l.add(new ItemVocal("E", "ELEFANTE", null));
-        l.add(new ItemVocal("E", "ESTRELLA", null));
-        l.add(new ItemVocal("E", "ESCALERA", null));
-        l.add(new ItemVocal("E", "ELOTE", null));
-        l.add(new ItemVocal("E", "ESPADA", null));
+        l.add(new ItemVocal("E", "ELEFANTE", "/assets/vocales/elefante.png"));
+        l.add(new ItemVocal("E", "ESTRELLA", "/assets/vocales/estrella.png"));
+        l.add(new ItemVocal("E", "ESCALERA", "/assets/vocales/escalera.png"));
+        l.add(new ItemVocal("E", "ESPEJO", "/assets/vocales/espejo.png"));
+        l.add(new ItemVocal("E", "ESPADA", "/assets/vocales/espada.png"));
 
         // I
-        l.add(new ItemVocal("I", "IGLESIA", null));
-        l.add(new ItemVocal("I", "ISLA", null));
-        l.add(new ItemVocal("I", "IGUANA", null));
-        l.add(new ItemVocal("I", "IMÁN", null));
-        l.add(new ItemVocal("I", "IGLÚ", null));
+        l.add(new ItemVocal("I", "IGLESIA", "/assets/vocales/iglesia.png"));
+        l.add(new ItemVocal("I", "ISLA", "/assets/vocales/isla.png"));
+        l.add(new ItemVocal("I", "IGUANA", "/assets/vocales/iguana.png"));
+        l.add(new ItemVocal("I", "IMÁN", "/assets/vocales/iman.png"));
+        l.add(new ItemVocal("I", "IGLÚ", "/assets/vocales/iglu.png"));
 
         // O
-        l.add(new ItemVocal("O", "OSO", null));
-        l.add(new ItemVocal("O", "OJO", null));
-        l.add(new ItemVocal("O", "OLLA", null));
-        l.add(new ItemVocal("O", "OREJA", null));
-        l.add(new ItemVocal("O", "OCHO", null));
+        l.add(new ItemVocal("O", "OSO", "/assets/vocales/oso.png"));
+        l.add(new ItemVocal("O", "OJO", "/assets/vocales/ojo.png"));
+        l.add(new ItemVocal("O", "OLLA", "/assets/vocales/olla.png"));
+        l.add(new ItemVocal("O", "OREJA", "/assets/vocales/oreja.png"));
+        l.add(new ItemVocal("O", "OCHO", "/assets/vocales/ocho.png"));
 
         // U
-        l.add(new ItemVocal("U", "UVA", null));
-        l.add(new ItemVocal("U", "UÑA", null));
-        l.add(new ItemVocal("U", "UNO", null));
-        l.add(new ItemVocal("U", "UNICORNIO", null));
-        l.add(new ItemVocal("U", "UNIVERSO", null));
+        l.add(new ItemVocal("U", "UVA", "/assets/vocales/uva.png"));
+        l.add(new ItemVocal("U", "UÑA", "/assets/vocales/una.png"));
+        l.add(new ItemVocal("U", "UNO", "/assets/vocales/uno.png"));
+        l.add(new ItemVocal("U", "UNICORNIO", "/assets/vocales/unicornio.png"));
+        l.add(new ItemVocal("U", "UNIVERSO", "/assets/vocales/universo.png"));
 
         return l;
     }
@@ -372,7 +383,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
                 int imgX = (w - imgBox) / 2;
                 int imgY = (int) Math.round(h * 0.12);
 
-                dibujarPictogramaPlaceholder(g2, imgX, imgY, imgBox, item);
+                dibujarPictograma(g2, imgX, imgY, imgBox, item);
 
                 // Zona de palabra (abajo)
                 int wordY = imgY + imgBox + (int) Math.round(h * 0.10);
@@ -487,23 +498,48 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
             }
         }
 
-        private void dibujarPictogramaPlaceholder(Graphics2D g2, int x, int y, int size, ItemVocal item) {
+        private void dibujarPictograma(Graphics2D g2, int x, int y, int size, ItemVocal item) {
             int arc = Math.max(18, size / 6);
 
+            // Sombra suave
+            g2.setColor(new Color(0, 0, 0, 30));
+            g2.fillRoundRect(x + 3, y + 4, size, size, arc, arc);
+
+            // Marco
             g2.setColor(Color.WHITE);
             g2.fillRoundRect(x, y, size, size, arc, arc);
+
             g2.setColor(AccesibleUI.TABLERO_BORDE);
             g2.setStroke(new BasicStroke(2f));
             g2.drawRoundRect(x, y, size, size, arc, arc);
 
-            // MVP: placeholder neutral (evita problemas de emoji/fuentes).
-            g2.setColor(AccesibleUI.TEXTO_NEUTRO);
-            g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
-            String t = "[ IMAGEN ]";
-            FontMetrics fm = g2.getFontMetrics();
-            int tx = x + (size - fm.stringWidth(t)) / 2;
-            int ty = y + size / 2 + fm.getAscent() / 2;
-            g2.drawString(t, tx, ty);
+            int pad = Math.max(10, size / 18);
+            int innerX = x + pad, innerY = y + pad;
+            int innerW = size - pad * 2, innerH = size - pad * 2;
+
+            // Fondo interno gris suave (para separar imágenes con fondo blanco)
+            g2.setColor(new Color(245, 245, 245));
+            g2.fillRoundRect(innerX, innerY, innerW, innerH, arc - 6, arc - 6);
+
+            // Cargar imagen desde src/assets/...
+            if (item == null || item.recursoImagen == null) return;
+            ImageIcon icon = cargarIconoClasspath(item.recursoImagen);
+            if (icon == null) return;
+
+            int iw = icon.getIconWidth();
+            int ih = icon.getIconHeight();
+            if (iw <= 0 || ih <= 0) return;
+
+            // Escala sin deformar
+            double scale = Math.min(innerW / (double) iw, innerH / (double) ih);
+            int dw = (int) Math.round(iw * scale);
+            int dh = (int) Math.round(ih * scale);
+
+            int dx = innerX + (innerW - dw) / 2;
+            int dy = innerY + (innerH - dh) / 2;
+
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.drawImage(icon.getImage(), dx, dy, dw, dh, null);
         }
 
         private double easeOut(double t) {
