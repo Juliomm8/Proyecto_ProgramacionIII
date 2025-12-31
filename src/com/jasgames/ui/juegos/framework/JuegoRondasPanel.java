@@ -229,6 +229,22 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
         timerPulso = null;
     }
 
+    /**
+     * Limpieza automática cuando el panel se remueve del árbol de UI.
+     * Útil para evitar Timers “fantasma” si el usuario sale de un juego.
+     */
+    @Override
+    public void removeNotify() {
+        detenerPulso();
+        onAntesDeSalir();
+        super.removeNotify();
+    }
+
+    /** Hook opcional para que cada juego detenga sus Timers internos (fade, etc.). */
+    protected void onAntesDeSalir() {
+        // opcional
+    }
+
     private int clamp(int v, int min, int max) {
         return Math.max(min, Math.min(max, v));
     }

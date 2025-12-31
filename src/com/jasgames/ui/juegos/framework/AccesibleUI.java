@@ -26,6 +26,12 @@ public final class AccesibleUI {
     public static final Font FONT_PROGRESO = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
     public static final Font FONT_FEEDBACK = new Font(Font.SANS_SERIF, Font.PLAIN, 16);
 
+    public static final Color BORDE_ACTIVO = new Color(70, 70, 70, 160);
+    public static final Color BORDE_INACTIVO = new Color(140, 140, 140, 140);
+    public static final float STROKE_GRUESO = 4f;
+    public static final float STROKE_MEDIO = 3f;
+
+
     public static JPanel crearContenedorTablero(JComponent contenido) {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(TABLERO_BG);

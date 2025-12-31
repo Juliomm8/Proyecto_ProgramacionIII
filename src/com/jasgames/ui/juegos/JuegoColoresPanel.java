@@ -2,6 +2,8 @@ package com.jasgames.ui.juegos;
 
 import com.jasgames.model.Actividad;
 import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
+import com.jasgames.ui.juegos.framework.AccesibleUI;
+import com.jasgames.ui.juegos.framework.Paletas;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +30,7 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
 
     private LienzoColores lienzo;
 
-    private List<ColorItem> paletaCompleta;
+    private List<Paletas.ColorNombre> paletaCompleta;
 
     private List<OpcionColor> opciones;
     private OpcionColor objetivo;
@@ -43,7 +45,7 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
 
         setInstruccion("Toca el círculo que coincide con el color objetivo");
 
-        paletaCompleta = construirPaleta();
+        paletaCompleta = Paletas.coloresConNombre();
 
         lienzo = new LienzoColores();
         lienzo.setOpaque(false);
@@ -68,6 +70,15 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void onAntesDeSalir() {
+        if (opciones != null) {
+            for (OpcionColor op : opciones) {
+                if (op != null && op.fadeTimer != null && op.fadeTimer.isRunning()) op.fadeTimer.stop();
+            }
+        }
+    }
+
+    @Override
     protected int getRondasMetaPorNivel(int nivel) {
         return RONDAS_META; // siempre 5 rondas
     }
@@ -86,18 +97,18 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         int cantidadOpciones = cantidadOpcionesPorNivel(nivel);
 
         // Elegir subconjunto de paleta por nivel (evita saturación en niveles bajos)
-        List<ColorItem> base = paletaPorNivel(nivel);
+        List<Paletas.ColorNombre> base = paletaPorNivel(nivel);
 
         // Seleccionar opciones únicas
         Collections.shuffle(base, random);
-        List<ColorItem> seleccion = base.subList(0, Math.min(cantidadOpciones, base.size()));
+        List<Paletas.ColorNombre> seleccion = base.subList(0, Math.min(cantidadOpciones, base.size()));
 
         for (OpcionColor op : opciones) {
             if (op.fadeTimer != null && op.fadeTimer.isRunning()) op.fadeTimer.stop();
         }
 
         opciones.clear();
-        for (ColorItem item : seleccion) {
+        for (Paletas.ColorNombre item : seleccion) {
             opciones.add(new OpcionColor(item));
         }
 
@@ -128,10 +139,10 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         }
     }
 
-    private List<ColorItem> paletaPorNivel(int nivel) {
+    private List<Paletas.ColorNombre> paletaPorNivel(int nivel) {
         // Define una curva suave: pocos colores al inicio, más después.
         // Puedes ajustar si quieres.
-        List<ColorItem> p = new ArrayList<>(paletaCompleta);
+        List<Paletas.ColorNombre> p = new ArrayList<>(paletaCompleta);
 
         if (nivel == 1) {
             return Arrays.asList(
@@ -159,41 +170,18 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         return p;
     }
 
-    private ColorItem encontrar(String nombre) {
-        for (ColorItem c : paletaCompleta) {
+    private Paletas.ColorNombre encontrar(String nombre) {
+        for (Paletas.ColorNombre c : paletaCompleta) {
             if (c.nombre.equalsIgnoreCase(nombre)) return c;
         }
         return paletaCompleta.get(0);
     }
 
-    private List<ColorItem> construirPaleta() {
-        // Alto contraste / colores sólidos
-        return Arrays.asList(
-                new ColorItem("Rojo", new Color(220, 40, 40)),
-                new ColorItem("Azul", new Color(55, 110, 220)),
-                new ColorItem("Verde", new Color(60, 170, 90)),
-                new ColorItem("Amarillo", new Color(240, 210, 60)),
-                new ColorItem("Naranja", new Color(240, 140, 50)),
-                new ColorItem("Morado", new Color(150, 85, 210)),
-                new ColorItem("Negro", new Color(40, 40, 40)),
-                new ColorItem("Café", new Color(140, 90, 55))
-        );
-    }
-
     // ---------------------------------------------------------------------
     // Modelo interno
     // ---------------------------------------------------------------------
-    private static class ColorItem {
-        final String nombre;
-        final Color color;
-        ColorItem(String nombre, Color color) {
-            this.nombre = nombre;
-            this.color = color;
-        }
-    }
-
     private static class OpcionColor {
-        final ColorItem item;
+        final Paletas.ColorNombre item;
         boolean enabled = true;
         float alpha = 1f;
 
@@ -203,7 +191,7 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         // Fade timer
         Timer fadeTimer;
 
-        OpcionColor(ColorItem item) {
+        OpcionColor(Paletas.ColorNombre item) {
             this.item = item;
         }
 
@@ -439,8 +427,8 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
             g2.fillOval(x, y, d, d);
 
             // borde
-            g2.setStroke(new BasicStroke(4f));
-            g2.setColor(enabled ? new Color(70, 70, 70, 160) : new Color(140, 140, 140, 140));
+            g2.setStroke(new BasicStroke(AccesibleUI.STROKE_GRUESO));
+            g2.setColor(enabled ? AccesibleUI.BORDE_ACTIVO : AccesibleUI.BORDE_INACTIVO);
             g2.drawOval(x + 2, y + 2, d - 4, d - 4);
 
             g2.setComposite(old);

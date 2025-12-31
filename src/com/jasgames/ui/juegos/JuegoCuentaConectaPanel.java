@@ -2,6 +2,8 @@ package com.jasgames.ui.juegos;
 
 import com.jasgames.model.Actividad;
 import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
+import com.jasgames.ui.juegos.framework.AccesibleUI;
+import com.jasgames.ui.juegos.framework.Paletas;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,14 +34,7 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
 
     private enum Forma { CIRCULO, CUADRADO, ESTRELLA }
 
-    private static final Color[] PALETA = new Color[]{
-            new Color(55, 110, 220),
-            new Color(220, 40, 40),
-            new Color(60, 170, 90),
-            new Color(240, 140, 50),
-            new Color(150, 85, 210),
-            new Color(40, 40, 40)
-    };
+    private final Color[] paletaSolida = Paletas.coloresSolidos();
 
     public JuegoCuentaConectaPanel(Actividad actividad, JuegoListener listener) {
         super(actividad, listener);
@@ -82,6 +77,15 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void onAntesDeSalir() {
+        if (botones != null) {
+            for (OpcionNumeroButton b : botones) {
+                if (b != null) b.stopAnimations();
+            }
+        }
+    }
+
+    @Override
     protected int getRondasMetaPorNivel(int nivel) {
         return RONDAS_META; // siempre 5 rondas
     }
@@ -101,7 +105,7 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
 
         numeroObjetivo = random.nextInt(max) + 1;
         formaActual = Forma.values()[random.nextInt(Forma.values().length)];
-        colorActual = PALETA[random.nextInt(PALETA.length)];
+        colorActual = Paletas.colorAleatorio(paletaSolida, random);
 
         List<Integer> opciones = generarOpciones(numeroObjetivo, max);
         for (int i = 0; i < NUM_OPCIONES; i++) {
@@ -186,8 +190,8 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
                 int size = calcularTamFigura(w, h, numeroObjetivo, nivel);
                 List<Point> centros = obtenerCentros(numeroObjetivo, nivel, w, h, size);
 
-                Color borde = new Color(70, 70, 70, 160);
-                g2.setStroke(new BasicStroke(3f));
+                Color borde = AccesibleUI.BORDE_ACTIVO;
+                g2.setStroke(new BasicStroke(AccesibleUI.STROKE_GRUESO));
 
                 for (Point c : centros) {
                     int cx = c.x;
@@ -373,6 +377,11 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
             repaint();
         }
 
+        void stopAnimations() {
+            if (fadeTimer != null && fadeTimer.isRunning()) fadeTimer.stop();
+            fadeTimer = null;
+        }
+
         void fadeOutAndDisable() {
             if (!isEnabled()) return;
             setEnabled(false);
@@ -414,13 +423,13 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
                 int y = (getHeight() - d) / 2;
 
                 Color fill = isEnabled() ? Color.WHITE : new Color(230, 230, 230);
-                Color border = isEnabled() ? new Color(80, 80, 80, 160) : new Color(150, 150, 150, 140);
+                Color border = isEnabled() ? AccesibleUI.BORDE_ACTIVO : AccesibleUI.BORDE_INACTIVO;
                 Color text = isEnabled() ? new Color(30, 30, 30) : new Color(120, 120, 120);
 
                 g2.setColor(fill);
                 g2.fillOval(x, y, d, d);
 
-                g2.setStroke(new BasicStroke(4f));
+                g2.setStroke(new BasicStroke(AccesibleUI.STROKE_GRUESO));
                 g2.setColor(border);
                 g2.drawOval(x + 2, y + 2, d - 4, d - 4);
 
