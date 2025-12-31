@@ -56,8 +56,6 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         vacio.setOpaque(false);
         vacio.setPreferredSize(new Dimension(10, 10));
         setPanelRespuestas(vacio);
-
-        iniciarJuego();
     }
 
     @Override

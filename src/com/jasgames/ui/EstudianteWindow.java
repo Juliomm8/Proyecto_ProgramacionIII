@@ -17,7 +17,6 @@ import com.jasgames.ui.login.AccesoWindow;
 
 import java.awt.*;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -61,15 +60,6 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     
     private JButton btnCambiarNino;
     private JLabel lblAvatarSesion;
-
-    private static final Map<String, Color> COLOR_AULA = new HashMap<>();
-    static {
-        COLOR_AULA.put("Aula Azul", new Color(52, 152, 219));
-        COLOR_AULA.put("Aula Roja", new Color(231, 76, 60));
-        COLOR_AULA.put("Aula Verde", new Color(46, 204, 113));
-        COLOR_AULA.put("Aula Amarilla", new Color(241, 196, 15));
-        COLOR_AULA.put("Aula Morada", new Color(155, 89, 182));
-    }
 
 
     public EstudianteWindow(AppContext context, JFrame ventanaAnterior) {
@@ -180,7 +170,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             return;
         }
 
-        Color c = COLOR_AULA.getOrDefault(aula, new Color(149, 165, 166));
+        Color c = context.getAulaService().colorDeAula(aula);
         panelHeaderEstudiante.setBorder(BorderFactory.createMatteBorder(0, 0, 6, 0, c));
     }
     
@@ -348,8 +338,10 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         // Reset UI puntaje
         lblValorPuntaje.setText("0");
 
-        // Iniciar
-        juegoEnCurso.iniciarJuego();
+        // Iniciar una sola vez, pero después del layout para evitar tamaños 0 en el lienzo
+        SwingUtilities.invokeLater(() -> {
+            if (juegoEnCurso != null) juegoEnCurso.iniciarJuego();
+        });
     }
 
     private void finalizarYGuardarManual() {

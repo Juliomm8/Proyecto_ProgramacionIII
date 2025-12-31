@@ -47,8 +47,6 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
 
         panelRespuestas = construirPanelRespuestas();
         setPanelRespuestas(panelRespuestas);
-
-        iniciarJuego();
     }
 
     private JPanel construirPanelRespuestas() {
