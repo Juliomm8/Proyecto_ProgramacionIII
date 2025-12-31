@@ -16,6 +16,8 @@ public final class JuegoPanelFactory {
                 return new JuegoColoresPanel(actividad, listener);
             case 2:
                 return new JuegoCuentaConectaPanel(actividad, listener);
+            case 3:
+                return new JuegoSigueSeriePanel(actividad, listener);
             default:
                 return null;
         }

@@ -56,6 +56,14 @@ public class JuegoService {
                 1,
                 "Cuenta las figuras y toca el número correcto. 5 rondas completadas = 100 puntos."
         ));
+
+        agregarJuego(new Juego(
+                3,
+                "Sigue la Serie",
+                TipoJuego.SERIES,
+                1,
+                "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas = 100 puntos."
+        ));
     }
 
     private void asegurarJuegosMinimos() {
@@ -79,6 +87,17 @@ public class JuegoService {
                     TipoJuego.NUMEROS,
                     1,
                     "Cuenta las figuras y toca el número correcto. 5 rondas completadas = 100 puntos."
+            ));
+            changed = true;
+        }
+
+        if (buscarPorId(3) == null) {
+            agregarJuego(new Juego(
+                    3,
+                    "Sigue la Serie",
+                    TipoJuego.SERIES,
+                    1,
+                    "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas = 100 puntos."
             ));
             changed = true;
         }
