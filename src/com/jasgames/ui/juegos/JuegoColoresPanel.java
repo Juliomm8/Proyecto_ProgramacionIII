@@ -236,13 +236,12 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         LienzoColores() {
             addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                public void mousePressed(MouseEvent e) {
                     if (isBloqueado()) return;
                     if (objetivo == null || opciones == null || opciones.isEmpty()) return;
 
                     Point p = e.getPoint();
 
-                    // Buscar opción clickeada
                     OpcionColor click = null;
                     for (OpcionColor op : opciones) {
                         if (op.enabled && op.contains(p.x, p.y)) {
@@ -250,16 +249,12 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
                             break;
                         }
                     }
-
                     if (click == null) return;
 
                     if (click == objetivo) {
-                        // Acierto: bloquear interacción, y pulso
-                        setBloqueado(true);
+                        // NO hacer setBloqueado(true) aquí (el framework lo hace)
+                        // NO deshabilitar opciones aquí (el bloqueo del framework evita multi-click)
                         ultimoCorrecto = click;
-
-                        // Deshabilitar todo para evitar multi-click durante animación
-                        for (OpcionColor op : opciones) op.enabled = false;
 
                         marcarAciertoConPulso(LienzoColores.this, null);
                     } else {
@@ -268,6 +263,7 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
                     }
                 }
             });
+
         }
 
         @Override
