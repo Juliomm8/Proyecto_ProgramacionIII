@@ -92,6 +92,10 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
         Collections.shuffle(base, random);
         List<ColorItem> seleccion = base.subList(0, Math.min(cantidadOpciones, base.size()));
 
+        for (OpcionColor op : opciones) {
+            if (op.fadeTimer != null && op.fadeTimer.isRunning()) op.fadeTimer.stop();
+        }
+
         opciones.clear();
         for (ColorItem item : seleccion) {
             opciones.add(new OpcionColor(item));
@@ -238,6 +242,13 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     if (isBloqueado()) return;
+
+                    Dimension d = new Dimension(LienzoColores.this.getWidth(), LienzoColores.this.getHeight());
+                    if (dimensionCache == null || !dimensionCache.equals(d)) {
+                        layoutOpciones(d.width, d.height);
+                        dimensionCache = d;
+                    }
+
                     if (objetivo == null || opciones == null || opciones.isEmpty()) return;
 
                     Point p = e.getPoint();
