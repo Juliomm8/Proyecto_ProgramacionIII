@@ -37,7 +37,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private JTextField txtNombreEstudiante;
     private JPanel panelSeleccionJuego;
     private JLabel lblSeleccionJuego;
-    private JList listaJuegosEstudiante;
+    private JList<Juego> listaJuegosEstudiante;
     private JScrollPane scrollJuegosEstudiante;
     private JPanel panelJuegoEstudiante;
     private JLabel lblPuntajeActual;
@@ -314,7 +314,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             if (ninoActual == null) return;
         }
 
-        Juego juego = (Juego) listaJuegosEstudiante.getSelectedValue();
+        Juego juego = listaJuegosEstudiante.getSelectedValue();
         if (juego == null) {
             JOptionPane.showMessageDialog(this, "Selecciona un juego de la lista.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;

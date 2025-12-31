@@ -61,6 +61,17 @@ public class JuegoService {
     private void asegurarJuegosMinimos() {
         boolean changed = false;
 
+        if (buscarPorId(1) == null) {
+            agregarJuego(new Juego(
+                    1,
+                    "Discriminación de Colores",
+                    TipoJuego.COLORES,
+                    1,
+                    "Toca el círculo que coincide con el color objetivo. 5 rondas completadas = 100 puntos."
+            ));
+            changed = true;
+        }
+
         if (buscarPorId(2) == null) {
             agregarJuego(new Juego(
                     2,

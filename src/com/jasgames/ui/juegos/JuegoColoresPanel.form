@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jasgames.ui.juegos.JuegoColoresPanel">
-  <grid id="27dc6" binding="panelJuegoColores" layout-manager="BorderLayout" hgap="0" vgap="0">
+  <grid id="27dc6" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
       <xy x="20" y="20" width="500" height="400"/>
     </constraints>
@@ -8,45 +8,6 @@
     <border type="empty">
       <size top="20" left="20" bottom="20" right="20"/>
     </border>
-    <children>
-      <grid id="5a2fd" binding="panelInstruccion" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints border-constraint="North"/>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="34234" class="javax.swing.JLabel" binding="lblInstruccion">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <font size="26" style="1"/>
-              <horizontalAlignment value="0"/>
-              <horizontalTextPosition value="11"/>
-              <text value="Toca el color ROJO"/>
-            </properties>
-          </component>
-          <component id="a5201" class="javax.swing.JLabel" binding="lblFeedback">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <font size="16"/>
-              <text value=" "/>
-            </properties>
-          </component>
-        </children>
-      </grid>
-      <grid id="7b2a9" binding="panelLienzo" layout-manager="BorderLayout" hgap="0" vgap="0">
-        <constraints border-constraint="Center"/>
-        <properties>
-          <foreground color="-1"/>
-        </properties>
-        <border type="line">
-          <color color="-1"/>
-        </border>
-        <children/>
-      </grid>
-    </children>
+    <children/>
   </grid>
 </form>
