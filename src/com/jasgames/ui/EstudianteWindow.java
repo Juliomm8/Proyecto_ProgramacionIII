@@ -12,6 +12,7 @@ import com.jasgames.service.ResultadoService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
 import com.jasgames.ui.juegos.JuegoColoresPanel;
 import com.jasgames.ui.juegos.JuegoListener;
+import com.jasgames.ui.juegos.JuegoPanelFactory;
 import com.jasgames.ui.login.AccesoWindow;
 
 import java.awt.*;
@@ -326,11 +327,15 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
         Actividad actividad = new Actividad((int) System.currentTimeMillis(), juego, nivel, 0);
 
-        // Instanciamos el panel del juego según su tipo
-        if (juego.getTipo() == TipoJuego.COLORES) {
-            juegoEnCurso = new JuegoColoresPanel(actividad, this);
-        } else {
-            JOptionPane.showMessageDialog(this, "Tipo de juego no implementado aún: " + juego.getTipo(), "Aviso", JOptionPane.WARNING_MESSAGE);
+        // Crear panel usando factory
+        juegoEnCurso = JuegoPanelFactory.crearPanel(actividad, this);
+        if (juegoEnCurso == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Juego no implementado aún (id=" + juego.getId() + ")",
+                    "Aviso",
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 

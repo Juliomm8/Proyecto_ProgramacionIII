@@ -30,14 +30,15 @@ public class JuegoService {
         this.juegos = new ArrayList<>();
         this.colaActividades = new LinkedList<>();
 
-        // 1) Intentar cargar desde data/juegos.json
         boolean cargado = cargarJuegosDesdeArchivo();
 
-        // 2) Si no existe o está vacío, cargamos los iniciales y lo guardamos
         if (!cargado) {
             cargarJuegosIniciales();
-            guardar(); // crea data/juegos.json en la primera ejecución
+            guardar();
         }
+
+        // Asegura que existan los juegos mínimos aunque el json venga viejo
+        asegurarJuegosMinimos();
     }
 
     private void cargarJuegosIniciales() {
@@ -48,6 +49,49 @@ public class JuegoService {
                 1,
                 "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error."
         ));
+
+        agregarJuego(new Juego(
+                2,
+                "Cuenta y Conecta",
+                TipoJuego.NUMEROS,
+                1,
+                "Cuenta las figuras y toca el número correcto. 5 rondas completadas = 100 puntos."
+        ));
+    }
+
+    private void asegurarJuegosMinimos() {
+        boolean changed = false;
+
+        if (buscarPorId(1) == null) {
+            agregarJuego(new Juego(
+                    1,
+                    "Discriminación de Colores",
+                    TipoJuego.COLORES,
+                    1,
+                    "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error."
+            ));
+            changed = true;
+        }
+
+        if (buscarPorId(2) == null) {
+            agregarJuego(new Juego(
+                    2,
+                    "Cuenta y Conecta",
+                    TipoJuego.NUMEROS,
+                    1,
+                    "Cuenta las figuras y toca el número correcto. 5 rondas completadas = 100 puntos."
+            ));
+            changed = true;
+        }
+
+        if (changed) guardar();
+    }
+
+    private Juego buscarPorId(int id) {
+        for (Juego j : juegos) {
+            if (j.getId() == id) return j;
+        }
+        return null;
     }
 
     /** Guarda juegos (incluye habilitado y dificultad global) en data/juegos.json */
