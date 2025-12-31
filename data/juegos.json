@@ -14,5 +14,21 @@
     "dificultad": 1,
     "descripcion": "Cuenta las figuras y toca el número correcto. 5 rondas completadas \u003d 100 puntos.",
     "habilitado": true
+  },
+  {
+    "id": 3,
+    "nombre": "Sigue la Serie",
+    "tipo": "SERIES",
+    "dificultad": 2,
+    "descripcion": "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas \u003d 100 puntos.",
+    "habilitado": true
+  },
+  {
+    "id": 4,
+    "nombre": "Vocales Divertidas",
+    "tipo": "FONEMAS",
+    "dificultad": 1,
+    "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+    "habilitado": true
   }
 ]

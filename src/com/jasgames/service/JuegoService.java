@@ -64,6 +64,14 @@ public class JuegoService {
                 1,
                 "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas = 100 puntos."
         ));
+
+        agregarJuego(new Juego(
+                4,
+                "Vocales Divertidas",
+                TipoJuego.FONEMAS,
+                1,
+                "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados."
+        ));
     }
 
     private void asegurarJuegosMinimos() {
@@ -98,6 +106,17 @@ public class JuegoService {
                     TipoJuego.SERIES,
                     1,
                     "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas = 100 puntos."
+            ));
+            changed = true;
+        }
+
+        if (buscarPorId(4) == null) {
+            agregarJuego(new Juego(
+                    4,
+                    "Vocales Divertidas",
+                    TipoJuego.FONEMAS,
+                    1,
+                    "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados."
             ));
             changed = true;
         }
