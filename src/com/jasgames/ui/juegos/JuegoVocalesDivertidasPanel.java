@@ -377,16 +377,16 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
                 if (w <= 0 || h <= 0) return;
 
                 // Zona de pictograma (arriba)
-                int imgBox = (int) Math.round(Math.min(w, h) * 0.48);
-                imgBox = clamp(imgBox, 140, 260);
+                int imgBox = (int) Math.round(Math.min(w, h) * 0.62);
+                imgBox = clamp(imgBox, 220, 380);
 
                 int imgX = (w - imgBox) / 2;
-                int imgY = (int) Math.round(h * 0.12);
+                int imgY = (int) Math.round(h * 0.07);
 
                 dibujarPictograma(g2, imgX, imgY, imgBox, item);
 
                 // Zona de palabra (abajo)
-                int wordY = imgY + imgBox + (int) Math.round(h * 0.10);
+                int wordY = imgY + imgBox + (int) Math.round(h * 0.12);
                 wordY = Math.min(wordY, h - 70);
 
                 String palabra = item.palabraCompleta;
@@ -513,7 +513,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
             g2.setStroke(new BasicStroke(2f));
             g2.drawRoundRect(x, y, size, size, arc, arc);
 
-            int pad = Math.max(10, size / 18);
+            int pad = Math.max(10, size / 24);
             int innerX = x + pad, innerY = y + pad;
             int innerW = size - pad * 2, innerH = size - pad * 2;
 
