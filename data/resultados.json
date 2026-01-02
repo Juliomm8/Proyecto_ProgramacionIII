@@ -2830,5 +2830,229 @@
     "puntaje": 100,
     "fechaHora": "2025-12-31T00:11:14.099233",
     "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 3,
+      "nombre": "Sigue la Serie",
+      "tipo": "SERIES",
+      "dificultad": 1,
+      "descripcion": "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas \u003d 100 puntos.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T12:18:47.279017500",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 3,
+      "nombre": "Sigue la Serie",
+      "tipo": "SERIES",
+      "dificultad": 2,
+      "descripcion": "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas \u003d 100 puntos.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T12:38:44.913381",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T13:48:56.062971500",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 1,
+      "nombre": "Discriminación de Colores",
+      "tipo": "COLORES",
+      "dificultad": 4,
+      "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:16:50.307815600",
+    "dificultad": 2
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 2,
+      "nombre": "Cuenta y Conecta",
+      "tipo": "NUMEROS",
+      "dificultad": 1,
+      "descripcion": "Cuenta las figuras y toca el número correcto. 5 rondas completadas \u003d 100 puntos.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:17:00.332052900",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 3,
+      "nombre": "Sigue la Serie",
+      "tipo": "SERIES",
+      "dificultad": 2,
+      "descripcion": "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas \u003d 100 puntos.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:17:16.314894100",
+    "dificultad": 3
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:17:35.564367500",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:18:45.887476100",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:34:31.369864200",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T18:34:50.842644500",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2025-12-31T20:31:40.086677300",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2026-01-01T22:04:12.266108500",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2026-01-01T22:05:56.363318",
+    "dificultad": 1
+  },
+  {
+    "idEstudiante": 1,
+    "nombreEstudiante": "Julio Mera",
+    "aula": "Aula Azul",
+    "juego": {
+      "id": 4,
+      "nombre": "Vocales Divertidas",
+      "tipo": "FONEMAS",
+      "dificultad": 1,
+      "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
+      "habilitado": true
+    },
+    "puntaje": 100,
+    "fechaHora": "2026-01-01T22:18:58.326638100",
+    "dificultad": 1
   }
 ]

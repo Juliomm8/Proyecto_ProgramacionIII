@@ -216,3 +216,89 @@
 2025-12-31 01:19:19 | SELECCION_AULA | aula=Aula Morada
 2025-12-31 01:19:21 | INGRESO_ESTUDIANTE | id=18 nombre=Gael Medina aula=Aula Morada
 2025-12-31 01:19:24 | SALIDA_ESTUDIANTE | id=18 nombre=Gael Medina aula=Aula Morada
+2025-12-31 12:17:53 | LOGIN_DOCENTE | usuario=admin exito=false
+2025-12-31 12:17:58 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 12:18:05 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 12:18:08 | SELECCION_AULA | aula=Aula Prueba
+2025-12-31 12:18:10 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 12:18:13 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:18:21 | SELECCION_AULA | aula=Aula Morada
+2025-12-31 12:18:25 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 12:18:29 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:18:31 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 12:18:59 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 12:29:20 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 12:29:25 | SELECCION_AULA | aula=Aula Morada
+2025-12-31 12:29:27 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 12:29:35 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 12:29:53 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 12:29:54 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:30:05 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 12:30:29 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 12:30:31 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:37:48 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:37:55 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 12:37:59 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:38:04 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 12:38:13 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 12:38:19 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 12:38:27 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 12:38:29 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 12:38:31 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 12:40:35 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 13:48:17 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 13:48:23 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 13:48:25 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 13:48:35 | SELECCION_AULA | aula=Aula Amarilla
+2025-12-31 13:48:37 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 13:48:39 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 13:49:01 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 15:31:59 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 15:32:12 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 15:32:13 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:12:05 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:12:07 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:12:15 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:15:57 | LOGIN_DOCENTE | usuario=admin exito=true
+2025-12-31 18:16:36 | LOGOUT_DOCENTE | usuario=admin
+2025-12-31 18:16:37 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:16:39 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:17:40 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:18:31 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:18:33 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:18:54 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:20:35 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:20:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:23:05 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:26:34 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:26:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:33:57 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:33:58 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:34:04 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:34:13 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 18:34:15 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 18:34:54 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:12:17 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 20:12:21 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:12:32 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:13:35 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 20:13:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:20:13 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:20:36 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 20:20:38 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:20:43 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:31:24 | SELECCION_AULA | aula=Aula Azul
+2025-12-31 20:31:25 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2025-12-31 20:31:43 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:03:50 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:03:52 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:06:05 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:09:41 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:09:42 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:09:49 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:17:58 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:17:59 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:18:07 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:18:36 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:18:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:19:00 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul

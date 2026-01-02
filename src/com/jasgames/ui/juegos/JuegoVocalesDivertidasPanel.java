@@ -4,10 +4,12 @@ import com.jasgames.model.Actividad;
 import com.jasgames.ui.juegos.framework.AccesibleUI;
 import com.jasgames.ui.juegos.framework.JuegoRondasPanel;
 
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +35,8 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
 
     private final Random random = new Random();
     private final Map<String, ImageIcon> imageCache = new HashMap<>();
+    private final Map<String, Clip> audioCache = new HashMap<>();
+    private Clip clipActual = null;
 
     // UI
     private LienzoVocales lienzo;
@@ -60,11 +64,13 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
         final String vocalCorrecta;   // lógica: "A" | "E" | "I" | "O" | "U"
         final String palabraCompleta; // presentación: puede tener tildes (ej. "ÁRBOL")
         final String recursoImagen;   // opcional: futuro /assets/...png
+        final String recursoAudio;
 
-        ItemVocal(String vocalCorrecta, String palabraCompleta, String recursoImagen) {
+        ItemVocal(String vocalCorrecta, String palabraCompleta, String recursoImagen, String recursoAudio) {
             this.vocalCorrecta = vocalCorrecta;
             this.palabraCompleta = palabraCompleta;
             this.recursoImagen = recursoImagen;
+            this.recursoAudio = recursoAudio;
         }
     }
 
@@ -91,6 +97,107 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
             java.net.URL url = getClass().getResource(p); // p debe empezar con "/"
             return (url != null) ? new ImageIcon(url) : null;
         });
+    }
+
+    private void reproducirAudioAsync(String resourcePath) {
+        if (resourcePath == null || resourcePath.isEmpty()) return;
+
+        new Thread(() -> {
+            try {
+                Clip clip = cargarClip(resourcePath);
+                if (clip == null) return;
+
+                synchronized (audioCache) {
+                    if (clipActual != null && clipActual.isRunning()) clipActual.stop();
+                    clipActual = clip;
+                }
+
+                clip.stop();
+                clip.setFramePosition(0);
+                clip.start();
+            } catch (Exception ignored) {}
+        }, "Audio-JAS").start();
+    }
+
+    private void reproducirAudioYDespues(String resourcePath, Runnable onFinish) {
+        if (onFinish == null) return;
+
+        // Si no hay audio, continúa de inmediato
+        if (resourcePath == null || resourcePath.isEmpty()) {
+            SwingUtilities.invokeLater(onFinish);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                Clip clip = cargarClip(resourcePath);
+                if (clip == null) {
+                    SwingUtilities.invokeLater(onFinish);
+                    return;
+                }
+
+                // Detener cualquier audio anterior para que no se encimen
+                synchronized (audioCache) {
+                    if (clipActual != null && clipActual.isRunning()) {
+                        clipActual.stop();
+                    }
+                    clipActual = clip;
+                }
+
+                // Reiniciar el clip
+                clip.stop();
+                clip.setFramePosition(0);
+
+                // Listener de FIN: cuando el clip termine, recién avanzamos
+                final LineListener[] holder = new LineListener[1];
+                holder[0] = event -> {
+                    if (event.getType() == LineEvent.Type.STOP) {
+                        clip.removeLineListener(holder[0]);
+
+                        // Si el panel ya no existe (saliste del juego), no hagas nada
+                        if (!JuegoVocalesDivertidasPanel.this.isDisplayable()) return;
+
+                        SwingUtilities.invokeLater(onFinish);
+                    }
+                };
+
+                clip.addLineListener(holder[0]);
+                clip.start();
+
+            } catch (Exception ex) {
+                // Si falla el audio, no bloqueamos el juego
+                SwingUtilities.invokeLater(onFinish);
+            }
+        }, "Audio-JAS").start();
+    }
+
+    private Clip cargarClip(String resourcePath) throws Exception {
+        synchronized (audioCache) {
+            if (audioCache.containsKey(resourcePath)) return audioCache.get(resourcePath);
+        }
+
+        URL url = getClass().getResource(resourcePath);
+        if (url == null) return null;
+
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(url)) {
+            Clip clip = AudioSystem.getClip();
+            clip.open(ais);
+
+            synchronized (audioCache) {
+                audioCache.put(resourcePath, clip);
+            }
+            return clip;
+        }
+    }
+
+    private void cerrarAudios() {
+        synchronized (audioCache) {
+            for (Clip c : audioCache.values()) {
+                try { c.close(); } catch (Exception ignored) {}
+            }
+            audioCache.clear();
+            clipActual = null;
+        }
     }
 
     private JPanel construirPanelRespuestas() {
@@ -129,6 +236,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
     @Override
     protected void onAntesDeSalir() {
         detenerAnimacion();
+        cerrarAudios();
         if (botones != null) {
             for (VocalButton b : botones) {
                 if (b != null) b.stopAnimations();
@@ -188,7 +296,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
 
         if (valor.equals(vocalCorrecta)) {
             // Refuerzo sonoro MVP
-            Toolkit.getDefaultToolkit().beep();
+            // Toolkit.getDefaultToolkit().beep();
 
             for (VocalButton b : botones) b.setEnabled(false);
             btn.setCorrecto(true);
@@ -255,7 +363,9 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
                 mostrarCompleta = true;
                 lienzo.repaint();
 
-                marcarAciertoConPulso(lienzo, this::resetPostAcierto);
+                reproducirAudioYDespues(itemActual.recursoAudio, () ->
+                        marcarAciertoConPulso(lienzo, this::resetPostAcierto)
+                );
                 return;
             }
             lienzo.repaint();
@@ -280,43 +390,42 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
     // -------------------- Banco / rondas --------------------
 
     private List<ItemVocal> construirBancoInicial() {
-        // Lista curada (nivel 1 seguro). Recurso de imagen queda preparado para futuro.
         List<ItemVocal> l = new ArrayList<>();
 
         // A
-        l.add(new ItemVocal("A", "AVIÓN", "/assets/vocales/avion.png"));
-        l.add(new ItemVocal("A", "ÁRBOL", "/assets/vocales/arbol.png"));
-        l.add(new ItemVocal("A", "ABEJA", "/assets/vocales/abeja.png"));
-        l.add(new ItemVocal("A", "ARAÑA", "/assets/vocales/arana.png"));
-        l.add(new ItemVocal("A", "AZUL", "/assets/vocales/azul.png"));
+        l.add(new ItemVocal("A", "AVIÓN", "/assets/vocales/avion.png", "/assets/audio/vocales/avion.wav"));
+        l.add(new ItemVocal("A", "ÁRBOL", "/assets/vocales/arbol.png", "/assets/audio/vocales/arbol.wav"));
+        l.add(new ItemVocal("A", "ABEJA", "/assets/vocales/abeja.png", "/assets/audio/vocales/abeja.wav"));
+        l.add(new ItemVocal("A", "ARAÑA", "/assets/vocales/arana.png", "/assets/audio/vocales/arana.wav"));
+        l.add(new ItemVocal("A", "AZUL", "/assets/vocales/azul.png", "/assets/audio/vocales/azul.wav"));
 
         // E
-        l.add(new ItemVocal("E", "ELEFANTE", "/assets/vocales/elefante.png"));
-        l.add(new ItemVocal("E", "ESTRELLA", "/assets/vocales/estrella.png"));
-        l.add(new ItemVocal("E", "ESCALERA", "/assets/vocales/escalera.png"));
-        l.add(new ItemVocal("E", "ESPEJO", "/assets/vocales/espejo.png"));
-        l.add(new ItemVocal("E", "ESPADA", "/assets/vocales/espada.png"));
+        l.add(new ItemVocal("E", "ELEFANTE", "/assets/vocales/elefante.png", "/assets/audio/vocales/elefante.wav"));
+        l.add(new ItemVocal("E", "ESTRELLA", "/assets/vocales/estrella.png", "/assets/audio/vocales/estrella.wav"));
+        l.add(new ItemVocal("E", "ESCALERA", "/assets/vocales/escalera.png", "/assets/audio/vocales/escalera.wav"));
+        l.add(new ItemVocal("E", "ESPEJO", "/assets/vocales/espejo.png", "/assets/audio/vocales/espejo.wav"));
+        l.add(new ItemVocal("E", "ESPADA", "/assets/vocales/espada.png", "/assets/audio/vocales/espada.wav"));
 
         // I
-        l.add(new ItemVocal("I", "IGLESIA", "/assets/vocales/iglesia.png"));
-        l.add(new ItemVocal("I", "ISLA", "/assets/vocales/isla.png"));
-        l.add(new ItemVocal("I", "IGUANA", "/assets/vocales/iguana.png"));
-        l.add(new ItemVocal("I", "IMÁN", "/assets/vocales/iman.png"));
-        l.add(new ItemVocal("I", "IGLÚ", "/assets/vocales/iglu.png"));
+        l.add(new ItemVocal("I", "IGLESIA", "/assets/vocales/iglesia.png", "/assets/audio/vocales/iglesia.wav"));
+        l.add(new ItemVocal("I", "ISLA", "/assets/vocales/isla.png", "/assets/audio/vocales/isla.wav"));
+        l.add(new ItemVocal("I", "IGUANA", "/assets/vocales/iguana.png", "/assets/audio/vocales/iguana.wav"));
+        l.add(new ItemVocal("I", "IMÁN", "/assets/vocales/iman.png", "/assets/audio/vocales/iman.wav"));
+        l.add(new ItemVocal("I", "IGLÚ", "/assets/vocales/iglu.png", "/assets/audio/vocales/iglu.wav"));
 
         // O
-        l.add(new ItemVocal("O", "OSO", "/assets/vocales/oso.png"));
-        l.add(new ItemVocal("O", "OJO", "/assets/vocales/ojo.png"));
-        l.add(new ItemVocal("O", "OLLA", "/assets/vocales/olla.png"));
-        l.add(new ItemVocal("O", "OREJA", "/assets/vocales/oreja.png"));
-        l.add(new ItemVocal("O", "OCHO", "/assets/vocales/ocho.png"));
+        l.add(new ItemVocal("O", "OSO", "/assets/vocales/oso.png", "/assets/audio/vocales/oso.wav"));
+        l.add(new ItemVocal("O", "OJO", "/assets/vocales/ojo.png", "/assets/audio/vocales/ojo.wav"));
+        l.add(new ItemVocal("O", "OLLA", "/assets/vocales/olla.png", "/assets/audio/vocales/olla.wav"));
+        l.add(new ItemVocal("O", "OREJA", "/assets/vocales/oreja.png", "/assets/audio/vocales/oreja.wav"));
+        l.add(new ItemVocal("O", "OCHO", "/assets/vocales/ocho.png", "/assets/audio/vocales/ocho.wav"));
 
         // U
-        l.add(new ItemVocal("U", "UVA", "/assets/vocales/uva.png"));
-        l.add(new ItemVocal("U", "UÑA", "/assets/vocales/una.png"));
-        l.add(new ItemVocal("U", "UNO", "/assets/vocales/uno.png"));
-        l.add(new ItemVocal("U", "UNICORNIO", "/assets/vocales/unicornio.png"));
-        l.add(new ItemVocal("U", "UNIVERSO", "/assets/vocales/universo.png"));
+        l.add(new ItemVocal("U", "UVA", "/assets/vocales/uva.png", "/assets/audio/vocales/uva.wav"));
+        l.add(new ItemVocal("U", "UÑA", "/assets/vocales/una.png", "/assets/audio/vocales/una.wav"));
+        l.add(new ItemVocal("U", "UNO", "/assets/vocales/uno.png", "/assets/audio/vocales/uno.wav"));
+        l.add(new ItemVocal("U", "UNICORNIO", "/assets/vocales/unicornio.png", "/assets/audio/vocales/unicornio.wav"));
+        l.add(new ItemVocal("U", "UNIVERSO", "/assets/vocales/universo.png", "/assets/audio/vocales/universo.wav"));
 
         return l;
     }

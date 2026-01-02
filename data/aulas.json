@@ -6,13 +6,5 @@
   {
     "nombre": "Aula Amarilla",
     "colorHex": "#F1C40F"
-  },
-  {
-    "nombre": "Aula Morada",
-    "colorHex": "#9933FF"
-  },
-  {
-    "nombre": "Aula Prueba",
-    "colorHex": "#6666FF"
   }
 ]
