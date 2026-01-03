@@ -39,6 +39,9 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private boolean bloqueado = false;
     private Timer timerSiguiente = null;
 
+    private boolean audioFeedbackEnCurso = false; // error / acierto+palabra
+    private boolean audioPreguntaEnCurso = false; // repetir pregunta
+
     // ====== Modelo interno ======
     private static class VocalItem {
         final char vocal;
@@ -159,13 +162,18 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     }
 
     private void siguienteRonda() {
-        bloqueado = false;
+        audioFeedbackEnCurso = false;
+        audioPreguntaEnCurso = false;
+        btnRepetir.setEnabled(true);
 
         for (JButton b : btnOpciones) {
+            b.putClientProperty("elim", false); // reset de eliminadas
             b.setEnabled(true);
             b.setBorder(null);
             b.setIcon(null);
         }
+
+        bloqueado = false;
 
         if (rondaIdx >= orden.size()) {
             finDelJuego();
@@ -203,13 +211,23 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     }
 
     private void repetirAudioPregunta() {
-        if (audioPreguntaActual != null) {
-            AudioPlayer.play(audioPreguntaActual, null);
-        }
+        if (audioPreguntaActual == null) return;
+
+        // Si ya hay un audio de feedback (error/acierto) o ya está sonando la pregunta, ignorar.
+        if (audioFeedbackEnCurso || audioPreguntaEnCurso) return;
+
+        audioPreguntaEnCurso = true;
+        btnRepetir.setEnabled(false);
+
+        AudioPlayer.play(audioPreguntaActual, () -> {
+            audioPreguntaEnCurso = false;
+            // Solo re-habilitar si no estamos bloqueados por otra cosa
+            if (!audioFeedbackEnCurso) btnRepetir.setEnabled(true);
+        });
     }
 
     private void onElegirOpcion(int idx) {
-        if (bloqueado) return;
+        if (bloqueado || audioFeedbackEnCurso) return;
 
         JButton b = btnOpciones[idx];
         VocalItem elegido = (VocalItem) b.getClientProperty("item");
@@ -217,6 +235,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         if (elegido == correctaActual) {
             bloqueado = true;
+            audioFeedbackEnCurso = true;
+            btnRepetir.setEnabled(false);
 
             b.setBorder(new LineBorder(new Color(20, 170, 60), 5, true));
             for (JButton other : btnOpciones) other.setEnabled(false);
@@ -225,6 +245,9 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
                     AUDIO_JUEGO5 + "acierto.wav",
                     correctaActual.audioPath,
                     () -> {
+                        // el feedback ya terminó, pero igual seguimos bloqueados hasta pasar de ronda
+                        audioFeedbackEnCurso = false;
+
                         timerSiguiente = new Timer(2000, ev -> {
                             ((Timer) ev.getSource()).stop();
                             rondaIdx++;
@@ -238,13 +261,26 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         } else {
             intentosFallidos++;
 
-            b.setEnabled(false);
+            audioFeedbackEnCurso = true;
+            btnRepetir.setEnabled(false);
+
+            // Marcar esta opción como eliminada
+            b.putClientProperty("elim", true);
             b.setBorder(new LineBorder(new Color(200, 60, 60), 4, true));
 
             Icon currentIcon = b.getIcon();
             if (currentIcon != null) b.setIcon(makeTransparent(currentIcon, 0.25f));
 
-            AudioPlayer.play(AUDIO_JUEGO5 + "error.wav", null);
+            // Bloquear TODAS las opciones mientras suena el error (para evitar spam)
+            for (JButton x : btnOpciones) x.setEnabled(false);
+
+            AudioPlayer.play(AUDIO_JUEGO5 + "error.wav", () -> {
+                audioFeedbackEnCurso = false;
+                btnRepetir.setEnabled(true);
+
+                // Rehabilitar solo las que NO están eliminadas
+                setOpcionesEnabledRespetandoEliminadas(true);
+            });
         }
     }
 
@@ -293,10 +329,19 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         return new ImageIcon(out);
     }
 
+    private void setOpcionesEnabledRespetandoEliminadas(boolean enabled) {
+        for (JButton b : btnOpciones) {
+            boolean elim = Boolean.TRUE.equals(b.getClientProperty("elim"));
+            b.setEnabled(enabled && !elim);
+        }
+    }
+
     @Override
     public void removeNotify() {
         super.removeNotify();
         if (timerSiguiente != null && timerSiguiente.isRunning()) timerSiguiente.stop();
+        audioFeedbackEnCurso = false;
+        audioPreguntaEnCurso = false;
         AudioPlayer.stop();
     }
 }
