@@ -4,13 +4,18 @@
     "nombre": "Julio Mera",
     "edad": 3,
     "diagnostico": "Dificultad sensorial",
-    "puntosTotales": 148,
+    "puntosTotales": 1948,
     "juegosAsignados": [
       1,
-      2
+      2,
+      3,
+      4,
+      5
     ],
     "dificultadPorJuego": {
-      "1": 2
+      "1": 5,
+      "2": 5,
+      "3": 5
     },
     "aula": "Aula Azul",
     "avatar": "🦁"
@@ -87,7 +92,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🐶"
   },
   {
@@ -237,7 +242,7 @@
     "dificultadPorJuego": {
       "1": 1
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🐨"
   },
   {
@@ -252,7 +257,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Prueba",
+    "aula": "Aula Azul",
     "avatar": "🐨"
   },
   {
@@ -267,7 +272,7 @@
     "dificultadPorJuego": {
       "1": 2
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🐨"
   },
   {
@@ -277,7 +282,10 @@
     "diagnostico": "Dificultad sensorial",
     "puntosTotales": 54,
     "juegosAsignados": [
-      1
+      1,
+      2,
+      3,
+      4
     ],
     "dificultadPorJuego": {
       "1": 2
@@ -297,7 +305,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🐯"
   },
   {
@@ -342,7 +350,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🙂"
   },
   {
@@ -372,7 +380,7 @@
     "dificultadPorJuego": {
       "1": 5
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🤩"
   },
   {
@@ -387,7 +395,7 @@
     "dificultadPorJuego": {
       "1": 4
     },
-    "aula": "Aula Morada",
+    "aula": "Aula Azul",
     "avatar": "🐸"
   },
   {

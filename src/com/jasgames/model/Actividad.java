@@ -6,6 +6,7 @@ public class Actividad {
     private Juego juego;
     private int nivel;
     private int puntos;
+    private int intentosFallidos = 0;
 
     public Actividad(int id, Juego juego, int nivel, int puntos) {
         this.id = id;
@@ -32,6 +33,14 @@ public class Actividad {
 
     public void setPuntos(int puntos) {
         this.puntos = puntos;
+    }
+
+    public int getIntentosFallidos() {
+        return intentosFallidos;
+    }
+
+    public void setIntentosFallidos(int intentosFallidos) {
+        this.intentosFallidos = intentosFallidos;
     }
 
     @Override

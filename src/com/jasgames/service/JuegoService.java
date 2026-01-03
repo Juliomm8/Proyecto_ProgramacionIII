@@ -64,6 +64,23 @@ public class JuegoService {
                 1,
                 "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas = 100 puntos."
         ));
+
+        agregarJuego(new Juego(
+                4,
+                "Vocales Divertidas",
+                TipoJuego.FONEMAS,
+                1,
+                "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados."
+        ));
+
+        agregarJuego(new Juego(
+                5,
+                "Explorando las Vocales",
+                TipoJuego.FONEMAS,
+                1,
+                "Escucha la pregunta y toca la imagen cuyo nombre empieza con la vocal mostrada. 5 rondas = 100 puntos."
+        ));
+
     }
 
     private void asegurarJuegosMinimos() {
@@ -102,6 +119,28 @@ public class JuegoService {
             changed = true;
         }
 
+        if (buscarPorId(4) == null) {
+            agregarJuego(new Juego(
+                    4,
+                    "Vocales Divertidas",
+                    TipoJuego.FONEMAS,
+                    1,
+                    "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados."
+            ));
+            changed = true;
+        }
+
+        if (buscarPorId(5) == null) {
+            agregarJuego(new Juego(
+                    5,
+                    "Explorando las Vocales",
+                    TipoJuego.FONEMAS,
+                    1,
+                    "Escucha la pregunta y toca la imagen cuyo nombre empieza con la vocal mostrada. 5 rondas = 100 puntos."
+            ));
+            changed = true;
+        }
+
         if (changed) guardar();
     }
 
@@ -116,7 +155,7 @@ public class JuegoService {
             Path pathArchivo = Paths.get(ARCHIVO_JUEGOS);
             Path carpeta = pathArchivo.getParent();
             if (carpeta != null) {
-                Files.createDirectories(carpeta); // crea "data" si no existe
+                Files.createDirectories(carpeta);
             }
 
             String json = gson.toJson(juegos);
