@@ -42,6 +42,11 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private boolean audioFeedbackEnCurso = false; // error / acierto+palabra
     private boolean audioPreguntaEnCurso = false; // repetir pregunta
 
+    // Campos nuevos para efectos visuales
+    private float bodyAlpha = 1f;
+    private JPanel bodyPanel;
+    private JLabel lblProgreso;
+
     // ====== Modelo interno ======
     private static class VocalItem {
         final char vocal;
@@ -84,7 +89,17 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         lblTitulo = new JLabel("Las Vocales");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 34));
         lblTitulo.setForeground(new Color(30, 80, 200));
-        header.add(lblTitulo, BorderLayout.WEST);
+
+        lblProgreso = new JLabel("Ronda 1/5");
+        lblProgreso.setFont(new Font("Arial", Font.BOLD, 18));
+        lblProgreso.setForeground(new Color(90, 90, 90));
+
+        JPanel left = new JPanel(new GridLayout(2, 1));
+        left.setOpaque(false);
+        left.add(lblTitulo);
+        left.add(lblProgreso);
+
+        header.add(left, BorderLayout.WEST);
 
         btnRepetir = new JButton("🔊 Repetir");
         btnRepetir.setFocusPainted(false);
@@ -93,11 +108,22 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         add(header, BorderLayout.NORTH);
 
+        // BODY con FADE (letra + opciones)
+        bodyPanel = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintChildren(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, bodyAlpha));
+                super.paintChildren(g2);
+                g2.dispose();
+            }
+        };
+        bodyPanel.setOpaque(false);
+
         lblVocal = new JLabel(" ", SwingConstants.CENTER);
-        lblVocal.setVisible(false);
         lblVocal.setFont(new Font("Arial", Font.BOLD, 140));
         lblVocal.setForeground(new Color(30, 80, 200));
-        add(lblVocal, BorderLayout.CENTER);
+        bodyPanel.add(lblVocal, BorderLayout.CENTER);
 
         JPanel opciones = new JPanel(new GridLayout(1, 3, 30, 0));
         opciones.setOpaque(false);
@@ -137,7 +163,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             opciones.add(b);
         }
 
-        add(opciones, BorderLayout.SOUTH);
+        bodyPanel.add(opciones, BorderLayout.SOUTH);
+        add(bodyPanel, BorderLayout.CENTER);
     }
 
     private void construirBanco() {
@@ -203,6 +230,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         }
 
         vocalActual = orden.get(rondaIdx);
+        lblProgreso.setText("Ronda " + (rondaIdx + 1) + "/5");
         lblVocal.setVisible(true);
         lblVocal.setText(String.valueOf(vocalActual));
 
@@ -269,16 +297,20 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
                     AUDIO_JUEGO5 + "acierto.wav",
                     correctaActual.audioPath,
                     () -> {
-                        // el feedback ya terminó, pero igual seguimos bloqueados hasta pasar de ronda
-                        audioFeedbackEnCurso = false;
-
-                        timerSiguiente = new Timer(2000, ev -> {
+                        // Mantener feedback visible un ratito, luego transición suave
+                        Timer hold = new Timer(1200, ev -> {
                             ((Timer) ev.getSource()).stop();
-                            rondaIdx++;
-                            siguienteRonda();
+
+                            // Fade OUT
+                            fadeBody(1f, 0f, 220, () -> {
+                                rondaIdx++;
+                                siguienteRonda(); // prepara siguiente ronda (setea letra + iconos + pregunta)
+                                // Fade IN
+                                fadeBody(0f, 1f, 220, null);
+                            });
                         });
-                        timerSiguiente.setRepeats(false);
-                        timerSiguiente.start();
+                        hold.setRepeats(false);
+                        hold.start();
                     }
             );
 
@@ -323,6 +355,32 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         // ✅ Reproducir fin y luego finalizar (puntaje fijo 100)
         AudioPlayer.play(AUDIO_JUEGO5 + "fin.wav", () -> finalizarJuego(100));
+    }
+
+    private void fadeBody(float from, float to, int durationMs, Runnable onDone) {
+        final int fps = 25;
+        final int delay = 1000 / fps;
+        final int steps = Math.max(1, durationMs / delay);
+        final int[] i = {0};
+
+        bodyAlpha = from;
+        bodyPanel.repaint();
+
+        Timer t = new Timer(delay, null);
+        t.addActionListener(e -> {
+            i[0]++;
+            float p = i[0] / (float) steps;
+            bodyAlpha = from + (to - from) * p;
+            bodyPanel.repaint();
+
+            if (i[0] >= steps) {
+                t.stop();
+                bodyAlpha = to;
+                bodyPanel.repaint();
+                if (onDone != null) onDone.run();
+            }
+        });
+        t.start();
     }
 
     private Icon loadIcon(String path, int w, int h) {
