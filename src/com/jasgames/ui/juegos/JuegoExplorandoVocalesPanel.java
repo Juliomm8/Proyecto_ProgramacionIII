@@ -5,9 +5,13 @@ import com.jasgames.model.Actividad;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.Timer;
+import javax.swing.Timer; // Mantener para el fade
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.*;
@@ -47,6 +51,9 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private JPanel bodyPanel;
     private JLabel lblProgreso;
 
+    private JLabel lblPregunta;
+    private ProgressDots dots;
+
     // ====== Modelo interno ======
     private static class VocalItem {
         final char vocal;
@@ -78,38 +85,74 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         iniciarPartida();
     }
 
-    private void construirUI() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
-        setBackground(new Color(245, 248, 255));
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
+        GradientPaint gp = new GradientPaint(
+                0, 0, new Color(245, 248, 255),
+                0, getHeight(), new Color(255, 255, 255)
+        );
+        g2.setPaint(gp);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.dispose();
+    }
+
+    private void construirUI() {
+        setLayout(new BorderLayout(12, 12));
+        setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        setOpaque(true);
+
+        // ===== HEADER =====
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
 
         lblTitulo = new JLabel("Las Vocales");
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 34));
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 36));
         lblTitulo.setForeground(new Color(30, 80, 200));
 
         lblProgreso = new JLabel("Ronda 1/5");
-        lblProgreso.setFont(new Font("Arial", Font.BOLD, 18));
-        lblProgreso.setForeground(new Color(90, 90, 90));
+        lblProgreso.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblProgreso.setForeground(new Color(110, 110, 110));
 
-        JPanel left = new JPanel(new GridLayout(2, 1));
+        dots = new ProgressDots(5);
+        dots.setCurrent(0);
+
+        JPanel progresoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        progresoRow.setOpaque(false);
+        progresoRow.add(dots);
+        progresoRow.add(lblProgreso);
+
+        JPanel left = new JPanel();
         left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.add(lblTitulo);
-        left.add(lblProgreso);
+        left.add(Box.createVerticalStrut(6));
+        left.add(progresoRow);
 
         header.add(left, BorderLayout.WEST);
 
-        btnRepetir = new JButton("🔊 Repetir");
+        btnRepetir = new JButton("Repetir");
+        btnRepetir.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnRepetir.setForeground(Color.WHITE);
+        btnRepetir.setBackground(new Color(30, 80, 200));
+        btnRepetir.setOpaque(true);
+        btnRepetir.setContentAreaFilled(true);
         btnRepetir.setFocusPainted(false);
+        btnRepetir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRepetir.setBorder(new CompoundBorder(
+                new LineBorder(new Color(30, 80, 200), 1, true),
+                new EmptyBorder(10, 16, 10, 16)
+        ));
         btnRepetir.addActionListener(e -> repetirAudioPregunta());
-        header.add(btnRepetir, BorderLayout.EAST);
 
+        header.add(btnRepetir, BorderLayout.EAST);
         add(header, BorderLayout.NORTH);
 
-        // BODY con FADE (letra + opciones)
-        bodyPanel = new JPanel(new BorderLayout(10, 10)) {
+        // ===== BODY con FADE =====
+        bodyPanel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintChildren(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -120,41 +163,28 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         };
         bodyPanel.setOpaque(false);
 
-        lblVocal = new JLabel(" ", SwingConstants.CENTER);
-        lblVocal.setFont(new Font("Arial", Font.BOLD, 140));
-        lblVocal.setForeground(new Color(30, 80, 200));
-        bodyPanel.add(lblVocal, BorderLayout.CENTER);
+        // Card central (blanco con sombra)
+        RoundedCardPanel card = new RoundedCardPanel();
+        card.setLayout(new BorderLayout(0, 16));
+        card.setBorder(new EmptyBorder(26, 26, 26, 26));
 
-        JPanel opciones = new JPanel(new GridLayout(1, 3, 30, 0));
+        lblPregunta = new JLabel(" ", SwingConstants.CENTER);
+        lblPregunta.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        lblPregunta.setForeground(new Color(90, 90, 90));
+        card.add(lblPregunta, BorderLayout.NORTH);
+
+        lblVocal = new JLabel(" ", SwingConstants.CENTER);
+        lblVocal.setFont(new Font("Segoe UI", Font.BOLD, 150));
+        lblVocal.setForeground(new Color(30, 80, 200));
+        card.add(lblVocal, BorderLayout.CENTER);
+
+        JPanel opciones = new JPanel(new GridLayout(1, 3, 26, 0));
         opciones.setOpaque(false);
-        opciones.setBorder(BorderFactory.createEmptyBorder(30, 90, 60, 90));
+        opciones.setBorder(BorderFactory.createEmptyBorder(12, 12, 6, 12));
 
         for (int i = 0; i < 3; i++) {
-            JButton b = new JButton();
-            b.setFocusPainted(false);
-            b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
-            b.setContentAreaFilled(true);
-            b.setOpaque(true);
-            b.setBackground(Color.WHITE);
-            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            b.setPreferredSize(new Dimension(260, 260));
-
-            // hover effect (se ve pro)
-            b.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mouseEntered(java.awt.event.MouseEvent e) {
-                    if (b.isEnabled()) {
-                        b.setBorder(new LineBorder(new Color(60, 120, 255), 5, true));
-                    }
-                }
-
-                @Override
-                public void mouseExited(java.awt.event.MouseEvent e) {
-                    if (b.isEnabled()) {
-                        b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
-                    }
-                }
-            });
+            CardButton b = new CardButton();
+            b.setPreferredSize(new Dimension(320, 320));
 
             int idx = i;
             b.addActionListener(e -> onElegirOpcion(idx));
@@ -163,7 +193,16 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             opciones.add(b);
         }
 
-        bodyPanel.add(opciones, BorderLayout.SOUTH);
+        card.add(opciones, BorderLayout.SOUTH);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        bodyPanel.add(card, gbc);
+
         add(bodyPanel, BorderLayout.CENTER);
     }
 
@@ -215,11 +254,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         audioPreguntaEnCurso = false;
         btnRepetir.setEnabled(true);
 
-        for (JButton b : btnOpciones) {
-            b.putClientProperty("elim", false); // reset de eliminadas
-            b.setEnabled(true);
-            b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
-            b.setIcon(null);
+        for (JButton b0 : btnOpciones) {
+            b0.putClientProperty("elim", false);
+            b0.setEnabled(true);
+            b0.setIcon(null);
+            b0.setDisabledIcon(null);
+            if (b0 instanceof CardButton) ((CardButton) b0).resetVisual();
         }
 
         bloqueado = false;
@@ -231,6 +271,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         vocalActual = orden.get(rondaIdx);
         lblProgreso.setText("Ronda " + (rondaIdx + 1) + "/5");
+        dots.setCurrent(rondaIdx);
+        lblPregunta.setText("¿Qué objeto empieza con la letra " + vocalActual + "?");
         lblVocal.setVisible(true);
         lblVocal.setText(String.valueOf(vocalActual));
 
@@ -290,7 +332,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             audioFeedbackEnCurso = true;
             btnRepetir.setEnabled(false);
 
-            b.setBorder(new LineBorder(new Color(20, 170, 60), 5, true));
+            if (b instanceof CardButton) ((CardButton) b).setCorrect(true);
             for (JButton other : btnOpciones) other.setEnabled(false);
 
             AudioPlayer.playSequence(
@@ -429,5 +471,143 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         audioFeedbackEnCurso = false;
         audioPreguntaEnCurso = false;
         AudioPlayer.stop();
+    }
+
+    private static class RoundedCardPanel extends JPanel {
+        RoundedCardPanel() { setOpaque(false); }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int w = getWidth();
+            int h = getHeight();
+            int arc = 34;
+
+            // sombra suave
+            for (int i = 10; i >= 1; i--) {
+                float a = 0.015f * i;
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a));
+                g2.setColor(Color.BLACK);
+                g2.fillRoundRect(i, i + 3, w - i * 2, h - i * 2, arc, arc);
+            }
+
+            // card blanco
+            g2.setComposite(AlphaComposite.SrcOver);
+            g2.setColor(new Color(255, 255, 255, 245));
+            g2.fillRoundRect(0, 0, w, h - 6, arc, arc);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static class CardButton extends JButton {
+        private boolean hover = false;
+        private boolean correct = false;
+
+        CardButton() {
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setVerticalAlignment(SwingConstants.CENTER);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setMargin(new Insets(20, 20, 20, 20));
+
+            addMouseListener(new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) {
+                    if (isEnabled() && !correct) { hover = true; repaint(); }
+                }
+                @Override public void mouseExited(MouseEvent e) {
+                    hover = false; repaint();
+                }
+            });
+        }
+
+        void resetVisual() {
+            hover = false;
+            correct = false;
+            repaint();
+        }
+
+        void setCorrect(boolean v) {
+            correct = v;
+            hover = false;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int w = getWidth();
+            int h = getHeight();
+            int pad = 10;
+            int arc = 30;
+
+            // sombra (solo si está habilitado)
+            if (isEnabled()) {
+                for (int i = 6; i >= 1; i--) {
+                    float a = 0.02f * i;
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a));
+                    g2.setColor(Color.BLACK);
+                    g2.fillRoundRect(pad + i, pad + i + 2, w - 2 * (pad + i), h - 2 * (pad + i), arc, arc);
+                }
+            }
+
+            // fondo
+            g2.setComposite(AlphaComposite.SrcOver);
+            g2.setColor(isEnabled() ? Color.WHITE : new Color(252, 252, 252));
+            g2.fillRoundRect(pad, pad, w - 2 * pad, h - 2 * pad, arc, arc);
+
+            // borde
+            Color border = new Color(215, 221, 235);
+            if (correct) border = new Color(70, 200, 120);
+            else if (hover) border = new Color(110, 160, 255);
+
+            g2.setStroke(new BasicStroke(correct ? 5f : 4f));
+            g2.setColor(border);
+            g2.drawRoundRect(pad, pad, w - 2 * pad, h - 2 * pad, arc, arc);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static class ProgressDots extends JComponent {
+        private final int total;
+        private int current = 0;
+
+        ProgressDots(int total) {
+            this.total = total;
+            setPreferredSize(new Dimension(total * 18, 14));
+            setMinimumSize(getPreferredSize());
+            setOpaque(false);
+        }
+
+        void setCurrent(int current) {
+            this.current = Math.max(0, Math.min(current, total - 1));
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int x = 0;
+            for (int i = 0; i < total; i++) {
+                boolean doneOrCurrent = (i <= current);
+                g2.setColor(doneOrCurrent ? new Color(30, 80, 200) : new Color(210, 210, 210));
+                g2.fillOval(x, 2, 10, 10);
+                x += 18;
+            }
+
+            g2.dispose();
+        }
     }
 }
