@@ -21,7 +21,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
     private static final String AUDIO_JUEGO5 = "/assets/audio/juego5/";
     private static final String AUDIO_VOCALES = "/assets/audio/vocales/";
-    private static final int ICON_SIZE = 220;
+    private static final int ICON_SIZE = 200;
 
     // UI
     private JLabel lblTitulo;
@@ -173,10 +173,25 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         lblPregunta.setForeground(new Color(90, 90, 90));
         card.add(lblPregunta, BorderLayout.NORTH);
 
-        lblVocal = new JLabel(" ", SwingConstants.CENTER);
-        lblVocal.setFont(new Font("Segoe UI", Font.BOLD, 150));
-        lblVocal.setForeground(new Color(30, 80, 200));
-        card.add(lblVocal, BorderLayout.CENTER);
+        lblVocal = new JLabel("", SwingConstants.CENTER);
+        lblVocal.setFont(new Font("Segoe UI", Font.BOLD, 140));
+        lblVocal.setForeground(new Color(33, 102, 230));
+        lblVocal.setVisible(false); // ✅ evita que se vea una "A" al abrir el panel
+
+        JPanel vocalWrap = new JPanel(new GridBagLayout());
+        vocalWrap.setOpaque(false);
+        vocalWrap.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
+        vocalWrap.setPreferredSize(new Dimension(10, 220)); // ✅ asegura espacio para la letra
+
+        GridBagConstraints gv = new GridBagConstraints();
+        gv.gridx = 0;
+        gv.gridy = 0;
+        gv.weightx = 1;
+        gv.weighty = 1;
+        gv.fill = GridBagConstraints.BOTH;
+        vocalWrap.add(lblVocal, gv);
+
+        card.add(vocalWrap, BorderLayout.CENTER);
 
         JPanel opciones = new JPanel(new GridLayout(1, 3, 26, 0));
         opciones.setOpaque(false);
@@ -184,7 +199,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         for (int i = 0; i < 3; i++) {
             CardButton b = new CardButton();
-            b.setPreferredSize(new Dimension(320, 320));
+            b.setPreferredSize(new Dimension(280, 280));
 
             int idx = i;
             b.addActionListener(e -> onElegirOpcion(idx));
@@ -200,10 +215,45 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.fill = GridBagConstraints.BOTH;          // ✅ clave
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(0, 30, 0, 30);       // opcional: margen lateral pro
         bodyPanel.add(card, gbc);
 
         add(bodyPanel, BorderLayout.CENTER);
+    }
+
+    private void ajustarFuenteVocal() {
+        if (lblVocal == null || !lblVocal.isShowing()) return;
+
+        String t = lblVocal.getText();
+        if (t == null || t.isBlank()) return;
+
+        Insets in = lblVocal.getInsets();
+        int w = lblVocal.getWidth() - in.left - in.right - 10;
+        int h = lblVocal.getHeight() - in.top - in.bottom - 10;
+        if (w <= 0 || h <= 0) return;
+
+        Font base = lblVocal.getFont();
+        int lo = 18, hi = 240, best = 18;  // ✅ mínimo pequeño para evitar recorte
+
+        while (lo <= hi) {
+            int mid = (lo + hi) / 2;
+            Font f = base.deriveFont(Font.BOLD, (float) mid);
+            FontMetrics fm = lblVocal.getFontMetrics(f);
+
+            int tw = fm.stringWidth(t);
+            int th = fm.getAscent() + fm.getDescent();
+
+            if (tw <= w && th <= h) {
+                best = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+
+        lblVocal.setFont(base.deriveFont(Font.BOLD, (float) best));
     }
 
     private void construirBanco() {
@@ -254,6 +304,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         audioPreguntaEnCurso = false;
         btnRepetir.setEnabled(true);
 
+        // ✅ primero verificar fin, antes de limpiar UI
+        if (rondaIdx >= orden.size()) {
+            finDelJuego();
+            return;
+        }
+
         for (JButton b0 : btnOpciones) {
             b0.putClientProperty("elim", false);
             b0.setEnabled(true);
@@ -264,17 +320,13 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         bloqueado = false;
 
-        if (rondaIdx >= orden.size()) {
-            finDelJuego();
-            return;
-        }
-
         vocalActual = orden.get(rondaIdx);
         lblProgreso.setText("Ronda " + (rondaIdx + 1) + "/5");
         dots.setCurrent(rondaIdx);
         lblPregunta.setText("¿Qué objeto empieza con la letra " + vocalActual + "?");
         lblVocal.setVisible(true);
         lblVocal.setText(String.valueOf(vocalActual));
+        SwingUtilities.invokeLater(this::ajustarFuenteVocal);
 
         audioPreguntaActual = AUDIO_JUEGO5 + "pregunta_" + Character.toLowerCase(vocalActual) + ".wav";
 
@@ -388,12 +440,29 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
     private void finDelJuego() {
         bloqueado = true;
-        for (JButton b : btnOpciones) b.setEnabled(false);
+        btnRepetir.setEnabled(false);
 
-        // ✅ Guardar intentos fallidos en la actividad (ver paso 2)
+        // desactivar botones (puedes también ocultarlos si quieres)
+        for (JButton b : btnOpciones) {
+            b.setEnabled(false);
+        }
+
+        // ✅ Guardar intentos fallidos
         if (actividadActual != null) {
             actividadActual.setIntentosFallidos(intentosFallidos);
         }
+
+        // ✅ UI final (nada de pantalla vacía)
+        lblProgreso.setText("Completado");
+        lblPregunta.setText("<html><div style='text-align:center;'>"
+                + "¡Excelente! 🎉<br/>"
+                + "Intentos fallidos: " + intentosFallidos
+                + "</div></html>");
+
+        lblVocal.setVisible(true);
+        lblVocal.setText("✓");
+        lblVocal.setForeground(new Color(46, 204, 113));
+        SwingUtilities.invokeLater(this::ajustarFuenteVocal);
 
         // ✅ Reproducir fin y luego finalizar (puntaje fijo 100)
         AudioPlayer.play(AUDIO_JUEGO5 + "fin.wav", () -> finalizarJuego(100));
@@ -515,7 +584,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             setHorizontalAlignment(SwingConstants.CENTER);
             setVerticalAlignment(SwingConstants.CENTER);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setMargin(new Insets(20, 20, 20, 20));
+            setBorder(new EmptyBorder(26, 26, 26, 26));
+            setMargin(new Insets(0, 0, 0, 0));
 
             addMouseListener(new MouseAdapter() {
                 @Override public void mouseEntered(MouseEvent e) {
@@ -573,8 +643,18 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             g2.setColor(border);
             g2.drawRoundRect(pad, pad, w - 2 * pad, h - 2 * pad, arc, arc);
 
+            // ✅ CLIP: todo lo que pinte Swing (icono) queda dentro del card
+            Shape clip = new java.awt.geom.RoundRectangle2D.Float(
+                    pad + 6, pad + 6,
+                    w - 2 * (pad + 6), h - 2 * (pad + 6),
+                    arc - 4, arc - 4
+            );
+            g2.setClip(clip);
+
+            // pinta el icono usando el Graphics2D con clip
+            super.paintComponent(g2);
+
             g2.dispose();
-            super.paintComponent(g);
         }
     }
 
