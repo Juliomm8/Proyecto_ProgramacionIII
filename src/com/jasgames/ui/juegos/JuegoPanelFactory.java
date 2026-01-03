@@ -20,6 +20,8 @@ public final class JuegoPanelFactory {
                 return new JuegoSigueSeriePanel(actividad, listener);
             case 4:
                 return new JuegoVocalesDivertidasPanel(actividad, listener);
+            case 5:
+                return new JuegoExplorandoVocalesPanel(actividad, listener);
             default:
                 return null;
         }

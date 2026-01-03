@@ -30,5 +30,13 @@
     "dificultad": 1,
     "descripcion": "Mira el dibujo y completa la palabra: toca la vocal inicial correcta. Intentos ilimitados.",
     "habilitado": true
+  },
+  {
+    "id": 5,
+    "nombre": "Explorando las Vocales",
+    "tipo": "FONEMAS",
+    "dificultad": 1,
+    "descripcion": "Escucha la pregunta y toca la imagen cuyo nombre empieza con la vocal mostrada. 5 rondas \u003d 100 puntos.",
+    "habilitado": true
   }
 ]

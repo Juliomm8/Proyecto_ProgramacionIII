@@ -302,3 +302,35 @@
 2026-01-01 22:18:36 | SELECCION_AULA | aula=Aula Azul
 2026-01-01 22:18:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
 2026-01-01 22:19:00 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:27:44 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:27:46 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:28:04 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:28:15 | LOGIN_DOCENTE | usuario=admin exito=true
+2026-01-01 22:28:35 | LOGOUT_DOCENTE | usuario=admin
+2026-01-01 22:28:36 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 22:28:37 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 22:32:17 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 23:18:00 | SELECCION_AULA | aula=Aula Amarilla
+2026-01-01 23:18:02 | SELECCION_AULA | aula=Aula Azul
+2026-01-01 23:18:05 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 23:19:14 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-01 23:19:35 | LOGIN_DOCENTE | usuario=admin exito=true
+2026-01-01 23:20:25 | LOGOUT_DOCENTE | usuario=admin
+2026-01-02 22:33:04 | LOGIN_DOCENTE | usuario=admin exito=true
+2026-01-02 22:33:13 | LOGOUT_DOCENTE | usuario=admin
+2026-01-02 22:33:14 | SELECCION_AULA | aula=Aula Azul
+2026-01-02 22:33:16 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:33:22 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:49:46 | LOGIN_DOCENTE | usuario=admin exito=true
+2026-01-02 22:49:51 | LOGOUT_DOCENTE | usuario=admin
+2026-01-02 22:49:52 | SELECCION_AULA | aula=Aula Azul
+2026-01-02 22:49:54 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:57:26 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:58:43 | SELECCION_AULA | aula=Aula Azul
+2026-01-02 22:58:45 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:58:47 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:58:55 | LOGIN_DOCENTE | usuario=admin exito=true
+2026-01-02 22:59:01 | LOGOUT_DOCENTE | usuario=admin
+2026-01-02 22:59:02 | SELECCION_AULA | aula=Aula Azul
+2026-01-02 22:59:03 | INGRESO_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
+2026-01-02 22:59:49 | SALIDA_ESTUDIANTE | id=1 nombre=Julio Mera aula=Aula Azul
