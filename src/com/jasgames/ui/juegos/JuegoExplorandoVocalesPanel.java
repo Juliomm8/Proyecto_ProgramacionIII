@@ -88,7 +88,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         add(header, BorderLayout.NORTH);
 
-        lblVocal = new JLabel("A", SwingConstants.CENTER);
+        lblVocal = new JLabel(" ", SwingConstants.CENTER);
+        lblVocal.setVisible(false);
         lblVocal.setFont(new Font("Arial", Font.BOLD, 110));
         lblVocal.setForeground(new Color(30, 80, 200));
         add(lblVocal, BorderLayout.CENTER);
@@ -172,6 +173,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         }
 
         vocalActual = orden.get(rondaIdx);
+        lblVocal.setVisible(true);
         lblVocal.setText(String.valueOf(vocalActual));
 
         audioPreguntaActual = AUDIO_JUEGO5 + "pregunta_" + Character.toLowerCase(vocalActual) + ".wav";
