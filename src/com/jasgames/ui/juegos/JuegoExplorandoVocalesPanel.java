@@ -17,7 +17,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
     private static final String AUDIO_JUEGO5 = "/assets/audio/juego5/";
     private static final String AUDIO_VOCALES = "/assets/audio/vocales/";
-    private static final int ICON_SIZE = 170;
+    private static final int ICON_SIZE = 220;
 
     // UI
     private JLabel lblTitulo;
@@ -76,12 +76,14 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private void construirUI() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        setBackground(new Color(245, 248, 255));
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
 
         lblTitulo = new JLabel("Las Vocales");
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 26));
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 34));
+        lblTitulo.setForeground(new Color(30, 80, 200));
         header.add(lblTitulo, BorderLayout.WEST);
 
         btnRepetir = new JButton("🔊 Repetir");
@@ -93,20 +95,40 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         lblVocal = new JLabel(" ", SwingConstants.CENTER);
         lblVocal.setVisible(false);
-        lblVocal.setFont(new Font("Arial", Font.BOLD, 110));
+        lblVocal.setFont(new Font("Arial", Font.BOLD, 140));
         lblVocal.setForeground(new Color(30, 80, 200));
         add(lblVocal, BorderLayout.CENTER);
 
-        JPanel opciones = new JPanel(new GridLayout(1, 3, 12, 12));
+        JPanel opciones = new JPanel(new GridLayout(1, 3, 30, 0));
         opciones.setOpaque(false);
-        opciones.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        opciones.setBorder(BorderFactory.createEmptyBorder(30, 90, 60, 90));
 
         for (int i = 0; i < 3; i++) {
             JButton b = new JButton();
-            b.setBorderPainted(false);
-            b.setContentAreaFilled(false);
             b.setFocusPainted(false);
-            b.setOpaque(false);
+            b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
+            b.setContentAreaFilled(true);
+            b.setOpaque(true);
+            b.setBackground(Color.WHITE);
+            b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            b.setPreferredSize(new Dimension(260, 260));
+
+            // hover effect (se ve pro)
+            b.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    if (b.isEnabled()) {
+                        b.setBorder(new LineBorder(new Color(60, 120, 255), 5, true));
+                    }
+                }
+
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    if (b.isEnabled()) {
+                        b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
+                    }
+                }
+            });
 
             int idx = i;
             b.addActionListener(e -> onElegirOpcion(idx));
@@ -169,7 +191,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         for (JButton b : btnOpciones) {
             b.putClientProperty("elim", false); // reset de eliminadas
             b.setEnabled(true);
-            b.setBorder(null);
+            b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true));
             b.setIcon(null);
         }
 
@@ -204,7 +226,9 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         for (int i = 0; i < 3; i++) {
             VocalItem it = opciones.get(i);
             btnOpciones[i].putClientProperty("item", it);
-            btnOpciones[i].setIcon(loadIcon(it.imgPath, ICON_SIZE, ICON_SIZE));
+            Icon ic = loadIcon(it.imgPath, ICON_SIZE, ICON_SIZE);
+            btnOpciones[i].setIcon(ic);
+            btnOpciones[i].setDisabledIcon(makeTransparent(ic, 0.22f)); // suave
         }
 
         AudioPlayer.play(audioPreguntaActual, null);
@@ -261,19 +285,23 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         } else {
             intentosFallidos++;
 
+            // Bloquear para que no spameen clicks y no se acumulen audios
             audioFeedbackEnCurso = true;
             btnRepetir.setEnabled(false);
 
-            // Marcar esta opción como eliminada
+            // Marcar este botón como eliminado (queda apagado para siempre en esta ronda)
             b.putClientProperty("elim", true);
-            b.setBorder(new LineBorder(new Color(200, 60, 60), 4, true));
 
-            Icon currentIcon = b.getIcon();
-            if (currentIcon != null) b.setIcon(makeTransparent(currentIcon, 0.25f));
+            // Feedback visual suave: apagar opción
+            b.setEnabled(false);
+            b.setBorder(new LineBorder(new Color(210, 210, 210), 4, true)); // neutro (o b.setBorder(null))
 
-            // Bloquear TODAS las opciones mientras suena el error (para evitar spam)
-            for (JButton x : btnOpciones) x.setEnabled(false);
+            // Mientras suena el audio, bloquea temporalmente las otras opciones
+            for (JButton x : btnOpciones) {
+                if (x.isEnabled()) x.setEnabled(false);
+            }
 
+            // Audio de error suave
             AudioPlayer.play(AUDIO_JUEGO5 + "error.wav", () -> {
                 audioFeedbackEnCurso = false;
                 btnRepetir.setEnabled(true);
