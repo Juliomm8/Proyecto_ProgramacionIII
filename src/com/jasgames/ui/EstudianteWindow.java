@@ -363,34 +363,57 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         int puntaje = actividad.getPuntos();
         lblValorPuntaje.setText(String.valueOf(puntaje));
 
-        Integer id = (ninoActual != null) ? ninoActual.getId() : null;
-        String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
-        String aula = (ninoActual != null) ? ninoActual.getAula() : null;
-
-        resultadoService.registrarResultado(new ResultadoJuego(
-                id,
-                nombre,
-                aula,
-                actividad.getJuego(),
-                actividad.getNivel(),
-                puntaje,
-                LocalDateTime.now()
-        ));
-
-        // Opcional: sumar puntos al niño y persistir en ninos.json
-        if (ninoActual != null) {
-            ninoActual.agregarPuntos(puntaje);
-            perfilService.actualizarNino(ninoActual);
-        }
-
-        juegoEnCurso = null;
         if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(false);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Puntaje guardado: " + puntaje,
-                "OK",
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                Integer id = (ninoActual != null) ? ninoActual.getId() : null;
+                String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
+                String aula = (ninoActual != null) ? ninoActual.getAula() : null;
+
+                resultadoService.registrarResultado(new ResultadoJuego(
+                        id,
+                        nombre,
+                        aula,
+                        actividad.getJuego(),
+                        actividad.getNivel(),
+                        puntaje,
+                        LocalDateTime.now()
+                ));
+
+                if (ninoActual != null) {
+                    ninoActual.agregarPuntos(puntaje);
+                    perfilService.actualizarNino(ninoActual);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JOptionPane.showMessageDialog(
+                            EstudianteWindow.this,
+                            "Puntaje guardado correctamente.",
+                            "Listo",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    juegoEnCurso = null;
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            EstudianteWindow.this,
+                            "Error guardando el resultado:\n" + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } finally {
+                    setCursor(Cursor.getDefaultCursor());
+                }
+            }
+        }.execute();
     }
 }
