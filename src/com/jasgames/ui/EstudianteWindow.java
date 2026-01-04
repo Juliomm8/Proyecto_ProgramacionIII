@@ -93,6 +93,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         if (context.getNinoSesion() != null) {
             aplicarSesionEstudiante(context.getNinoSesion());
         }
+
+        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(false);
     }
 
     public EstudianteWindow() {
@@ -338,6 +340,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         // Reset UI puntaje
         lblValorPuntaje.setText("0");
 
+        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(true);
+
         // Iniciar una sola vez, pero después del layout para evitar tamaños 0 en el lienzo
         SwingUtilities.invokeLater(() -> {
             if (juegoEnCurso != null) juegoEnCurso.iniciarJuego();
@@ -378,6 +382,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             ninoActual.agregarPuntos(puntaje);
             perfilService.actualizarNino(ninoActual);
         }
+
+        juegoEnCurso = null;
+        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(false);
 
         JOptionPane.showMessageDialog(
                 this,

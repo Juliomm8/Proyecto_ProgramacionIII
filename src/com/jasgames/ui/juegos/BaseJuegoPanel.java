@@ -12,6 +12,7 @@ public abstract class BaseJuegoPanel extends JPanel {
 
     protected Actividad actividadActual;
     protected JuegoListener listener;
+    private boolean juegoFinalizado = false;
 
     /**
      * Constructor base.
@@ -42,7 +43,10 @@ public abstract class BaseJuegoPanel extends JPanel {
      * Método helper para que los hijos cierren el juego fácilmente.
      * @param puntajeObtenido Los puntos que ganó el niño.
      */
-    protected void finalizarJuego(int puntajeObtenido) {
+    protected final void finalizarJuego(int puntajeObtenido) {
+        if (juegoFinalizado) return;
+        juegoFinalizado = true;
+
         // 1. Guardamos el puntaje en el objeto de negocio
         if (this.actividadActual != null) {
             this.actividadActual.setPuntos(puntajeObtenido);
@@ -56,6 +60,10 @@ public abstract class BaseJuegoPanel extends JPanel {
 
     public Actividad getActividadActual() {
         return actividadActual;
+    }
+
+    protected final boolean isJuegoFinalizado() {
+        return juegoFinalizado;
     }
 
     /**
