@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Aula;
+import com.jasgames.util.AtomicFiles;
 
 import java.awt.Color;
 import java.lang.reflect.Type;
@@ -124,7 +125,7 @@ public class AulaService {
             Path p = Paths.get(ARCHIVO_AULAS);
             Path dir = p.getParent();
             if (dir != null) Files.createDirectories(dir);
-            Files.writeString(p, gson.toJson(aulas), StandardCharsets.UTF_8);
+            AtomicFiles.writeStringAtomic(p, gson.toJson(aulas), StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
         }

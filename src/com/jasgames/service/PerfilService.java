@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.CriterioOrdenNino;
 import com.jasgames.model.Nino;
+import com.jasgames.util.AtomicFiles;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -198,7 +199,7 @@ public class PerfilService {
             }
 
             String json = gson.toJson(ninos);
-            Files.writeString(pathArchivo, json, StandardCharsets.UTF_8);
+            AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
             e.printStackTrace();

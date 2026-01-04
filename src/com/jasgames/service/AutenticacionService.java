@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Docente;
+import com.jasgames.util.AtomicFiles;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +55,7 @@ public class AutenticacionService {
             if (dir != null) Files.createDirectories(dir);
 
             if (!Files.exists(path)) {
-                Files.writeString(path, "[]", StandardCharsets.UTF_8);
+                AtomicFiles.writeStringAtomic(path, "[]", StandardCharsets.UTF_8);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,7 +83,7 @@ public class AutenticacionService {
         try {
             Path path = Paths.get(ARCHIVO_DOCENTES);
             String json = gson.toJson(docentes);
-            Files.writeString(path, json, StandardCharsets.UTF_8);
+            AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
         }

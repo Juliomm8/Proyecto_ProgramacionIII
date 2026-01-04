@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Actividad;
 import com.jasgames.model.Juego;
 import com.jasgames.model.TipoJuego;
+import com.jasgames.util.AtomicFiles;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -159,7 +160,7 @@ public class JuegoService {
             }
 
             String json = gson.toJson(juegos);
-            Files.writeString(pathArchivo, json, StandardCharsets.UTF_8);
+            AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
             e.printStackTrace();
