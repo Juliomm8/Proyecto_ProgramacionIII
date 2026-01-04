@@ -57,6 +57,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
     
     private boolean salidaRegistrada = false;
+    private volatile boolean guardandoResultado = false;
     
     private JButton btnCambiarNino;
     private JLabel lblAvatarSesion;
@@ -235,6 +236,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private void initListeners() {
         if (btnBackEstudiante != null) {
             btnBackEstudiante.addActionListener(e -> {
+                if (guardandoResultado) return;
                 registrarSalidaSiAplica();
                 context.setNinoSesion(null);
 
@@ -301,6 +303,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     }
 
     private void iniciarJuegoSeleccionado() {
+        if (guardandoResultado) return;
         if (ninoActual == null) {
             cargarNinoYJuegos();
             if (ninoActual == null) return;
@@ -349,11 +352,48 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     }
 
     private void finalizarYGuardarManual() {
+        if (guardandoResultado) return;
         if (juegoEnCurso == null) {
             JOptionPane.showMessageDialog(this, "No hay ningún juego en curso.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
         juegoEnCurso.finalizarJuegoForzado();
+    }
+    
+    private void setGuardandoResultado(boolean v) {
+        guardandoResultado = v;
+
+        // Botones clave
+        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(!v && juegoEnCurso != null);
+
+        // Si tienes botón de "Iniciar" o lista de juegos:
+        if (btnIniciarJuego != null) btnIniciarJuego.setEnabled(!v);
+        if (listaJuegosEstudiante != null) listaJuegosEstudiante.setEnabled(!v);
+
+        // Si tienes navegación (volver/cerrar sesión)
+        if (btnBackEstudiante != null) btnBackEstudiante.setEnabled(!v);
+        if (btnCambiarNino != null) btnCambiarNino.setEnabled(!v);
+
+        // Cursor
+        setCursor(v ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
+
+        // (Opcional PRO) bloquear clicks en toda la ventana con GlassPane
+        if (getRootPane() != null) {
+            if (v) {
+                JPanel glass = new JPanel(new GridBagLayout());
+                glass.setOpaque(true);
+                glass.setBackground(new Color(0, 0, 0, 80));
+                JLabel lbl = new JLabel("Guardando resultado...");
+                lbl.setForeground(Color.WHITE);
+                lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 16f));
+                glass.add(lbl);
+                getRootPane().setGlassPane(glass);
+                glass.setVisible(true);
+            } else {
+                Component gp = getRootPane().getGlassPane();
+                if (gp != null) gp.setVisible(false);
+            }
+        }
     }
 
     @Override
@@ -363,8 +403,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         int puntaje = actividad.getPuntos();
         lblValorPuntaje.setText(String.valueOf(puntaje));
 
-        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(false);
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        setGuardandoResultado(true);
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -411,7 +450,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                             JOptionPane.ERROR_MESSAGE
                     );
                 } finally {
-                    setCursor(Cursor.getDefaultCursor());
+                    setGuardandoResultado(false);
                 }
             }
         }.execute();
