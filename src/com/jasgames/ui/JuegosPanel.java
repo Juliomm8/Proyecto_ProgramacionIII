@@ -6,6 +6,10 @@ import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -13,11 +17,12 @@ import java.util.List;
 /**
  * Panel de gestión de juegos para el modo docente.
  *
- * - Columna izquierda: habilitar / deshabilitar juegos del sistema.
- * - Columna derecha: asignar juegos habilitados a un niño específico.
+ * UI (rediseñada):
+ * - Izquierda: catálogo del sistema (habilitado + dificultad global)
+ * - Derecha: asignación por niño (solo juegos habilitados + dificultad individual)
  *
- * Aunque existe un .form asociado, este panel construye su interfaz por código,
- * reutilizando los mismos nombres de campos para mantener compatibilidad.
+ * Nota: aunque existe un .form asociado, este panel construye su interfaz por código,
+ * reusando nombres de campos para compatibilidad.
  */
 public class JuegosPanel extends JPanel {
 
@@ -37,15 +42,38 @@ public class JuegosPanel extends JPanel {
     // Panel interno dentro del scroll de asignaciones
     private JPanel panelAsignacionContenido;
 
+    // UI nueva
+    private JTextField txtBuscarCatalogo;
+    private JTextField txtBuscarAsignacion;
+    private JCheckBox chkSoloAsignados;
+    private JLabel lblResumenCatalogo;
+    private JLabel lblResumenAsignacion;
+    private JButton btnRefrescar;
+    private JButton btnHabilitarTodos;
+    private JButton btnDeshabilitarTodos;
+    private JButton btnAsignarTodos;
+    private JButton btnQuitarTodos;
+
     // Servicios compartidos
     private final JuegoService juegoService;
     private final PerfilService perfilService;
 
-    // Mapas auxiliares: idJuego -> checkbox
+    // Mapas auxiliares: idJuego -> checkbox/spinner
     private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
     private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
     private final Map<Integer, JSpinner> spinnersDificultad = new LinkedHashMap<>();
     private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
+
+    // Cache simple para render
+    private List<Juego> cacheJuegos = new ArrayList<>();
+    private List<Nino> cacheNinos = new ArrayList<>();
+
+    // Mantener cambios del catálogo incluso si el usuario filtra con el buscador
+    private final Map<Integer, Boolean> pendingHabilitado = new HashMap<>();
+    private final Map<Integer, Integer> pendingDificultadGlobal = new HashMap<>();
+
+    // Para que el resumen de asignación no “crezca” con cada repaint
+    private String resumenAsignacionBase = " ";
 
     public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
@@ -58,113 +86,244 @@ public class JuegosPanel extends JPanel {
     }
 
     // ---------------------------------------------------------------------
-    // Inicialización de la interfaz
+    // UI
     // ---------------------------------------------------------------------
 
     private void initUI() {
-        setLayout(new GridLayout(1, 2, 10, 0));
+        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(14, 14, 14, 14));
 
-        // ====== Columna izquierda: juegos del sistema ======
-        panelIzquierdo = new JPanel(new BorderLayout(5, 5));
+        add(buildHeader(), BorderLayout.NORTH);
 
-        lblTituloJuegos = new JLabel("Juegos disponibles");
-        lblTituloJuegos.setHorizontalAlignment(SwingConstants.CENTER);
-        panelIzquierdo.add(lblTituloJuegos, BorderLayout.NORTH);
+        panelIzquierdo = buildCatalogoPanel();
+        panelDerecho = buildAsignacionPanel();
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelIzquierdo, panelDerecho);
+        split.setResizeWeight(0.52);
+        split.setDividerSize(8);
+        split.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
+        add(split, BorderLayout.CENTER);
+    }
+
+    private JComponent buildHeader() {
+        JPanel header = new JPanel(new BorderLayout(12, 0));
+        header.setOpaque(false);
+
+        JPanel titles = new JPanel();
+        titles.setOpaque(false);
+        titles.setLayout(new BoxLayout(titles, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Gestión de Juegos");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
+
+        JLabel subtitle = new JLabel("Habilita juegos del sistema y asigna juegos/dificultad por estudiante.");
+        subtitle.setFont(subtitle.getFont().deriveFont(Font.PLAIN, 12f));
+        subtitle.setForeground(new Color(90, 90, 90));
+
+        titles.add(title);
+        titles.add(Box.createVerticalStrut(2));
+        titles.add(subtitle);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        btnRefrescar = new JButton("Refrescar");
+        actions.add(btnRefrescar);
+
+        header.add(titles, BorderLayout.CENTER);
+        header.add(actions, BorderLayout.EAST);
+        return header;
+    }
+    
+    private JPanel buildCatalogoPanel() {
+        JPanel card = new CardPanel(new BorderLayout(10, 10));
+
+        // TOP en 2 filas (evita que el título se corte)
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+
+        JPanel titleBlock = new JPanel();
+        titleBlock.setOpaque(false);
+        titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
+
+        lblTituloJuegos = new JLabel("Catálogo del sistema");
+        lblTituloJuegos.setFont(lblTituloJuegos.getFont().deriveFont(Font.BOLD, 15f));
+
+        lblResumenCatalogo = new JLabel(" ");
+        lblResumenCatalogo.setFont(lblResumenCatalogo.getFont().deriveFont(Font.PLAIN, 12f));
+        lblResumenCatalogo.setForeground(new Color(90, 90, 90));
+
+        titleBlock.add(lblTituloJuegos);
+        titleBlock.add(Box.createVerticalStrut(2));
+        titleBlock.add(lblResumenCatalogo);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        actions.setOpaque(false);
+
+        txtBuscarCatalogo = new JTextField(18);
+        txtBuscarCatalogo.setToolTipText("Buscar por nombre o descripción");
+
+        btnHabilitarTodos = new JButton("Habilitar todo");
+        btnDeshabilitarTodos = new JButton("Deshabilitar todo");
+
+        actions.add(new JLabel("Buscar:"));
+        actions.add(txtBuscarCatalogo);
+        actions.add(btnHabilitarTodos);
+        actions.add(btnDeshabilitarTodos);
+
+        top.add(titleBlock);
+        top.add(Box.createVerticalStrut(8));
+        top.add(actions);
 
         panelListaJuegos = new JPanel();
+        panelListaJuegos.setOpaque(false);
         panelListaJuegos.setLayout(new BoxLayout(panelListaJuegos, BoxLayout.Y_AXIS));
-        JScrollPane scrollJuegos = new JScrollPane(panelListaJuegos);
-        panelIzquierdo.add(scrollJuegos, BorderLayout.CENTER);
+
+        JScrollPane scroll = new JScrollPane(panelListaJuegos);
+        styleScroll(scroll);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setOpaque(false);
+        bottom.setBorder(new MatteBorder(1, 0, 0, 0, new Color(0, 0, 0, 18)));
 
         btnGuardarEstadoJuegos = new JButton("Guardar cambios");
-        panelIzquierdo.add(btnGuardarEstadoJuegos, BorderLayout.SOUTH);
+        bottom.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
+        bottom.add(btnGuardarEstadoJuegos, BorderLayout.EAST);
 
-        // ====== Columna derecha: asignación a niños ======
-        panelDerecho = new JPanel(new BorderLayout(5, 5));
+        card.add(top, BorderLayout.NORTH);
+        card.add(scroll, BorderLayout.CENTER);
+        card.add(bottom, BorderLayout.SOUTH);
+        return card;
+    }
 
-        JPanel panelTopDerecho = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        lblSeleccionNino = new JLabel("Seleccionar niño:");
+    // B) Reemplaza buildAsignacionPanel() por esta versión
+    private JPanel buildAsignacionPanel() {
+        JPanel card = new CardPanel(new BorderLayout(10, 10));
+
+        // TOP en 3 filas (más limpio y no se corta)
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+
+        JPanel titleBlock = new JPanel();
+        titleBlock.setOpaque(false);
+        titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
+
+        lblTituloAsignacion = new JLabel("Asignación por estudiante");
+        lblTituloAsignacion.setFont(lblTituloAsignacion.getFont().deriveFont(Font.BOLD, 15f));
+
+        lblResumenAsignacion = new JLabel(" ");
+        lblResumenAsignacion.setFont(lblResumenAsignacion.getFont().deriveFont(Font.PLAIN, 12f));
+        lblResumenAsignacion.setForeground(new Color(90, 90, 90));
+
+        titleBlock.add(lblTituloAsignacion);
+        titleBlock.add(Box.createVerticalStrut(2));
+        titleBlock.add(lblResumenAsignacion);
+
+        // Fila 1: estudiante
+        JPanel rowStudent = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        rowStudent.setOpaque(false);
+
+        lblSeleccionNino = new JLabel("Estudiante:");
         cboNinos = new JComboBox();
-        panelTopDerecho.add(lblSeleccionNino);
-        panelTopDerecho.add(cboNinos);
-        panelDerecho.add(panelTopDerecho, BorderLayout.NORTH);
+        cboNinos.setPreferredSize(new Dimension(260, cboNinos.getPreferredSize().height));
+        cboNinos.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Nino) {
+                    Nino n = (Nino) value;
+                    setText(n.getNombre() + "  ·  " + n.getAula() + "  ·  id=" + n.getId());
+                }
+                return this;
+            }
+        });
 
-        JPanel panelCentroDerecho = new JPanel(new BorderLayout(5, 5));
-        lblTituloAsignacion = new JLabel("Juegos asignados al niño:");
-        panelCentroDerecho.add(lblTituloAsignacion, BorderLayout.NORTH);
+        rowStudent.add(lblSeleccionNino);
+        rowStudent.add(cboNinos);
+
+        // Fila 2: filtros + acciones
+        JPanel rowFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        rowFilters.setOpaque(false);
+
+        txtBuscarAsignacion = new JTextField(16);
+        txtBuscarAsignacion.setToolTipText("Filtra por juego");
+
+        chkSoloAsignados = new JCheckBox("Solo asignados");
+        chkSoloAsignados.setOpaque(false);
+
+        btnAsignarTodos = new JButton("Asignar todo");
+        btnQuitarTodos = new JButton("Quitar todo");
+
+        rowFilters.add(new JLabel("Buscar:"));
+        rowFilters.add(txtBuscarAsignacion);
+        rowFilters.add(chkSoloAsignados);
+        rowFilters.add(btnAsignarTodos);
+        rowFilters.add(btnQuitarTodos);
+
+        top.add(titleBlock);
+        top.add(Box.createVerticalStrut(8));
+        top.add(rowStudent);
+        top.add(Box.createVerticalStrut(6));
+        top.add(rowFilters);
 
         panelAsignacionContenido = new JPanel();
+        panelAsignacionContenido.setOpaque(false);
         panelAsignacionContenido.setLayout(new BoxLayout(panelAsignacionContenido, BoxLayout.Y_AXIS));
-        panelAsignacionJuegos = new JScrollPane(panelAsignacionContenido);
-        panelCentroDerecho.add(panelAsignacionJuegos, BorderLayout.CENTER);
 
-        panelDerecho.add(panelCentroDerecho, BorderLayout.CENTER);
+        panelAsignacionJuegos = new JScrollPane(panelAsignacionContenido);
+        styleScroll(panelAsignacionJuegos);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setOpaque(false);
+        bottom.setBorder(new MatteBorder(1, 0, 0, 0, new Color(0, 0, 0, 18)));
 
         btnGuardarAsignacion = new JButton("Guardar asignación");
-        panelDerecho.add(btnGuardarAsignacion, BorderLayout.SOUTH);
+        bottom.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
+        bottom.add(btnGuardarAsignacion, BorderLayout.EAST);
 
-        // Agregar columnas al panel principal
-        add(panelIzquierdo);
-        add(panelDerecho);
+        card.add(top, BorderLayout.NORTH);
+        card.add(panelAsignacionJuegos, BorderLayout.CENTER);
+        card.add(bottom, BorderLayout.SOUTH);
+        return card;
+    }
+
+    private void styleScroll(JScrollPane sp) {
+        sp.setBorder(new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 18)));
+        sp.getViewport().setOpaque(false);
+        sp.setOpaque(false);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
     }
 
     // ---------------------------------------------------------------------
-    // Carga de datos inicial
+    // Data
     // ---------------------------------------------------------------------
 
-    /** Crea un checkbox por cada juego registrado en el servicio. */
     private void cargarJuegos() {
-        panelListaJuegos.removeAll();
-        checkBoxesJuegos.clear();
-        spinnersDificultad.clear();
+        cacheJuegos = new ArrayList<>(juegoService.obtenerTodos());
+        cacheJuegos.sort(Comparator.comparingInt(Juego::getId));
 
-        List<Juego> juegos = juegoService.obtenerTodos();
-        for (Juego juego : juegos) {
-            JCheckBox chk = new JCheckBox(juego.getNombre());
-            chk.setSelected(juego.isHabilitado());
+        // El refresco vuelve a estado real del servicio
+        pendingHabilitado.clear();
+        pendingDificultadGlobal.clear();
 
-            int difInicial = juego.getDificultad();
-            if (difInicial < 1) difInicial = 1;
-            if (difInicial > 5) difInicial = 5;
-
-            JSpinner spDif = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
-            spDif.setPreferredSize(new Dimension(55, spDif.getPreferredSize().height));
-
-            spDif.setEnabled(chk.isSelected());
-            chk.addItemListener(e -> spDif.setEnabled(chk.isSelected()));
-
-            JPanel fila = new JPanel(new BorderLayout(8, 0));
-            fila.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            fila.add(chk, BorderLayout.CENTER);
-
-            JPanel panelDif = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-            panelDif.add(new JLabel("Dif:"));
-            panelDif.add(spDif);
-            fila.add(panelDif, BorderLayout.EAST);
-
-            panelListaJuegos.add(fila);
-
-            checkBoxesJuegos.put(juego.getId(), chk);
-            spinnersDificultad.put(juego.getId(), spDif);
-        }
-
-        panelListaJuegos.revalidate();
-        panelListaJuegos.repaint();
+        renderCatalogo();
     }
 
-    /** Carga los niños en el combo y prepara el mapa de asignaciones. */
     private void cargarNinos() {
         cboNinos.removeAllItems();
 
-        java.util.List<Nino> ninos = perfilService.obtenerTodosNinos();
-        for (Nino nino : ninos) {
-            cboNinos.addItem(nino);
-        }
+        cacheNinos = new ArrayList<>(perfilService.obtenerTodosNinos());
+        cacheNinos.sort(Comparator.comparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER));
+        for (Nino n : cacheNinos) cboNinos.addItem(n);
 
         if (cboNinos.getItemCount() > 0) {
             cboNinos.setSelectedIndex(0);
             actualizarAsignacionesParaSeleccionado();
+        } else {
+            panelAsignacionContenido.removeAll();
+            panelAsignacionContenido.revalidate();
+            panelAsignacionContenido.repaint();
         }
     }
 
@@ -172,23 +331,189 @@ public class JuegosPanel extends JPanel {
         btnGuardarEstadoJuegos.addActionListener(e -> onGuardarEstadosJuegos());
         cboNinos.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
         btnGuardarAsignacion.addActionListener(e -> onGuardarAsignacion());
+
+        btnRefrescar.addActionListener(e -> {
+            cargarJuegos();
+            cargarNinos();
+        });
+
+        btnHabilitarTodos.addActionListener(e -> {
+            for (Map.Entry<Integer, JCheckBox> e2 : checkBoxesJuegos.entrySet()) {
+                e2.getValue().setSelected(true);
+                pendingHabilitado.put(e2.getKey(), true);
+            }
+            renderCatalogoResumen();
+            actualizarAsignacionesParaSeleccionado();
+        });
+
+        btnDeshabilitarTodos.addActionListener(e -> {
+            for (Map.Entry<Integer, JCheckBox> e2 : checkBoxesJuegos.entrySet()) {
+                e2.getValue().setSelected(false);
+                pendingHabilitado.put(e2.getKey(), false);
+            }
+            renderCatalogoResumen();
+            actualizarAsignacionesParaSeleccionado();
+        });
+
+        btnAsignarTodos.addActionListener(e -> {
+            for (JCheckBox chk : checkBoxesAsignacion.values()) chk.setSelected(true);
+            renderAsignacionResumen();
+        });
+
+        btnQuitarTodos.addActionListener(e -> {
+            for (JCheckBox chk : checkBoxesAsignacion.values()) chk.setSelected(false);
+            renderAsignacionResumen();
+        });
+
+        chkSoloAsignados.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
+
+        wireSearch(txtBuscarCatalogo, this::renderCatalogo);
+        wireSearch(txtBuscarAsignacion, this::actualizarAsignacionesParaSeleccionado);
+    }
+
+    private void wireSearch(JTextField field, Runnable onChange) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { onChange.run(); }
+            @Override public void removeUpdate(DocumentEvent e) { onChange.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { onChange.run(); }
+        });
     }
 
     // ---------------------------------------------------------------------
-    // IZQUIERDA: habilitar / deshabilitar juegos
+    // Render: catálogo
+    // ---------------------------------------------------------------------
+
+    private void renderCatalogo() {
+        panelListaJuegos.removeAll();
+        checkBoxesJuegos.clear();
+        spinnersDificultad.clear();
+
+        String q = safeLower(txtBuscarCatalogo.getText());
+
+        for (Juego juego : cacheJuegos) {
+            if (!matchesJuego(juego, q)) continue;
+
+            boolean sel = pendingHabilitado.containsKey(juego.getId())
+                    ? pendingHabilitado.get(juego.getId())
+                    : juego.isHabilitado();
+
+            int dif = pendingDificultadGlobal.containsKey(juego.getId())
+                    ? pendingDificultadGlobal.get(juego.getId())
+                    : clamp1to5(juego.getDificultad());
+
+            JComponent row = crearFilaCatalogo(juego, sel, dif);
+            panelListaJuegos.add(row);
+            panelListaJuegos.add(Box.createVerticalStrut(10));
+        }
+
+        renderCatalogoResumen();
+        panelListaJuegos.revalidate();
+        panelListaJuegos.repaint();
+
+        actualizarAsignacionesParaSeleccionado();
+    }
+
+    private void renderCatalogoResumen() {
+        int total = cacheJuegos.size();
+        int habilitados = 0;
+        for (Juego j : cacheJuegos) {
+            if (isJuegoHabilitadoActual(j)) habilitados++;
+        }
+        lblResumenCatalogo.setText("Total: " + total + "  ·  Habilitados: " + habilitados);
+    }
+
+    private JComponent crearFilaCatalogo(Juego juego, boolean selected, int dificultad) {
+        CardPanel row = new CardPanel(new BorderLayout(12, 8));
+        row.setBorder(new EmptyBorder(10, 12, 10, 12));
+
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JLabel name = new JLabel(juego.getNombre());
+        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
+
+        JTextArea desc = new JTextArea(safe(juego.getDescripcion()));
+        desc.setOpaque(false);
+        desc.setEditable(false);
+        desc.setFocusable(false);
+        desc.setLineWrap(true);
+        desc.setWrapStyleWord(true);
+        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
+        desc.setForeground(new Color(85, 85, 85));
+
+        JLabel badgeId = createBadge("#" + juego.getId());
+        JLabel tipo = createBadge(safe(juego.getTipo() != null ? juego.getTipo().name() : "JUEGO"));
+
+        JPanel line1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        line1.setOpaque(false);
+        line1.add(name);
+        line1.add(badgeId);
+        line1.add(tipo);
+
+        left.add(line1);
+        left.add(Box.createVerticalStrut(6));
+        left.add(desc);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.setOpaque(false);
+
+        JCheckBox chk = new JCheckBox("Habilitado");
+        chk.setOpaque(false);
+        chk.setSelected(selected);
+
+        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
+        sp.setPreferredSize(new Dimension(60, sp.getPreferredSize().height));
+        sp.setEnabled(chk.isSelected());
+
+        chk.addItemListener(e -> {
+            sp.setEnabled(chk.isSelected());
+            pendingHabilitado.put(juego.getId(), chk.isSelected());
+            renderCatalogoResumen();
+            actualizarAsignacionesParaSeleccionado();
+        });
+
+        sp.addChangeListener(e -> pendingDificultadGlobal.put(juego.getId(), (Integer) sp.getValue()));
+
+        right.add(new JLabel("Dificultad:"));
+        right.add(sp);
+        right.add(chk);
+
+        row.add(left, BorderLayout.CENTER);
+        row.add(right, BorderLayout.EAST);
+
+        checkBoxesJuegos.put(juego.getId(), chk);
+        spinnersDificultad.put(juego.getId(), sp);
+
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+        return row;
+    }
+
+    private JLabel createBadge(String text) {
+        JLabel b = new JLabel(text);
+        b.setFont(b.getFont().deriveFont(Font.BOLD, 11f));
+        b.setOpaque(true);
+        b.setBackground(new Color(255, 255, 255, 210));
+        b.setForeground(new Color(60, 60, 60));
+        b.setHorizontalAlignment(SwingConstants.CENTER);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 28)),
+                new EmptyBorder(2, 8, 2, 8)
+        ));
+        return b;
+    }
+
+    // ---------------------------------------------------------------------
+    // Guardar catálogo
     // ---------------------------------------------------------------------
 
     private void onGuardarEstadosJuegos() {
         List<Juego> juegos = juegoService.obtenerTodos();
 
         for (Juego juego : juegos) {
-            // 1) Guardar habilitado/deshabilitado
             JCheckBox chk = checkBoxesJuegos.get(juego.getId());
-            if (chk != null) {
-                juego.setHabilitado(chk.isSelected());
-            }
+            if (chk != null) juego.setHabilitado(chk.isSelected());
 
-            // 2) Guardar dificultad global con confirmación
             JSpinner sp = spinnersDificultad.get(juego.getId());
             if (sp != null) {
                 int nueva = (Integer) sp.getValue();
@@ -214,38 +539,36 @@ public class JuegosPanel extends JPanel {
                     );
 
                     if (resp == 2 || resp == JOptionPane.CLOSED_OPTION) {
-                        // Cancelar: revertimos spinner y no aplicamos
                         sp.setValue(anterior);
                         continue;
                     }
 
-                    // Siempre se actualiza dificultad GLOBAL del juego:
                     juego.setDificultad(nueva);
 
-                    //  Si eligió aplicar a TODOS: sobrescribe overrides
                     if (resp == 0) {
                         perfilService.aplicarDificultadJuegoATodos(juego.getId(), nueva, false);
                     }
-
-                    // Si eligió solo sin override: NO tocamos nada más (ellos usarán global automáticamente)
                 }
             }
         }
 
-        // Persistir juegos si estás guardándolos a archivo (recomendado)
         juegoService.guardar();
-
+        cargarJuegos();
         JOptionPane.showMessageDialog(this, "Cambios guardados.");
     }
 
+    // ---------------------------------------------------------------------
+    // Render: asignación
+    // ---------------------------------------------------------------------
 
-    // ---------------------------------------------------------------------
-    // DERECHA: asignar juegos habilitados a un niño
-    // ---------------------------------------------------------------------
-    /** Reconstruye la lista de checkboxes de asignación para el niño actual. */
     private void actualizarAsignacionesParaSeleccionado() {
         Nino seleccionado = (Nino) cboNinos.getSelectedItem();
         if (seleccionado == null) return;
+
+        Map<Integer, Boolean> prevSel = new HashMap<>();
+        Map<Integer, Integer> prevDif = new HashMap<>();
+        for (Map.Entry<Integer, JCheckBox> e : checkBoxesAsignacion.entrySet()) prevSel.put(e.getKey(), e.getValue().isSelected());
+        for (Map.Entry<Integer, JSpinner> e : spinnersDificultadAsignacion.entrySet()) prevDif.put(e.getKey(), (Integer) e.getValue().getValue());
 
         panelAsignacionContenido.removeAll();
         checkBoxesAsignacion.clear();
@@ -255,37 +578,114 @@ public class JuegosPanel extends JPanel {
                 ? seleccionado.getJuegosAsignados()
                 : Collections.emptySet();
 
-        for (Juego juego : juegoService.obtenerTodos()) {
-            if (!juego.isHabilitado()) continue;
+        String q = safeLower(txtBuscarAsignacion.getText());
+        boolean soloAsignados = chkSoloAsignados.isSelected();
+
+        int totalHabilitados = 0;
+        int totalAsignados = 0;
+
+        for (Juego juego : cacheJuegos) {
+            if (!isJuegoHabilitadoActual(juego)) continue;
+            totalHabilitados++;
+
             int idJuego = juego.getId();
+            boolean estaAsignado = asignados.contains(idJuego);
+            if (estaAsignado) totalAsignados++;
 
-            JCheckBox chk = new JCheckBox(juego.getNombre());
-            chk.setSelected(asignados != null && asignados.contains(idJuego));
-            checkBoxesAsignacion.put(idJuego, chk);
+            if (soloAsignados && !estaAsignado) continue;
+            if (!matchesJuego(juego, q)) continue;
 
-            int difInicial = seleccionado.getDificultadJuego(idJuego, Math.max(1, juego.getDificultad()));
-            JSpinner sp = new JSpinner(new SpinnerNumberModel(difInicial, 1, 5, 1));
-            spinnersDificultadAsignacion.put(idJuego, sp);
+            boolean sel = prevSel.containsKey(idJuego) ? prevSel.get(idJuego) : estaAsignado;
+            int difGlobal = getDificultadGlobalActual(juego);
+            int difInicial = prevDif.containsKey(idJuego)
+                    ? prevDif.get(idJuego)
+                    : seleccionado.getDificultadJuego(idJuego, difGlobal);
 
-            JPanel fila = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            fila.add(chk);
-            fila.add(new JLabel("Dificultad:"));
-            fila.add(sp);
-
-            panelAsignacionContenido.add(fila);
+            JComponent row = crearFilaAsignacion(juego, sel, clamp1to5(difInicial), difGlobal);
+            panelAsignacionContenido.add(row);
+            panelAsignacionContenido.add(Box.createVerticalStrut(10));
         }
+
+        resumenAsignacionBase = "Habilitados: " + totalHabilitados + "  ·  Asignados: " + totalAsignados;
+        lblResumenAsignacion.setText(resumenAsignacionBase);
 
         panelAsignacionContenido.revalidate();
         panelAsignacionContenido.repaint();
+        renderAsignacionResumen();
     }
 
-    /**
-     * Guarda la asignación de juegos (panel derecho) y la dificultad por niño.
-     *
-     * - Los juegos seleccionados se guardan en Nino.juegosAsignados.
-     * - La dificultad se guarda en Nino.dificultadPorJuego como override individual.
-     * - Si un juego queda desmarcado, también eliminamos su dificultad individual para ese niño.
-     */
+    private void renderAsignacionResumen() {
+        int asignados = 0;
+        for (JCheckBox chk : checkBoxesAsignacion.values()) if (chk.isSelected()) asignados++;
+        lblResumenAsignacion.setText(resumenAsignacionBase + "  ·  Seleccionados: " + asignados);
+    }
+
+    private JComponent crearFilaAsignacion(Juego juego, boolean selected, int dificultad, int difGlobal) {
+        CardPanel row = new CardPanel(new BorderLayout(12, 8));
+        row.setBorder(new EmptyBorder(10, 12, 10, 12));
+
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JLabel name = new JLabel(juego.getNombre() + "  " + "#" + juego.getId());
+        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
+
+        JTextArea desc = new JTextArea(safe(juego.getDescripcion()));
+        desc.setOpaque(false);
+        desc.setEditable(false);
+        desc.setFocusable(false);
+        desc.setLineWrap(true);
+        desc.setWrapStyleWord(true);
+        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
+        desc.setForeground(new Color(85, 85, 85));
+
+        left.add(name);
+        left.add(Box.createVerticalStrut(6));
+        left.add(desc);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.setOpaque(false);
+
+        JCheckBox chk = new JCheckBox("Asignado");
+        chk.setOpaque(false);
+        chk.setSelected(selected);
+
+        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
+        sp.setPreferredSize(new Dimension(60, sp.getPreferredSize().height));
+        sp.setEnabled(chk.isSelected());
+
+        JLabel lblModo = createBadge((dificultad == difGlobal) ? "Global" : "Personal");
+
+        chk.addItemListener(e -> {
+            sp.setEnabled(chk.isSelected());
+            renderAsignacionResumen();
+        });
+
+        sp.addChangeListener(e -> {
+            int v = (Integer) sp.getValue();
+            lblModo.setText(v == difGlobal ? "Global" : "Personal");
+        });
+
+        right.add(new JLabel("Dificultad:"));
+        right.add(sp);
+        right.add(lblModo);
+        right.add(chk);
+
+        row.add(left, BorderLayout.CENTER);
+        row.add(right, BorderLayout.EAST);
+
+        checkBoxesAsignacion.put(juego.getId(), chk);
+        spinnersDificultadAsignacion.put(juego.getId(), sp);
+
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+        return row;
+    }
+
+    // ---------------------------------------------------------------------
+    // Guardar asignación
+    // ---------------------------------------------------------------------
+
     private void onGuardarAsignacion() {
         Nino seleccionado = (Nino) cboNinos.getSelectedItem();
         if (seleccionado == null) {
@@ -296,9 +696,8 @@ public class JuegosPanel extends JPanel {
         Set<Integer> juegosAsignados = new HashSet<>();
         Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
 
-        List<Juego> juegos = juegoService.obtenerTodos();
-
-        for (Juego juego : juegos) {
+        for (Juego juego : cacheJuegos) {
+            if (!isJuegoHabilitadoActual(juego)) continue;
             int idJuego = juego.getId();
             JCheckBox chk = checkBoxesAsignacion.get(idJuego);
             if (chk != null && chk.isSelected()) {
@@ -307,9 +706,8 @@ public class JuegosPanel extends JPanel {
                 JSpinner sp = spinnersDificultadAsignacion.get(idJuego);
                 if (sp != null) {
                     int valor = (Integer) sp.getValue();
-                    int difGlobal = Math.max(1, juego.getDificultad());
+                    int difGlobal = getDificultadGlobalActual(juego);
 
-                    // ✅ Solo guardamos si ES override
                     if (valor != difGlobal) {
                         dificultadPorJuego.put(idJuego, valor);
                     }
@@ -321,11 +719,102 @@ public class JuegosPanel extends JPanel {
         perfilService.guardarCambios();
 
         JOptionPane.showMessageDialog(this, "Asignación guardada para: " + seleccionado.getNombre());
-        actualizarAsignacionesParaSeleccionado();
+        cargarNinos();
     }
 
-    /** Devuelve IDs de juegos asignados a un niño (útil para EstudianteWindow). */
     public Set<Integer> getJuegosAsignadosParaNino(int idNino) {
         return perfilService.getJuegosAsignados(idNino);
+    }
+
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    private static String safe(String s) {
+        return (s == null) ? "" : s;
+    }
+
+    private static String safeLower(String s) {
+        return safe(s).trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean matchesJuego(Juego j, String qLower) {
+        if (qLower == null || qLower.isBlank()) return true;
+        String hay = (safe(j.getNombre()) + " " + safe(j.getDescripcion()) + " " + safe(j.getTipo() != null ? j.getTipo().name() : ""))
+                .toLowerCase(Locale.ROOT);
+        return hay.contains(qLower);
+    }
+
+    private static int clamp1to5(int v) {
+        if (v < 1) return 1;
+        if (v > 5) return 5;
+        return v;
+    }
+
+    private boolean isJuegoHabilitadoActual(Juego juego) {
+        JCheckBox chk = checkBoxesJuegos.get(juego.getId());
+        if (chk != null) return chk.isSelected();
+        if (pendingHabilitado.containsKey(juego.getId())) return pendingHabilitado.get(juego.getId());
+        return juego.isHabilitado();
+    }
+
+    private int getDificultadGlobalActual(Juego juego) {
+        JSpinner sp = spinnersDificultad.get(juego.getId());
+        if (sp != null) return clamp1to5((Integer) sp.getValue());
+        if (pendingDificultadGlobal.containsKey(juego.getId())) return clamp1to5(pendingDificultadGlobal.get(juego.getId()));
+        return clamp1to5(juego.getDificultad());
+    }
+
+    // ---------------------------------------------------------------------
+    // UI components
+    // ---------------------------------------------------------------------
+
+    private static final class CardPanel extends JPanel {
+        private final int arc;
+
+        CardPanel(LayoutManager lm) {
+            this(lm, 16);
+        }
+
+        CardPanel(LayoutManager lm, int arc) {
+            super(lm);
+            this.arc = arc;
+            setOpaque(false);
+            setBorder(new EmptyBorder(12, 12, 12, 12));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+                int pad = 1;
+
+                Color base = UIManager.getColor("Panel.background");
+                if (base == null) base = new Color(245, 245, 245);
+
+                Color fill = blend(base, Color.WHITE, 0.65f);
+                Color stroke = new Color(0, 0, 0, 20);
+
+                g2.setColor(fill);
+                g2.fillRoundRect(pad, pad, w - pad * 2, h - pad * 2, arc, arc);
+                g2.setColor(stroke);
+                g2.drawRoundRect(pad, pad, w - pad * 2, h - pad * 2, arc, arc);
+            } finally {
+                g2.dispose();
+            }
+            super.paintComponent(g);
+        }
+    }
+
+    private static Color blend(Color a, Color b, float t) {
+        t = Math.max(0f, Math.min(1f, t));
+        int r = (int) (a.getRed() + (b.getRed() - a.getRed()) * t);
+        int g = (int) (a.getGreen() + (b.getGreen() - a.getGreen()) * t);
+        int bl = (int) (a.getBlue() + (b.getBlue() - a.getBlue()) * t);
+        return new Color(r, g, bl);
     }
 }

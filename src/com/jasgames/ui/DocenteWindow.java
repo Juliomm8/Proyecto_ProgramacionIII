@@ -54,7 +54,8 @@ public class DocenteWindow extends JFrame {
         setContentPane(mainPanel);
         setTitle("JAS Games - Modo Docente");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1100, 800);
+        setMinimumSize(new java.awt.Dimension(1100, 800));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
 
         addWindowListener(new WindowAdapter() {
