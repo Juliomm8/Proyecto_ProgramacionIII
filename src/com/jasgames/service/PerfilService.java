@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.CriterioOrdenNino;
 import com.jasgames.model.Nino;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.FileLocks;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class PerfilService {
 
@@ -22,6 +24,7 @@ public class PerfilService {
 
     // Lista interna de niños
     private final List<Nino> ninos = new ArrayList<>();
+    private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_NINOS));
 
     // Gson para JSON
     private final Gson gson = new GsonBuilder()
@@ -33,7 +36,12 @@ public class PerfilService {
     }
 
     public void guardarCambios() {
-        guardarNinosEnArchivo();
+        ioLock.lock();
+        try {
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     // =========================================================
@@ -42,44 +50,64 @@ public class PerfilService {
 
     /** Usado por PerfilesPanel para llenar la tabla */
     public List<Nino> obtenerTodosNinos() {
-        return new ArrayList<>(ninos);
+        ioLock.lock();
+        try {
+            return new ArrayList<>(ninos);
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     /** Usado por PerfilesPanel al buscar por ID */
     public Nino buscarNinoPorId(int id) {
-        for (Nino n : ninos) {
-            if (n.getId() == id) {
-                return n;
+        ioLock.lock();
+        try {
+            for (Nino n : ninos) {
+                if (n.getId() == id) {
+                    return n;
+                }
             }
+            return null;
+        } finally {
+            ioLock.unlock();
         }
-        return null;
     }
 
     /** Devuelve los IDs de juegos asignados a un niño por su ID. */
     public Set<Integer> getJuegosAsignados(int idNino) {
-        Nino nino = buscarNinoPorId(idNino);
-        if (nino == null || nino.getJuegosAsignados() == null) {
-            return Collections.emptySet();
+        ioLock.lock();
+        try {
+            Nino nino = buscarNinoPorId(idNino);
+            if (nino == null || nino.getJuegosAsignados() == null) {
+                return Collections.emptySet();
+            }
+            // devolvemos una copia para no exponer la colección interna
+            return new HashSet<>(nino.getJuegosAsignados());
+        } finally {
+            ioLock.unlock();
         }
-        // devolvemos una copia para no exponer la colección interna
-        return new HashSet<>(nino.getJuegosAsignados());
     }
 
     /** Reemplaza el conjunto de juegos asignados a un niño y guarda en JSON. */
     public void asignarJuegos(int idNino, Set<Integer> juegosIds) {
-        Nino nino = buscarNinoPorId(idNino);
-        if (nino == null) {
-            return;
-        }
+        ioLock.lock();
+        try {
+            Nino nino = buscarNinoPorId(idNino);
+            if (nino == null) {
+                return;
+            }
 
-        if (juegosIds == null) {
-            nino.setJuegosAsignados(new HashSet<>());
-        } else {
-            nino.setJuegosAsignados(new HashSet<>(juegosIds));
-        }
+            if (juegosIds == null) {
+                nino.setJuegosAsignados(new HashSet<>());
+            } else {
+                nino.setJuegosAsignados(new HashSet<>(juegosIds));
+            }
 
-        // Persistimos el cambio en data/ninos.json
-        guardarNinosEnArchivo();
+            // Persistimos el cambio en data/ninos.json
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     /**
@@ -91,43 +119,53 @@ public class PerfilService {
             return null;
         }
 
-        String trimmed = texto.trim();
-
-        // 1) Intentar interpretarlo como ID (int)
+        ioLock.lock();
         try {
-            int idBuscado = Integer.parseInt(trimmed);
+            String trimmed = texto.trim();
+
+            // 1) Intentar interpretarlo como ID (int)
+            try {
+                int idBuscado = Integer.parseInt(trimmed);
+                for (Nino n : ninos) {
+                    if (n.getId() == idBuscado) {
+                        return n;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                // No es un número, seguimos con búsqueda por nombre
+            }
+
+            // 2) Buscar por nombre que contenga el texto (ignorando mayúsculas/minúsculas)
+            String buscadoLower = trimmed.toLowerCase();
             for (Nino n : ninos) {
-                if (n.getId() == idBuscado) {
+                if (n.getNombre() != null &&
+                        n.getNombre().toLowerCase().contains(buscadoLower)) {
                     return n;
                 }
             }
-        } catch (NumberFormatException e) {
-            // No es un número, seguimos con búsqueda por nombre
-        }
 
-        // 2) Buscar por nombre que contenga el texto (ignorando mayúsculas/minúsculas)
-        String buscadoLower = trimmed.toLowerCase();
-        for (Nino n : ninos) {
-            if (n.getNombre() != null &&
-                    n.getNombre().toLowerCase().contains(buscadoLower)) {
-                return n;
-            }
+            // Si no se encontró nada
+            return null;
+        } finally {
+            ioLock.unlock();
         }
-
-        // Si no se encontró nada
-        return null;
     }
 
     /** Usado por PerfilesPanel para actualizar los datos editados */
     public void actualizarNino(Nino ninoActualizado) {
         if (ninoActualizado == null) return;
 
-        for (int i = 0; i < ninos.size(); i++) {
-            if (ninos.get(i).getId() == ninoActualizado.getId()) {
-                ninos.set(i, ninoActualizado);
-                guardarNinosEnArchivo();
-                return;
+        ioLock.lock();
+        try {
+            for (int i = 0; i < ninos.size(); i++) {
+                if (ninos.get(i).getId() == ninoActualizado.getId()) {
+                    ninos.set(i, ninoActualizado);
+                    guardarNinosEnArchivo();
+                    return;
+                }
             }
+        } finally {
+            ioLock.unlock();
         }
     }
 
@@ -135,55 +173,75 @@ public class PerfilService {
     public void registrarNino(Nino nino) {
         if (nino == null) return;
 
-        // si ya existe ese ID, lo reemplazamos
-        eliminarNinoPorId(nino.getId());
-        ninos.add(nino);
-        guardarNinosEnArchivo();
+        ioLock.lock();
+        try {
+            // si ya existe ese ID, lo reemplazamos
+            eliminarNinoPorId(nino.getId());
+            ninos.add(nino);
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     /** Eliminar un niño por ID */
     public boolean eliminarNinoPorId(int id) {
-        boolean eliminado = ninos.removeIf(n -> n.getId() == id);
-        if (eliminado) {
-            guardarNinosEnArchivo();
+        ioLock.lock();
+        try {
+            boolean eliminado = ninos.removeIf(n -> n.getId() == id);
+            if (eliminado) {
+                guardarNinosEnArchivo();
+            }
+            return eliminado;
+        } finally {
+            ioLock.unlock();
         }
-        return eliminado;
     }
 
     /** Devolver copia de la lista ordenada según el criterio */
     public List<Nino> obtenerNinosOrdenados(CriterioOrdenNino criterio) {
-        List<Nino> copia = new ArrayList<>(ninos);
-        if (criterio == null) return copia;
+        ioLock.lock();
+        try {
+            List<Nino> copia = new ArrayList<>(ninos);
+            if (criterio == null) return copia;
 
-        switch (criterio) {
-            case ID:
-                // id es int
-                copia.sort(Comparator.comparingInt(Nino::getId));
-                break;
-            case NOMBRE:
-                copia.sort(Comparator.comparing(
-                        Nino::getNombre,
-                        String.CASE_INSENSITIVE_ORDER
-                ));
-                break;
-            case EDAD:
-                copia.sort(Comparator.comparingInt(Nino::getEdad));
-                break;
-            case DIAGNOSTICO:
-                // por si diagnostico no es String, usamos String.valueOf
-                copia.sort(Comparator.comparing(
-                        n -> String.valueOf(n.getDiagnostico()),
-                        String.CASE_INSENSITIVE_ORDER
-                ));
-                break;
+            switch (criterio) {
+                case ID:
+                    // id es int
+                    copia.sort(Comparator.comparingInt(Nino::getId));
+                    break;
+                case NOMBRE:
+                    copia.sort(Comparator.comparing(
+                            Nino::getNombre,
+                            String.CASE_INSENSITIVE_ORDER
+                    ));
+                    break;
+                case EDAD:
+                    copia.sort(Comparator.comparingInt(Nino::getEdad));
+                    break;
+                case DIAGNOSTICO:
+                    // por si diagnostico no es String, usamos String.valueOf
+                    copia.sort(Comparator.comparing(
+                            n -> String.valueOf(n.getDiagnostico()),
+                            String.CASE_INSENSITIVE_ORDER
+                    ));
+                    break;
+            }
+            return copia;
+        } finally {
+            ioLock.unlock();
         }
-        return copia;
     }
 
     public int getDificultadAsignada(int idNino, int idJuego, int difDefault) {
-        Nino nino = buscarNinoPorId(idNino);
-        if (nino == null) return difDefault;
-        return nino.getDificultadJuego(idJuego, difDefault);
+        ioLock.lock();
+        try {
+            Nino nino = buscarNinoPorId(idNino);
+            if (nino == null) return difDefault;
+            return nino.getDificultadJuego(idJuego, difDefault);
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     // =========================================================
@@ -191,6 +249,7 @@ public class PerfilService {
     // =========================================================
     /** Guarda la lista de niños en data/ninos.json */
     private void guardarNinosEnArchivo() {
+        ioLock.lock();
         try {
             Path pathArchivo = Paths.get(ARCHIVO_NINOS);
             Path carpeta = pathArchivo.getParent();
@@ -203,17 +262,20 @@ public class PerfilService {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     /** Carga los niños desde data/ninos.json, si existe */
     private void cargarNinosDesdeArchivo() {
-        Path pathArchivo = Paths.get(ARCHIVO_NINOS);
-        if (!Files.exists(pathArchivo)) {
-            return; // primera vez, no hay archivo
-        }
-
+        ioLock.lock();
         try {
+            Path pathArchivo = Paths.get(ARCHIVO_NINOS);
+            if (!Files.exists(pathArchivo)) {
+                return; // primera vez, no hay archivo
+            }
+
             String json = Files.readString(pathArchivo, StandardCharsets.UTF_8);
             if (json == null || json.isBlank()) return;
 
@@ -227,86 +289,118 @@ public class PerfilService {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     public void asignarJuegosConDificultad(int idNino, Set<Integer> juegosIds, Map<Integer, Integer> dificultades) {
-        Nino nino = buscarNinoPorId(idNino);
-        if (nino == null) return;
+        ioLock.lock();
+        try {
+            Nino nino = buscarNinoPorId(idNino);
+            if (nino == null) return;
 
-        Set<Integer> asignados = (juegosIds == null) ? new HashSet<>() : new HashSet<>(juegosIds);
-        nino.setJuegosAsignados(asignados);
+            Set<Integer> asignados = (juegosIds == null) ? new HashSet<>() : new HashSet<>(juegosIds);
+            nino.setJuegosAsignados(asignados);
 
-        // Si no me pasan dificultades, preservo las actuales (pero limpio las que ya no estén asignadas)
-        Map<Integer, Integer> difNueva;
-        if (dificultades != null) {
-            difNueva = new HashMap<>(dificultades);
-        } else {
-            difNueva = new HashMap<>(nino.getDificultadPorJuego());
+            // Si no me pasan dificultades, preservo las actuales (pero limpio las que ya no estén asignadas)
+            Map<Integer, Integer> difNueva;
+            if (dificultades != null) {
+                difNueva = new HashMap<>(dificultades);
+            } else {
+                difNueva = new HashMap<>(nino.getDificultadPorJuego());
+            }
+
+            // Quitar dificultades de juegos que ya no están asignados
+            difNueva.keySet().removeIf(idJuego -> !asignados.contains(idJuego));
+
+            nino.setDificultadPorJuego(difNueva);
+
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
         }
-
-        // Quitar dificultades de juegos que ya no están asignados
-        difNueva.keySet().removeIf(idJuego -> !asignados.contains(idJuego));
-
-        nino.setDificultadPorJuego(difNueva);
-
-        guardarNinosEnArchivo();
     }
 
     public void limpiarDificultadJuegoParaTodos(int idJuego) {
-        for (Nino n : ninos) {
-            if (n.getDificultadPorJuego() != null) {
-                n.getDificultadPorJuego().remove(idJuego);
+        ioLock.lock();
+        try {
+            for (Nino n : ninos) {
+                if (n.getDificultadPorJuego() != null) {
+                    n.getDificultadPorJuego().remove(idJuego);
+                }
             }
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
         }
-        guardarNinosEnArchivo();
     }
 
     public void aplicarDificultadJuegoATodos(int idJuego, int nuevaDif, boolean soloSinOverride) {
-        for (Nino n : ninos) {
-            if (n.getJuegosAsignados() == null || !n.getJuegosAsignados().contains(idJuego)) continue;
+        ioLock.lock();
+        try {
+            for (Nino n : ninos) {
+                if (n.getJuegosAsignados() == null || !n.getJuegosAsignados().contains(idJuego)) continue;
 
-            Map<Integer, Integer> difs = n.getDificultadPorJuego();
-            boolean tieneOverride = (difs != null && difs.containsKey(idJuego));
+                Map<Integer, Integer> difs = n.getDificultadPorJuego();
+                boolean tieneOverride = (difs != null && difs.containsKey(idJuego));
 
-            if (soloSinOverride && tieneOverride) continue;
+                if (soloSinOverride && tieneOverride) continue;
 
-            n.setDificultadJuego(idJuego, nuevaDif);
+                n.setDificultadJuego(idJuego, nuevaDif);
+            }
+
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
         }
-
-        guardarNinosEnArchivo();
     }
 
     public int contarNinosEnAula(String aula) {
         if (aula == null) return 0;
-        int c = 0;
-        for (Nino n : ninos) {
-            if (n.getAula().equalsIgnoreCase(aula.trim())) c++;
+        ioLock.lock();
+        try {
+            int c = 0;
+            for (Nino n : ninos) {
+                if (n.getAula().equalsIgnoreCase(aula.trim())) c++;
+            }
+            return c;
+        } finally {
+            ioLock.unlock();
         }
-        return c;
     }
 
     public void migrarAula(String aulaOrigen, String aulaDestino) {
         if (aulaOrigen == null || aulaDestino == null) return;
 
-        String o = aulaOrigen.trim();
-        String d = aulaDestino.trim();
+        ioLock.lock();
+        try {
+            String o = aulaOrigen.trim();
+            String d = aulaDestino.trim();
 
-        for (Nino n : ninos) {
-            if (n.getAula().equalsIgnoreCase(o)) {
-                n.setAula(d);
+            for (Nino n : ninos) {
+                if (n.getAula().equalsIgnoreCase(o)) {
+                    n.setAula(d);
+                }
             }
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
         }
-        guardarNinosEnArchivo();
     }
 
     public Set<String> obtenerAulasEnUso() {
-        Set<String> set = new LinkedHashSet<>();
-        for (Nino n : ninos) {
-            String a = n.getAula();
-            if (a != null && !a.isBlank()) set.add(a.trim());
+        ioLock.lock();
+        try {
+            Set<String> set = new LinkedHashSet<>();
+            for (Nino n : ninos) {
+                String a = n.getAula();
+                if (a != null && !a.isBlank()) set.add(a.trim());
+            }
+            return set;
+        } finally {
+            ioLock.unlock();
         }
-        return set;
     }
 
 }

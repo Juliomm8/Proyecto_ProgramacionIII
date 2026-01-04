@@ -1,10 +1,11 @@
 package com.jasgames.service;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Juego;
 import com.jasgames.model.ResultadoJuego;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.FileLocks;
+import com.jasgames.util.JsonSafeIO;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ResultadoService {
@@ -19,6 +21,7 @@ public class ResultadoService {
     private static final String ARCHIVO_RESULTADOS = "data/resultados.json";
 
     private final List<ResultadoJuego> resultados = new ArrayList<>();
+    private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_RESULTADOS));
 
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -31,20 +34,35 @@ public class ResultadoService {
 
     public void registrarResultado(ResultadoJuego resultado) {
         if (resultado != null) {
-            resultados.add(resultado);
-            guardarEnArchivo();
+            ioLock.lock();
+            try {
+                resultados.add(resultado);
+                guardarEnArchivo();
+            } finally {
+                ioLock.unlock();
+            }
         }
     }
 
     public List<ResultadoJuego> obtenerTodos() {
-        return new ArrayList<>(resultados);
+        ioLock.lock();
+        try {
+            return new ArrayList<>(resultados);
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public List<ResultadoJuego> obtenerPorJuego(Juego juego) {
         if (juego == null) return new ArrayList<>();
-        return resultados.stream()
-                .filter(r -> r.getJuego() != null && r.getJuego().getId() == juego.getId())
-                .collect(Collectors.toList());
+        ioLock.lock();
+        try {
+            return resultados.stream()
+                    .filter(r -> r.getJuego() != null && r.getJuego().getId() == juego.getId())
+                    .collect(Collectors.toList());
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public List<ResultadoJuego> obtenerPorJuegoOrdenadosPorPuntajeDesc(Juego juego) {
@@ -56,6 +74,7 @@ public class ResultadoService {
     // ---------------- PERSISTENCIA ----------------
 
     private void guardarEnArchivo() {
+        ioLock.lock();
         try {
             Path path = Paths.get(ARCHIVO_RESULTADOS);
             Path dir = path.getParent();
@@ -66,25 +85,30 @@ public class ResultadoService {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     private void cargarDesdeArchivo() {
-        Path path = Paths.get(ARCHIVO_RESULTADOS);
-        if (!Files.exists(path)) return;
-
+        ioLock.lock();
         try {
-            String json = Files.readString(path, StandardCharsets.UTF_8);
-            if (json == null || json.isBlank()) return;
+            Path path = Paths.get(ARCHIVO_RESULTADOS);
+            if (!Files.exists(path)) return;
 
-            Type tipoLista = new TypeToken<List<ResultadoJuego>>(){}.getType();
-            List<ResultadoJuego> cargados = gson.fromJson(json, tipoLista);
-
+            ResultadoJuego[] lista = JsonSafeIO.readOrRecover(
+                    path,
+                    gson,
+                    ResultadoJuego[].class,
+                    new ResultadoJuego[0]
+            );
             resultados.clear();
-            if (cargados != null) resultados.addAll(cargados);
+            if (lista != null) resultados.addAll(Arrays.asList(lista));
 
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 

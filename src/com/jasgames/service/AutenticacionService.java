@@ -5,12 +5,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Docente;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AutenticacionService {
 
@@ -18,6 +20,7 @@ public class AutenticacionService {
 
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final List<Docente> docentes = new ArrayList<>();
+    private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_DOCENTES));
 
     public AutenticacionService() {
         asegurarArchivoExiste();
@@ -34,22 +37,28 @@ public class AutenticacionService {
     public Optional<Docente> login(String usuario, String passwordPlano) {
         if (usuario == null || passwordPlano == null) return Optional.empty();
 
-        String u = usuario.trim().toLowerCase(Locale.ROOT);
+        ioLock.lock();
+        try {
+            String u = usuario.trim().toLowerCase(Locale.ROOT);
 
-        for (Docente d : docentes) {
-            if (d.getUsuario() != null && d.getUsuario().trim().equalsIgnoreCase(u)) {
-                if (d.getSalt() == null || d.getPasswordHash() == null) return Optional.empty();
+            for (Docente d : docentes) {
+                if (d.getUsuario() != null && d.getUsuario().trim().equalsIgnoreCase(u)) {
+                    if (d.getSalt() == null || d.getPasswordHash() == null) return Optional.empty();
 
-                boolean ok = ContrasenaUtil.verificar(passwordPlano, d.getSalt(), d.getPasswordHash());
-                return ok ? Optional.of(d) : Optional.empty();
+                    boolean ok = ContrasenaUtil.verificar(passwordPlano, d.getSalt(), d.getPasswordHash());
+                    return ok ? Optional.of(d) : Optional.empty();
+                }
             }
+            return Optional.empty();
+        } finally {
+            ioLock.unlock();
         }
-        return Optional.empty();
     }
 
     // ---------------- internos ----------------
 
     private void asegurarArchivoExiste() {
+        ioLock.lock();
         try {
             Path path = Paths.get(ARCHIVO_DOCENTES);
             Path dir = path.getParent();
@@ -60,47 +69,62 @@ public class AutenticacionService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     private void cargarDocentes() {
-        Path path = Paths.get(ARCHIVO_DOCENTES);
-        Docente[] arr = JsonSafeIO.readOrRecover(path, gson, Docente[].class, new Docente[0]);
-        this.docentes.clear();
-        this.docentes.addAll(Arrays.asList(arr));
+        ioLock.lock();
+        try {
+            Path path = Paths.get(ARCHIVO_DOCENTES);
+            Docente[] arr = JsonSafeIO.readOrRecover(path, gson, Docente[].class, new Docente[0]);
+            this.docentes.clear();
+            this.docentes.addAll(Arrays.asList(arr));
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     private void guardarDocentes() {
+        ioLock.lock();
         try {
             Path path = Paths.get(ARCHIVO_DOCENTES);
             String json = gson.toJson(docentes);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     /** Convierte password plano -> salt + passwordHash y borra el password */
     private boolean migrarPasswordsPlanosSiExisten() {
-        boolean migrado = false;
+        ioLock.lock();
+        try {
+            boolean migrado = false;
 
-        for (Docente d : docentes) {
-            boolean faltaHash = (d.getPasswordHash() == null || d.getPasswordHash().isBlank()
-                    || d.getSalt() == null || d.getSalt().isBlank());
+            for (Docente d : docentes) {
+                boolean faltaHash = (d.getPasswordHash() == null || d.getPasswordHash().isBlank()
+                        || d.getSalt() == null || d.getSalt().isBlank());
 
-            if (faltaHash && d.getPassword() != null && !d.getPassword().isBlank()) {
-                String salt = ContrasenaUtil.generarSaltBase64();
-                String hash = ContrasenaUtil.hashPasswordBase64(d.getPassword(), salt);
+                if (faltaHash && d.getPassword() != null && !d.getPassword().isBlank()) {
+                    String salt = ContrasenaUtil.generarSaltBase64();
+                    String hash = ContrasenaUtil.hashPasswordBase64(d.getPassword(), salt);
 
-                d.setSalt(salt);
-                d.setPasswordHash(hash);
+                    d.setSalt(salt);
+                    d.setPasswordHash(hash);
 
-                // seguridad: eliminar password plano
-                d.setPassword(null);
+                    // seguridad: eliminar password plano
+                    d.setPassword(null);
 
-                migrado = true;
+                    migrado = true;
+                }
             }
+            return migrado;
+        } finally {
+            ioLock.unlock();
         }
-        return migrado;
     }
 }

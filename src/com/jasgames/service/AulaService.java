@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Aula;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
 import java.awt.Color;
@@ -12,6 +13,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AulaService {
 
@@ -19,6 +21,7 @@ public class AulaService {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private final List<Aula> aulas = new ArrayList<>();
+    private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_AULAS));
 
     public AulaService(PerfilService perfilService) {
         cargar();
@@ -28,45 +31,75 @@ public class AulaService {
     }
 
     public List<Aula> obtenerTodas() {
-        return new ArrayList<>(aulas);
+        ioLock.lock();
+        try {
+            return new ArrayList<>(aulas);
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public List<String> obtenerNombres() {
-        List<String> out = new ArrayList<>();
-        for (Aula a : aulas) out.add(a.getNombre());
-        out.sort(String.CASE_INSENSITIVE_ORDER);
-        return out;
+        ioLock.lock();
+        try {
+            List<String> out = new ArrayList<>();
+            for (Aula a : aulas) out.add(a.getNombre());
+            out.sort(String.CASE_INSENSITIVE_ORDER);
+            return out;
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public Aula buscarPorNombre(String nombre) {
         if (nombre == null) return null;
-        for (Aula a : aulas) {
-            if (a.getNombre() != null && a.getNombre().equalsIgnoreCase(nombre.trim())) return a;
+        ioLock.lock();
+        try {
+            for (Aula a : aulas) {
+                if (a.getNombre() != null && a.getNombre().equalsIgnoreCase(nombre.trim())) return a;
+            }
+            return null;
+        } finally {
+            ioLock.unlock();
         }
-        return null;
     }
 
     public Color colorDeAula(String nombreAula) {
-        Aula a = buscarPorNombre(nombreAula);
-        if (a == null) return new Color(149, 165, 166);
-        return parseHex(a.getColorHex());
+        ioLock.lock();
+        try {
+            Aula a = buscarPorNombre(nombreAula);
+            if (a == null) return new Color(149, 165, 166);
+            return parseHex(a.getColorHex());
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public void crearAula(String nombre, String colorHex) {
-        String n = normalizarNombre(nombre);
-        if (n.isBlank()) throw new IllegalArgumentException("Nombre de aula vacío.");
+        ioLock.lock();
+        try {
+            String n = normalizarNombre(nombre);
+            if (n.isBlank()) throw new IllegalArgumentException("Nombre de aula vacío.");
 
-        if (buscarPorNombre(n) != null) throw new IllegalArgumentException("Esa aula ya existe.");
+            if (buscarPorNombre(n) != null) throw new IllegalArgumentException("Esa aula ya existe.");
 
-        aulas.add(new Aula(n, normalizarHex(colorHex)));
-        guardar();
+            aulas.add(new Aula(n, normalizarHex(colorHex)));
+            guardar();
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     public void cambiarColor(String nombreAula, String colorHex) {
-        Aula a = buscarPorNombre(nombreAula);
-        if (a == null) throw new IllegalArgumentException("No existe esa aula.");
-        a.setColorHex(normalizarHex(colorHex));
-        guardar();
+        ioLock.lock();
+        try {
+            Aula a = buscarPorNombre(nombreAula);
+            if (a == null) throw new IllegalArgumentException("No existe esa aula.");
+            a.setColorHex(normalizarHex(colorHex));
+            guardar();
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     /**
@@ -74,43 +107,54 @@ public class AulaService {
      * Por seguridad, no permite dejar el sistema sin "Aula Azul".
      */
     public void eliminarAula(String aulaEliminar, String aulaDestino, PerfilService perfilService) {
-        Aula a = buscarPorNombre(aulaEliminar);
-        if (a == null) throw new IllegalArgumentException("No existe esa aula.");
+        ioLock.lock();
+        try {
+            Aula a = buscarPorNombre(aulaEliminar);
+            if (a == null) throw new IllegalArgumentException("No existe esa aula.");
 
-        // Guard rail: mantener Aula Azul siempre (porque Nino.getAula() usa ese default)
-        if ("Aula Azul".equalsIgnoreCase(a.getNombre())) {
-            throw new IllegalArgumentException("No se puede eliminar Aula Azul (es el aula por defecto del sistema).");
+            // Guard rail: mantener Aula Azul siempre (porque Nino.getAula() usa ese default)
+            if ("Aula Azul".equalsIgnoreCase(a.getNombre())) {
+                throw new IllegalArgumentException("No se puede eliminar Aula Azul (es el aula por defecto del sistema).");
+            }
+
+            int cant = perfilService.contarNinosEnAula(a.getNombre());
+
+            if (cant > 0) {
+                if (aulaDestino == null || aulaDestino.isBlank())
+                    throw new IllegalArgumentException("Debes elegir un aula destino para migrar estudiantes.");
+
+                if (aulaDestino.equalsIgnoreCase(a.getNombre()))
+                    throw new IllegalArgumentException("El aula destino no puede ser la misma.");
+
+                if (buscarPorNombre(aulaDestino) == null)
+                    throw new IllegalArgumentException("El aula destino no existe.");
+
+                perfilService.migrarAula(a.getNombre(), aulaDestino);
+            }
+
+            aulas.removeIf(x -> x.getNombre() != null && x.getNombre().equalsIgnoreCase(a.getNombre()));
+            guardar();
+        } finally {
+            ioLock.unlock();
         }
-
-        int cant = perfilService.contarNinosEnAula(a.getNombre());
-
-        if (cant > 0) {
-            if (aulaDestino == null || aulaDestino.isBlank())
-                throw new IllegalArgumentException("Debes elegir un aula destino para migrar estudiantes.");
-
-            if (aulaDestino.equalsIgnoreCase(a.getNombre()))
-                throw new IllegalArgumentException("El aula destino no puede ser la misma.");
-
-            if (buscarPorNombre(aulaDestino) == null)
-                throw new IllegalArgumentException("El aula destino no existe.");
-
-            perfilService.migrarAula(a.getNombre(), aulaDestino);
-        }
-
-        aulas.removeIf(x -> x.getNombre() != null && x.getNombre().equalsIgnoreCase(a.getNombre()));
-        guardar();
     }
 
     // ----------------- Interno -----------------
 
     private void cargar() {
-        aulas.clear();
-        Path p = Paths.get(ARCHIVO_AULAS);
-        Aula[] arr = JsonSafeIO.readOrRecover(p, gson, Aula[].class, new Aula[0]);
-        this.aulas.addAll(Arrays.asList(arr));
+        ioLock.lock();
+        try {
+            aulas.clear();
+            Path p = Paths.get(ARCHIVO_AULAS);
+            Aula[] arr = JsonSafeIO.readOrRecover(p, gson, Aula[].class, new Aula[0]);
+            this.aulas.addAll(Arrays.asList(arr));
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     private void guardar() {
+        ioLock.lock();
         try {
             Path p = Paths.get(ARCHIVO_AULAS);
             Path dir = p.getParent();
@@ -118,32 +162,44 @@ public class AulaService {
             AtomicFiles.writeStringAtomic(p, gson.toJson(aulas), StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            ioLock.unlock();
         }
     }
 
     private void inicializarSiVacio() {
-        // Si no hay archivo o viene vacío, crea base
-        if (aulas.isEmpty()) {
-            aulas.add(new Aula("Aula Azul", "#3498DB"));
-            aulas.add(new Aula("Aula Roja", "#E74C3C"));
-            aulas.add(new Aula("Aula Verde", "#2ECC71"));
-            aulas.add(new Aula("Aula Amarilla", "#F1C40F"));
-            aulas.add(new Aula("Aula Morada", "#9B59B6"));
-        }
+        ioLock.lock();
+        try {
+            // Si no hay archivo o viene vacío, crea base
+            if (aulas.isEmpty()) {
+                aulas.add(new Aula("Aula Azul", "#3498DB"));
+                aulas.add(new Aula("Aula Roja", "#E74C3C"));
+                aulas.add(new Aula("Aula Verde", "#2ECC71"));
+                aulas.add(new Aula("Aula Amarilla", "#F1C40F"));
+                aulas.add(new Aula("Aula Morada", "#9B59B6"));
+            }
 
-        // asegurar Aula Azul siempre
-        if (buscarPorNombre("Aula Azul") == null) {
-            aulas.add(new Aula("Aula Azul", "#3498DB"));
+            // asegurar Aula Azul siempre
+            if (buscarPorNombre("Aula Azul") == null) {
+                aulas.add(new Aula("Aula Azul", "#3498DB"));
+            }
+        } finally {
+            ioLock.unlock();
         }
     }
 
     private void sincronizarConAulasDeNinos(PerfilService perfilService) {
-        // Si en ninos.json existían aulas extra, se agregan con color gris por defecto
-        Set<String> aulasEnNinos = perfilService.obtenerAulasEnUso();
-        for (String nombre : aulasEnNinos) {
-            if (buscarPorNombre(nombre) == null) {
-                aulas.add(new Aula(nombre, "#95A5A6")); // gris
+        ioLock.lock();
+        try {
+            // Si en ninos.json existían aulas extra, se agregan con color gris por defecto
+            Set<String> aulasEnNinos = perfilService.obtenerAulasEnUso();
+            for (String nombre : aulasEnNinos) {
+                if (buscarPorNombre(nombre) == null) {
+                    aulas.add(new Aula(nombre, "#95A5A6")); // gris
+                }
             }
+        } finally {
+            ioLock.unlock();
         }
     }
 
