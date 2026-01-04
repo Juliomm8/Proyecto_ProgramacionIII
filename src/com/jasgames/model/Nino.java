@@ -42,11 +42,14 @@ public class Nino {
     }
 
     public Set<Integer> getJuegosAsignados() {
+        if (juegosAsignados == null) {
+            juegosAsignados = new HashSet<>();
+        }
         return juegosAsignados;
     }
 
     public void setJuegosAsignados(Set<Integer> juegosAsignados) {
-        this.juegosAsignados = juegosAsignados;
+        this.juegosAsignados = (juegosAsignados == null) ? new HashSet<>() : new HashSet<>(juegosAsignados);
     }
 
     public int getPuntosTotales() {

@@ -287,6 +287,21 @@ public class PerfilService {
                 ninos.addAll(cargados);
             }
 
+            boolean cambiado = false;
+            for (Nino n : ninos) {
+                if (n.getJuegosAsignados() == null) {
+                    n.setJuegosAsignados(new HashSet<>());
+                    cambiado = true;
+                }
+                if (n.getDificultadPorJuego() == null) {
+                    n.setDificultadPorJuego(new HashMap<>());
+                    cambiado = true;
+                }
+            }
+            if (cambiado) {
+                guardarNinosEnArchivo();
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
