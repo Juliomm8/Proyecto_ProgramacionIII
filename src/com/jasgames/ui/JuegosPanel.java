@@ -6,6 +6,7 @@ import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
@@ -19,6 +20,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -76,10 +78,22 @@ public class JuegosPanel extends JPanel {
 
     // Asignación (acciones)
     private JTextField txtBuscarAsignacion;
+
+    // Selector de estudiante (más intuitivo para listas grandes)
+    private JComboBox<String> cboFiltroAula;
+    private JTextField txtFiltroId;
+    private JComboBox<String> cboOrdenNino;
+    private JButton btnLimpiarFiltrosNino;
+    private JLabel lblNinosFiltro;
+
     private JCheckBox chkSoloAsignados;
     private JButton btnAsignarSel;
     private JButton btnQuitarSel;
     private JButton btnMasAsignacion;
+
+    // Debounce para filtros (evita refrescos excesivos cuando se escribe rápido)
+    private Timer tDebounceNinos;
+    private boolean ignoreNinoEvents = false;
 
     // Editor intuitivo de dificultad por estudiante
     private JLabel lblEditorJuego;
@@ -292,27 +306,101 @@ public class JuegosPanel extends JPanel {
         titleBlock.add(Box.createVerticalStrut(2));
         titleBlock.add(lblResumenAsignacion);
 
-        JPanel rowStudent = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+
+        // Bloque de selección de estudiante (2 filas, sin "wrap" cortado)
+        JPanel rowStudent = new JPanel(new GridBagLayout());
         rowStudent.setOpaque(false);
+
+        GridBagConstraints cs = new GridBagConstraints();
+        cs.insets = new Insets(2, 0, 2, 8);
+        cs.anchor = GridBagConstraints.WEST;
+        cs.fill = GridBagConstraints.NONE;
+        cs.gridy = 0;
+
+        // Filtros intuitivos (para 500+ estudiantes):
+        // 1) Filtra por aula, 2) (opcional) salta por ID, 3) ordena por Nombre/ID.
+        cboFiltroAula = new JComboBox<>();
+        cboFiltroAula.setPreferredSize(new Dimension(150, cboFiltroAula.getPreferredSize().height));
+        cboFiltroAula.setToolTipText("Filtrar estudiantes por aula");
+
+        txtFiltroId = new JTextField();
+        txtFiltroId.setColumns(14);
+        txtFiltroId.setToolTipText("Buscar por ID o nombre (ej: 23, julio, aula azul)");
+        Dimension idSize = new Dimension(140, txtFiltroId.getPreferredSize().height);
+        txtFiltroId.setPreferredSize(idSize);
+        txtFiltroId.setMinimumSize(idSize);
+        txtFiltroId.setEditable(true);
+        txtFiltroId.setEnabled(true);
+        cboOrdenNino = new JComboBox(new String[]{"Nombre (A-Z)", "ID (asc)", "Aula → Nombre"});
+        cboOrdenNino.setPreferredSize(new Dimension(140, cboOrdenNino.getPreferredSize().height));
+        cboOrdenNino.setToolTipText("Ordenar lista de estudiantes");
+
+        btnLimpiarFiltrosNino = new JButton("Limpiar");
+        btnLimpiarFiltrosNino.setToolTipText("Quitar filtros de aula/ID");
+
+        lblNinosFiltro = new JLabel(" ");
+        lblNinosFiltro.setFont(lblNinosFiltro.getFont().deriveFont(Font.PLAIN, 11.5f));
+        lblNinosFiltro.setForeground(new Color(110, 110, 110));
 
         lblSeleccionNino = new JLabel("Estudiante:");
         cboNinos = new JComboBox();
-        cboNinos.setPreferredSize(new Dimension(300, cboNinos.getPreferredSize().height));
+        cboNinos.setPreferredSize(new Dimension(420, cboNinos.getPreferredSize().height));
+        cboNinos.setMaximumRowCount(20);
         cboNinos.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Nino) {
                     Nino n = (Nino) value;
-                    setText(n.getNombre() + "  ·  " + n.getAula() + "  ·  id=" + n.getId());
+                    String nombre = safe(n.getNombre());
+                    String aula = safe(n.getAula());
+                    setText((nombre.isBlank() ? "(Sin nombre)" : nombre) + "  ·  " + aula + "  ·  id=" + n.getId());
                 }
                 return this;
             }
         });
 
-        rowStudent.add(lblSeleccionNino);
-        rowStudent.add(cboNinos);
+        // Fila 1: filtros
+        cs.gridx = 0; cs.weightx = 0;
+        rowStudent.add(new JLabel("Aula:"), cs);
 
+        cs.gridx = 1;
+        rowStudent.add(cboFiltroAula, cs);
+
+        cs.gridx = 2;
+        rowStudent.add(new JLabel("Buscar:"), cs);
+
+        cs.gridx = 3;
+        cs.fill = GridBagConstraints.HORIZONTAL;
+        rowStudent.add(txtFiltroId, cs);
+        cs.fill = GridBagConstraints.NONE;
+
+        cs.gridx = 4;
+        rowStudent.add(new JLabel("Orden:"), cs);
+
+        cs.gridx = 5;
+        rowStudent.add(cboOrdenNino, cs);
+
+        cs.gridx = 6;
+        rowStudent.add(btnLimpiarFiltrosNino, cs);
+
+        cs.gridx = 7;
+        cs.weightx = 1;
+        cs.fill = GridBagConstraints.HORIZONTAL;
+        rowStudent.add(lblNinosFiltro, cs);
+
+        // Fila 2: combo estudiante (SIEMPRE visible)
+        cs.gridy = 1;
+        cs.gridx = 0;
+        cs.weightx = 0;
+        cs.fill = GridBagConstraints.NONE;
+        rowStudent.add(lblSeleccionNino, cs);
+
+        cs.gridx = 1;
+        cs.gridwidth = 7;
+        cs.weightx = 1;
+        cs.fill = GridBagConstraints.HORIZONTAL;
+        rowStudent.add(cboNinos, cs);
         JPanel rowFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         rowFilters.setOpaque(false);
 
@@ -530,18 +618,10 @@ public class JuegosPanel extends JPanel {
     }
 
     private void cargarNinos() {
-        cboNinos.removeAllItems();
-
         cacheNinos = new ArrayList<>(perfilService.obtenerTodosNinos());
         cacheNinos.sort(Comparator.comparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER));
-        for (Nino n : cacheNinos) cboNinos.addItem(n);
-
-        if (cboNinos.getItemCount() > 0) {
-            cboNinos.setSelectedIndex(0);
-            actualizarAsignacionesParaSeleccionado();
-        } else {
-            asignacionModel.setRows(Collections.emptyList());
-        }
+        rebuildAulaFilter();
+        aplicarFiltroNinosNow(true);
     }
 
     private void initListeners() {
@@ -555,6 +635,21 @@ public class JuegosPanel extends JPanel {
         // Filtros
         wireSearch(txtBuscarCatalogo, this::aplicarFiltroCatalogo);
         wireSearch(txtBuscarAsignacion, this::aplicarFiltroAsignacion);
+
+        // Estudiantes: filtros por Aula / ID (más intuitivo para listas grandes)
+        wireSearchDebounced(txtFiltroId, this::scheduleFiltroNinos);
+        cboFiltroAula.addActionListener(e -> aplicarFiltroNinosNow(true));
+        cboOrdenNino.addActionListener(e -> aplicarFiltroNinosNow(true));
+        btnLimpiarFiltrosNino.addActionListener(e -> {
+            if (cboFiltroAula != null && cboFiltroAula.getItemCount() > 0) cboFiltroAula.setSelectedIndex(0); // "Todas"
+            if (cboOrdenNino != null && cboOrdenNino.getItemCount() > 0) cboOrdenNino.setSelectedIndex(0);
+            if (txtFiltroId != null) {
+                txtFiltroId.setText("");
+                txtFiltroId.requestFocusInWindow();
+                txtFiltroId.selectAll();
+            }
+            aplicarFiltroNinosNow(true);
+        });
 
         // Catálogo: menú "Más"
         btnMasCatalogo.addActionListener(e -> {
@@ -582,7 +677,10 @@ public class JuegosPanel extends JPanel {
         btnGuardarEstadoJuegos.addActionListener(e -> onGuardarEstadosJuegos());
 
         // Asignación
-        cboNinos.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
+        cboNinos.addActionListener(e -> {
+            if (ignoreNinoEvents) return;
+            actualizarAsignacionesParaSeleccionado();
+        });
         chkSoloAsignados.addActionListener(e -> aplicarFiltroAsignacion());
         btnGuardarAsignacion.addActionListener(e -> onGuardarAsignacion());
 
@@ -617,9 +715,29 @@ public class JuegosPanel extends JPanel {
                 updateEditorFromSelection();
             }
         });
+
+        // Atajo: Ctrl+F enfoca el buscador de estudiantes
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke("ctrl F"), "focusBuscarEstudiante");
+        getActionMap().put("focusBuscarEstudiante", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (txtFiltroId != null) {
+                    txtFiltroId.requestFocusInWindow();
+                    txtFiltroId.selectAll();
+                }
+            }
+        });
     }
 
     private void wireSearch(JTextField field, Runnable onChange) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { onChange.run(); }
+            @Override public void removeUpdate(DocumentEvent e) { onChange.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { onChange.run(); }
+        });
+    }
+
+    private void wireSearchDebounced(JTextField field, Runnable onChange) {
         field.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { onChange.run(); }
             @Override public void removeUpdate(DocumentEvent e) { onChange.run(); }
@@ -670,6 +788,159 @@ public class JuegosPanel extends JPanel {
     }
 
     // ---------------------------------------------------------------------
+    // Filtro de estudiantes (para listas grandes)
+    // ---------------------------------------------------------------------
+
+
+    private void scheduleFiltroNinos() {
+        if (tDebounceNinos == null) {
+            tDebounceNinos = new Timer(160, e -> {
+                tDebounceNinos.stop();
+                aplicarFiltroNinosNow(true);
+            });
+            tDebounceNinos.setRepeats(false);
+        }
+        tDebounceNinos.restart();
+    }
+
+    /** Reconstruye el combo de aulas a partir de los niños cargados. */
+    private void rebuildAulaFilter() {
+        if (cboFiltroAula == null) return;
+
+        // Guardar selección previa si existe
+        Object prev = cboFiltroAula.getSelectedItem();
+
+        Set<String> aulas = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Nino n : cacheNinos) {
+            String a = safe(n.getAula()).trim();
+            if (!a.isEmpty()) aulas.add(a);
+        }
+
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        model.addElement("Todas");
+        for (String a : aulas) model.addElement(a);
+
+        cboFiltroAula.setModel(model);
+
+        if (prev != null) {
+            cboFiltroAula.setSelectedItem(prev);
+        }
+        if (cboFiltroAula.getSelectedIndex() < 0) {
+            cboFiltroAula.setSelectedIndex(0);
+        }
+    }
+
+    private void aplicarFiltroNinosNow(boolean tryKeepSelection) {
+        if (cboNinos == null) return;
+
+        Integer keepId = null;
+        if (tryKeepSelection) {
+            Object sel = cboNinos.getSelectedItem();
+            if (sel instanceof Nino) keepId = ((Nino) sel).getId();
+        }
+
+        String aulaSel = (cboFiltroAula != null && cboFiltroAula.getSelectedItem() != null)
+                ? String.valueOf(cboFiltroAula.getSelectedItem())
+                : "Todas";
+        String qNino = (txtFiltroId != null) ? safe(txtFiltroId.getText()).trim().toLowerCase(Locale.ROOT) : "";
+        String[] tokens = qNino.isEmpty() ? new String[0] : qNino.split("\s+");
+
+        List<Nino> filtered = new ArrayList<>();
+        for (Nino n : cacheNinos) {
+            // 1) Filtro por aula
+            if (!"Todas".equalsIgnoreCase(aulaSel)) {
+                if (!safe(n.getAula()).equalsIgnoreCase(aulaSel)) continue;
+            }
+            // 2) Filtro por texto: ID (prefijo) o Nombre/Aula (contiene)
+            if (tokens.length > 0 && !matchesNinoTokensRecursive(n, tokens, 0)) {
+                continue;
+            }
+            filtered.add(n);
+        }
+
+// Orden
+        String orden = (cboOrdenNino != null && cboOrdenNino.getSelectedItem() != null)
+                ? String.valueOf(cboOrdenNino.getSelectedItem())
+                : "Nombre (A-Z)";
+
+        Comparator<Nino> comp;
+        if (orden.startsWith("ID")) {
+            comp = Comparator.comparingInt(Nino::getId);
+        } else if (orden.startsWith("Aula")) {
+            comp = Comparator.comparing((Nino n) -> safe(n.getAula()), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(n -> safe(n.getNombre()), String.CASE_INSENSITIVE_ORDER);
+        } else {
+            comp = Comparator.comparing(n -> safe(n.getNombre()), String.CASE_INSENSITIVE_ORDER);
+        }
+        filtered.sort(comp);
+
+        ignoreNinoEvents = true;
+        try {
+            DefaultComboBoxModel<Nino> model = new DefaultComboBoxModel<>(filtered.toArray(new Nino[0]));
+            cboNinos.setModel(model);
+
+            if (keepId != null) {
+                for (int i = 0; i < model.getSize(); i++) {
+                    Nino n = model.getElementAt(i);
+                    if (n != null && n.getId() == keepId) {
+                        cboNinos.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            if (cboNinos.getSelectedIndex() < 0 && model.getSize() > 0) {
+                cboNinos.setSelectedIndex(0);
+            }
+        } finally {
+            ignoreNinoEvents = false;
+        }
+
+        if (lblNinosFiltro != null) {
+            String extra = "Todas".equalsIgnoreCase(aulaSel) ? "" : (" · " + aulaSel);
+            lblNinosFiltro.setText("Mostrando " + filtered.size() + "/" + cacheNinos.size() + extra);
+        }
+
+        if (cboNinos.getItemCount() > 0) {
+            actualizarAsignacionesParaSeleccionado();
+        } else {
+            asignacionModel.setRows(Collections.emptyList());
+            resumenAsignacionBase = "Habilitados: 0  ·  Asignados: 0";
+            lblResumenAsignacion.setText(resumenAsignacionBase);
+        }
+    }
+
+
+    private boolean matchesNinoTokensRecursive(Nino n, String[] tokens, int idx) {
+        if (tokens == null || idx >= tokens.length) return true;
+
+        String t = tokens[idx];
+        if (t == null || t.isBlank()) {
+            return matchesNinoTokensRecursive(n, tokens, idx + 1);
+        }
+
+        if (!tokenMatchesNino(n, t)) return false;
+        return matchesNinoTokensRecursive(n, tokens, idx + 1);
+    }
+
+    private boolean tokenMatchesNino(Nino n, String token) {
+        String t = token.toLowerCase(Locale.ROOT).trim();
+        if (t.isEmpty()) return true;
+
+        // Si es numérico, lo tratamos como prefijo de ID (ej: "2" => 2, 20, 21...)
+        boolean numeric = true;
+        for (int i = 0; i < t.length(); i++) {
+            if (!Character.isDigit(t.charAt(i))) { numeric = false; break; }
+        }
+        if (numeric) {
+            return String.valueOf(n.getId()).startsWith(t);
+        }
+
+        // Si es texto, buscar en nombre y aula
+        String hay = (safe(n.getNombre()) + " " + safe(n.getAula())).toLowerCase(Locale.ROOT);
+        return hay.contains(t);
+    }
+
+// ---------------------------------------------------------------------
     // Catálogo: multiselección habilitar/deshabilitar y dif global
     // ---------------------------------------------------------------------
 
