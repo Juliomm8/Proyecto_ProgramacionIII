@@ -54,6 +54,10 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private JLabel lblPregunta;
     private ProgressDots dots;
 
+    private volatile boolean disposed = false;
+    private Timer timerHold = null;   // el “espera 1200ms”
+    private Timer timerFade = null;   // el fadeBody
+
     // ====== Modelo interno ======
     private static class VocalItem {
         final char vocal;
@@ -288,8 +292,22 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
                 .add(new VocalItem(vocal, palabra, imgPath, audioPath));
     }
 
-    private void iniciarPartida() {
+    // 2) Agrega un helper para parar timers (debajo de tus métodos privados)
+    private void stopAllTimers() {
         if (timerSiguiente != null && timerSiguiente.isRunning()) timerSiguiente.stop();
+        timerSiguiente = null;
+
+        if (timerHold != null && timerHold.isRunning()) timerHold.stop();
+        timerHold = null;
+
+        if (timerFade != null && timerFade.isRunning()) timerFade.stop();
+        timerFade = null;
+    }
+
+    // 3) En iniciarPartida() marca activo y limpia TODO
+    private void iniciarPartida() {
+        disposed = false;
+        stopAllTimers();
         AudioPlayer.stop();
 
         Collections.shuffle(orden);
@@ -299,7 +317,10 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         siguienteRonda();
     }
 
+    // 4) Pon guardas “si ya salí, no hagas nada” en métodos clave
     private void siguienteRonda() {
+        if (disposed) return;
+
         audioFeedbackEnCurso = false;
         audioPreguntaEnCurso = false;
         btnRepetir.setEnabled(true);
@@ -357,6 +378,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     }
 
     private void repetirAudioPregunta() {
+        if (disposed) return;
         if (audioPreguntaActual == null) return;
 
         // Si ya hay un audio de feedback (error/acierto) o ya está sonando la pregunta, ignorar.
@@ -373,6 +395,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     }
 
     private void onElegirOpcion(int idx) {
+        if (disposed) return;
         if (bloqueado || audioFeedbackEnCurso) return;
 
         JButton b = btnOpciones[idx];
@@ -391,20 +414,26 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
                     AUDIO_JUEGO5 + "acierto.wav",
                     correctaActual.audioPath,
                     () -> {
-                        // Mantener feedback visible un ratito, luego transición suave
-                        Timer hold = new Timer(1200, ev -> {
+                        // 5) Cambia el Timer hold local por el field timerHold
+                        if (timerHold != null && timerHold.isRunning()) timerHold.stop();
+
+                        timerHold = new Timer(1200, ev -> {
                             ((Timer) ev.getSource()).stop();
+                            timerHold = null;
+
+                            if (disposed) return;
 
                             // Fade OUT
                             fadeBody(1f, 0f, 220, () -> {
+                                if (disposed) return;
                                 rondaIdx++;
                                 siguienteRonda(); // prepara siguiente ronda (setea letra + iconos + pregunta)
                                 // Fade IN
                                 fadeBody(0f, 1f, 220, null);
                             });
                         });
-                        hold.setRepeats(false);
-                        hold.start();
+                        timerHold.setRepeats(false);
+                        timerHold.start();
                     }
             );
 
@@ -439,6 +468,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     }
 
     private void finDelJuego() {
+        if (disposed) return;
         bloqueado = true;
         btnRepetir.setEnabled(false);
 
@@ -468,7 +498,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         AudioPlayer.play(AUDIO_JUEGO5 + "fin.wav", () -> finalizarJuego(100));
     }
 
+    // 6) Cambia fadeBody(...) para usar timerFade (y cortarse si disposed)
     private void fadeBody(float from, float to, int durationMs, Runnable onDone) {
+        if (disposed) return;
+
+        if (timerFade != null && timerFade.isRunning()) timerFade.stop();
+
         final int fps = 25;
         final int delay = 1000 / fps;
         final int steps = Math.max(1, durationMs / delay);
@@ -477,21 +512,28 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         bodyAlpha = from;
         bodyPanel.repaint();
 
-        Timer t = new Timer(delay, null);
-        t.addActionListener(e -> {
+        timerFade = new Timer(delay, null);
+        timerFade.addActionListener(e -> {
+            if (disposed) {
+                timerFade.stop();
+                timerFade = null;
+                return;
+            }
+
             i[0]++;
             float p = i[0] / (float) steps;
             bodyAlpha = from + (to - from) * p;
             bodyPanel.repaint();
 
             if (i[0] >= steps) {
-                t.stop();
+                timerFade.stop();
+                timerFade = null;
                 bodyAlpha = to;
                 bodyPanel.repaint();
-                if (onDone != null) onDone.run();
+                if (onDone != null && !disposed) onDone.run();
             }
         });
-        t.start();
+        timerFade.start();
     }
 
     private Icon loadIcon(String path, int w, int h) {
@@ -533,13 +575,17 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         }
     }
 
+    // 7) Ajusta removeNotify() para marcar disposed y cancelar todo ANTES del super
     @Override
     public void removeNotify() {
-        super.removeNotify();
-        if (timerSiguiente != null && timerSiguiente.isRunning()) timerSiguiente.stop();
+        disposed = true;
+        stopAllTimers();
+
         audioFeedbackEnCurso = false;
         audioPreguntaEnCurso = false;
+
         AudioPlayer.stop();
+        super.removeNotify();
     }
 
     private static class RoundedCardPanel extends JPanel {
