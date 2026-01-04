@@ -11,6 +11,8 @@ import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -133,7 +135,7 @@ public class JuegosPanel extends JPanel {
         header.add(actions, BorderLayout.EAST);
         return header;
     }
-    
+
     private JPanel buildCatalogoPanel() {
         JPanel card = new CardPanel(new BorderLayout(10, 10));
 
@@ -176,11 +178,13 @@ public class JuegosPanel extends JPanel {
         top.add(actions);
 
         panelListaJuegos = new JPanel();
-        panelListaJuegos.setOpaque(false);
+        panelListaJuegos.setOpaque(true);
+        panelListaJuegos.setBackground(Color.WHITE);
         panelListaJuegos.setLayout(new BoxLayout(panelListaJuegos, BoxLayout.Y_AXIS));
 
         JScrollPane scroll = new JScrollPane(panelListaJuegos);
         styleScroll(scroll);
+        scroll.setColumnHeaderView(buildCatalogoListHeader());
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
@@ -196,7 +200,6 @@ public class JuegosPanel extends JPanel {
         return card;
     }
 
-    // B) Reemplaza buildAsignacionPanel() por esta versión
     private JPanel buildAsignacionPanel() {
         JPanel card = new CardPanel(new BorderLayout(10, 10));
 
@@ -268,11 +271,13 @@ public class JuegosPanel extends JPanel {
         top.add(rowFilters);
 
         panelAsignacionContenido = new JPanel();
-        panelAsignacionContenido.setOpaque(false);
+        panelAsignacionContenido.setOpaque(true);
+        panelAsignacionContenido.setBackground(Color.WHITE);
         panelAsignacionContenido.setLayout(new BoxLayout(panelAsignacionContenido, BoxLayout.Y_AXIS));
 
         panelAsignacionJuegos = new JScrollPane(panelAsignacionContenido);
         styleScroll(panelAsignacionJuegos);
+        panelAsignacionJuegos.setColumnHeaderView(buildAsignacionListHeader());
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
@@ -390,6 +395,7 @@ public class JuegosPanel extends JPanel {
 
         String q = safeLower(txtBuscarCatalogo.getText());
 
+        int idx = 0;
         for (Juego juego : cacheJuegos) {
             if (!matchesJuego(juego, q)) continue;
 
@@ -401,9 +407,8 @@ public class JuegosPanel extends JPanel {
                     ? pendingDificultadGlobal.get(juego.getId())
                     : clamp1to5(juego.getDificultad());
 
-            JComponent row = crearFilaCatalogo(juego, sel, dif);
+            JComponent row = crearFilaCatalogoList(juego, sel, dif, idx++);
             panelListaJuegos.add(row);
-            panelListaJuegos.add(Box.createVerticalStrut(10));
         }
 
         renderCatalogoResumen();
@@ -420,87 +425,6 @@ public class JuegosPanel extends JPanel {
             if (isJuegoHabilitadoActual(j)) habilitados++;
         }
         lblResumenCatalogo.setText("Total: " + total + "  ·  Habilitados: " + habilitados);
-    }
-
-    private JComponent crearFilaCatalogo(Juego juego, boolean selected, int dificultad) {
-        CardPanel row = new CardPanel(new BorderLayout(12, 8));
-        row.setBorder(new EmptyBorder(10, 12, 10, 12));
-
-        JPanel left = new JPanel();
-        left.setOpaque(false);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-
-        JLabel name = new JLabel(juego.getNombre());
-        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
-
-        JTextArea desc = new JTextArea(safe(juego.getDescripcion()));
-        desc.setOpaque(false);
-        desc.setEditable(false);
-        desc.setFocusable(false);
-        desc.setLineWrap(true);
-        desc.setWrapStyleWord(true);
-        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
-        desc.setForeground(new Color(85, 85, 85));
-
-        JLabel badgeId = createBadge("#" + juego.getId());
-        JLabel tipo = createBadge(safe(juego.getTipo() != null ? juego.getTipo().name() : "JUEGO"));
-
-        JPanel line1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        line1.setOpaque(false);
-        line1.add(name);
-        line1.add(badgeId);
-        line1.add(tipo);
-
-        left.add(line1);
-        left.add(Box.createVerticalStrut(6));
-        left.add(desc);
-
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setOpaque(false);
-
-        JCheckBox chk = new JCheckBox("Habilitado");
-        chk.setOpaque(false);
-        chk.setSelected(selected);
-
-        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
-        sp.setPreferredSize(new Dimension(60, sp.getPreferredSize().height));
-        sp.setEnabled(chk.isSelected());
-
-        chk.addItemListener(e -> {
-            sp.setEnabled(chk.isSelected());
-            pendingHabilitado.put(juego.getId(), chk.isSelected());
-            renderCatalogoResumen();
-            actualizarAsignacionesParaSeleccionado();
-        });
-
-        sp.addChangeListener(e -> pendingDificultadGlobal.put(juego.getId(), (Integer) sp.getValue()));
-
-        right.add(new JLabel("Dificultad:"));
-        right.add(sp);
-        right.add(chk);
-
-        row.add(left, BorderLayout.CENTER);
-        row.add(right, BorderLayout.EAST);
-
-        checkBoxesJuegos.put(juego.getId(), chk);
-        spinnersDificultad.put(juego.getId(), sp);
-
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-        return row;
-    }
-
-    private JLabel createBadge(String text) {
-        JLabel b = new JLabel(text);
-        b.setFont(b.getFont().deriveFont(Font.BOLD, 11f));
-        b.setOpaque(true);
-        b.setBackground(new Color(255, 255, 255, 210));
-        b.setForeground(new Color(60, 60, 60));
-        b.setHorizontalAlignment(SwingConstants.CENTER);
-        b.setBorder(BorderFactory.createCompoundBorder(
-                new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 28)),
-                new EmptyBorder(2, 8, 2, 8)
-        ));
-        return b;
     }
 
     // ---------------------------------------------------------------------
@@ -584,6 +508,7 @@ public class JuegosPanel extends JPanel {
         int totalHabilitados = 0;
         int totalAsignados = 0;
 
+        int idx = 0;
         for (Juego juego : cacheJuegos) {
             if (!isJuegoHabilitadoActual(juego)) continue;
             totalHabilitados++;
@@ -601,9 +526,8 @@ public class JuegosPanel extends JPanel {
                     ? prevDif.get(idJuego)
                     : seleccionado.getDificultadJuego(idJuego, difGlobal);
 
-            JComponent row = crearFilaAsignacion(juego, sel, clamp1to5(difInicial), difGlobal);
+            JComponent row = crearFilaAsignacionList(juego, sel, clamp1to5(difInicial), difGlobal, idx++);
             panelAsignacionContenido.add(row);
-            panelAsignacionContenido.add(Box.createVerticalStrut(10));
         }
 
         resumenAsignacionBase = "Habilitados: " + totalHabilitados + "  ·  Asignados: " + totalAsignados;
@@ -618,68 +542,6 @@ public class JuegosPanel extends JPanel {
         int asignados = 0;
         for (JCheckBox chk : checkBoxesAsignacion.values()) if (chk.isSelected()) asignados++;
         lblResumenAsignacion.setText(resumenAsignacionBase + "  ·  Seleccionados: " + asignados);
-    }
-
-    private JComponent crearFilaAsignacion(Juego juego, boolean selected, int dificultad, int difGlobal) {
-        CardPanel row = new CardPanel(new BorderLayout(12, 8));
-        row.setBorder(new EmptyBorder(10, 12, 10, 12));
-
-        JPanel left = new JPanel();
-        left.setOpaque(false);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-
-        JLabel name = new JLabel(juego.getNombre() + "  " + "#" + juego.getId());
-        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
-
-        JTextArea desc = new JTextArea(safe(juego.getDescripcion()));
-        desc.setOpaque(false);
-        desc.setEditable(false);
-        desc.setFocusable(false);
-        desc.setLineWrap(true);
-        desc.setWrapStyleWord(true);
-        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
-        desc.setForeground(new Color(85, 85, 85));
-
-        left.add(name);
-        left.add(Box.createVerticalStrut(6));
-        left.add(desc);
-
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setOpaque(false);
-
-        JCheckBox chk = new JCheckBox("Asignado");
-        chk.setOpaque(false);
-        chk.setSelected(selected);
-
-        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
-        sp.setPreferredSize(new Dimension(60, sp.getPreferredSize().height));
-        sp.setEnabled(chk.isSelected());
-
-        JLabel lblModo = createBadge((dificultad == difGlobal) ? "Global" : "Personal");
-
-        chk.addItemListener(e -> {
-            sp.setEnabled(chk.isSelected());
-            renderAsignacionResumen();
-        });
-
-        sp.addChangeListener(e -> {
-            int v = (Integer) sp.getValue();
-            lblModo.setText(v == difGlobal ? "Global" : "Personal");
-        });
-
-        right.add(new JLabel("Dificultad:"));
-        right.add(sp);
-        right.add(lblModo);
-        right.add(chk);
-
-        row.add(left, BorderLayout.CENTER);
-        row.add(right, BorderLayout.EAST);
-
-        checkBoxesAsignacion.put(juego.getId(), chk);
-        spinnersDificultadAsignacion.put(juego.getId(), sp);
-
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-        return row;
     }
 
     // ---------------------------------------------------------------------
@@ -769,6 +631,216 @@ public class JuegosPanel extends JPanel {
     // UI components
     // ---------------------------------------------------------------------
 
+    private JComponent buildCatalogoListHeader() {
+        JPanel h = new JPanel(new GridBagLayout());
+        h.setOpaque(true);
+        h.setBackground(new Color(245, 245, 245));
+        h.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 25)));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(6, 12, 6, 12);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        c.gridx = 0; c.weightx = 1;
+        h.add(headerLabel("Juego"), c);
+
+        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        h.add(headerLabel("Dif."), c);
+
+        c.gridx = 2; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        h.add(headerLabel("Habilitado"), c);
+
+        return h;
+    }
+
+    private JComponent buildAsignacionListHeader() {
+        JPanel h = new JPanel(new GridBagLayout());
+        h.setOpaque(true);
+        h.setBackground(new Color(245, 245, 245));
+        h.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 25)));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(6, 12, 6, 12);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        c.gridx = 0; c.weightx = 1;
+        h.add(headerLabel("Juego"), c);
+
+        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        h.add(headerLabel("Dif."), c);
+
+        c.gridx = 2; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        h.add(headerLabel("Modo"), c);
+
+        c.gridx = 3; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        h.add(headerLabel("Asignado"), c);
+
+        return h;
+    }
+
+    private JLabel headerLabel(String s) {
+        JLabel l = new JLabel(s);
+        l.setFont(l.getFont().deriveFont(Font.BOLD, 12f));
+        l.setForeground(new Color(70, 70, 70));
+        return l;
+    }
+
+    private JComponent crearFilaCatalogoList(Juego juego, boolean selected, int dificultad, int index) {
+        ListRowPanel row = new ListRowPanel(index);
+        row.setSelectedRow(selected);
+
+        row.setLayout(new GridBagLayout());
+        row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 18)));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(10, 12, 10, 12);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        // Col 0: nombre + meta + desc
+        c.gridx = 0; c.weightx = 1;
+        row.add(buildJuegoMainCell(juego), c);
+
+        // Col 1: spinner dificultad (sin texto)
+        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
+        sp.setPreferredSize(new Dimension(64, sp.getPreferredSize().height));
+        sp.setEnabled(selected);
+        sp.addChangeListener(e -> pendingDificultadGlobal.put(juego.getId(), (Integer) sp.getValue()));
+
+        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        row.add(sp, c);
+
+        // Col 2: checkbox habilitado
+        JCheckBox chk = new JCheckBox();
+        chk.setOpaque(false);
+        chk.setSelected(selected);
+
+        chk.addItemListener(e -> {
+            boolean v = chk.isSelected();
+            sp.setEnabled(v);
+            pendingHabilitado.put(juego.getId(), v);
+            row.setSelectedRow(v);
+            renderCatalogoResumen();
+            actualizarAsignacionesParaSeleccionado();
+        });
+
+        c.gridx = 2;
+        row.add(chk, c);
+
+        checkBoxesJuegos.put(juego.getId(), chk);
+        spinnersDificultad.put(juego.getId(), sp);
+
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+        return row;
+    }
+
+    private JComponent crearFilaAsignacionList(Juego juego, boolean selected, int dificultad, int difGlobal, int index) {
+        ListRowPanel row = new ListRowPanel(index);
+        row.setSelectedRow(selected);
+
+        row.setLayout(new GridBagLayout());
+        row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 18)));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(10, 12, 10, 12);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        // Col 0: main
+        c.gridx = 0; c.weightx = 1;
+        row.add(buildJuegoMainCell(juego), c);
+
+        // Col 1: dificultad
+        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
+        sp.setPreferredSize(new Dimension(64, sp.getPreferredSize().height));
+        sp.setEnabled(selected);
+
+        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
+        row.add(sp, c);
+
+        // Col 2: modo (Global/Personal)
+        JLabel modo = pillLabel((dificultad == difGlobal) ? "Global" : "Personal");
+
+        sp.addChangeListener(e -> {
+            int v = (Integer) sp.getValue();
+            modo.setText(v == difGlobal ? "Global" : "Personal");
+        });
+
+        c.gridx = 2;
+        row.add(modo, c);
+
+        // Col 3: asignado
+        JCheckBox chk = new JCheckBox();
+        chk.setOpaque(false);
+        chk.setSelected(selected);
+
+        chk.addItemListener(e -> {
+            boolean v = chk.isSelected();
+            sp.setEnabled(v);
+            row.setSelectedRow(v);
+            renderAsignacionResumen();
+        });
+
+        c.gridx = 3;
+        row.add(chk, c);
+
+        checkBoxesAsignacion.put(juego.getId(), chk);
+        spinnersDificultadAsignacion.put(juego.getId(), sp);
+
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+        return row;
+    }
+
+    private JComponent buildJuegoMainCell(Juego juego) {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+
+        JPanel line1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        line1.setOpaque(false);
+
+        JLabel name = new JLabel(juego.getNombre());
+        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
+
+        JLabel id = pillLabel("#" + juego.getId());
+        String tipo = (juego.getTipo() != null) ? juego.getTipo().name() : "JUEGO";
+        JLabel t = pillLabel(tipo);
+
+        line1.add(name);
+        line1.add(id);
+        line1.add(t);
+
+        JLabel desc = new JLabel(shortDesc(safe(juego.getDescripcion()), 90));
+        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
+        desc.setForeground(new Color(90, 90, 90));
+
+        p.add(line1);
+        p.add(Box.createVerticalStrut(4));
+        p.add(desc);
+        return p;
+    }
+
+    private String shortDesc(String s, int max) {
+        s = (s == null) ? "" : s.trim();
+        if (s.length() <= max) return s;
+        return s.substring(0, max - 1) + "…";
+    }
+
+    private JLabel pillLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(l.getFont().deriveFont(Font.BOLD, 11f));
+        l.setOpaque(true);
+        l.setBackground(new Color(255, 255, 255));
+        l.setForeground(new Color(70, 70, 70));
+        l.setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 22)),
+                new EmptyBorder(2, 8, 2, 8)
+        ));
+        return l;
+    }
+
     private static final class CardPanel extends JPanel {
         private final int arc;
 
@@ -806,6 +878,46 @@ public class JuegosPanel extends JPanel {
             } finally {
                 g2.dispose();
             }
+            super.paintComponent(g);
+        }
+    }
+
+    private static final class ListRowPanel extends JPanel {
+        private boolean hover = false;
+        private boolean selectedRow = false;
+        private final int index;
+
+        ListRowPanel(int index) {
+            this.index = index;
+            setOpaque(true);
+            setBackground(Color.WHITE);
+
+            MouseAdapter ma = new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { hover = false; repaint(); }
+            };
+            addMouseListener(ma);
+        }
+
+        void setSelectedRow(boolean v) {
+            selectedRow = v;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            // fondo zebra + hover + selected
+            Color base = (index % 2 == 0) ? Color.WHITE : new Color(250, 250, 250);
+            Color bg = base;
+
+            if (selectedRow) bg = new Color(238, 246, 255);
+            if (hover) bg = new Color(
+                    Math.min(255, bg.getRed() + 6),
+                    Math.min(255, bg.getGreen() + 6),
+                    Math.min(255, bg.getBlue() + 6)
+            );
+
+            setBackground(bg);
             super.paintComponent(g);
         }
     }
