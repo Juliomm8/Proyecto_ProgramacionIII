@@ -7,6 +7,7 @@ import com.jasgames.model.Actividad;
 import com.jasgames.model.Juego;
 import com.jasgames.model.TipoJuego;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.JsonSafeIO;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -172,29 +173,18 @@ public class JuegoService {
         Path pathArchivo = Paths.get(ARCHIVO_JUEGOS);
         if (!Files.exists(pathArchivo)) return false;
 
-        try {
-            String json = Files.readString(pathArchivo, StandardCharsets.UTF_8);
-            if (json == null || json.isBlank()) return false;
+        Juego[] arr = JsonSafeIO.readOrRecover(pathArchivo, gson, Juego[].class, new Juego[0]);
+        if (arr == null || arr.length == 0) return false;
 
-            Type tipoLista = new TypeToken<List<Juego>>() {}.getType();
-            List<Juego> cargados = gson.fromJson(json, tipoLista);
-
-            if (cargados == null || cargados.isEmpty()) return false;
-
-            // Normalizar por seguridad
-            for (Juego j : cargados) {
-                if (j.getDificultad() < 1) j.setDificultad(1);
-                if (j.getDificultad() > 5) j.setDificultad(5);
-            }
-
-            juegos.clear();
-            juegos.addAll(cargados);
-            return true;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+        // Normalizar por seguridad
+        for (Juego j : arr) {
+            if (j.getDificultad() < 1) j.setDificultad(1);
+            if (j.getDificultad() > 5) j.setDificultad(5);
         }
+
+        juegos.clear();
+        juegos.addAll(Arrays.asList(arr));
+        return true;
     }
 
     // ------------ CRUD JUEGOS ------------

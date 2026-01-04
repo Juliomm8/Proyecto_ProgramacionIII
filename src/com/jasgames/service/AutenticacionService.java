@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Docente;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.JsonSafeIO;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -63,20 +64,10 @@ public class AutenticacionService {
     }
 
     private void cargarDocentes() {
-        try {
-            Path path = Paths.get(ARCHIVO_DOCENTES);
-            String json = Files.readString(path, StandardCharsets.UTF_8);
-            if (json == null || json.isBlank()) json = "[]";
-
-            Type tipoLista = new TypeToken<List<Docente>>() {}.getType();
-            List<Docente> cargados = gson.fromJson(json, tipoLista);
-
-            docentes.clear();
-            if (cargados != null) docentes.addAll(cargados);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Path path = Paths.get(ARCHIVO_DOCENTES);
+        Docente[] arr = JsonSafeIO.readOrRecover(path, gson, Docente[].class, new Docente[0]);
+        this.docentes.clear();
+        this.docentes.addAll(Arrays.asList(arr));
     }
 
     private void guardarDocentes() {

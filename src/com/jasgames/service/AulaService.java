@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Aula;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.JsonSafeIO;
 
 import java.awt.Color;
 import java.lang.reflect.Type;
@@ -105,19 +106,8 @@ public class AulaService {
     private void cargar() {
         aulas.clear();
         Path p = Paths.get(ARCHIVO_AULAS);
-        if (!Files.exists(p)) return;
-
-        try {
-            String json = Files.readString(p, StandardCharsets.UTF_8);
-            if (json == null || json.isBlank()) return;
-
-            Type tipo = new TypeToken<List<Aula>>(){}.getType();
-            List<Aula> cargadas = gson.fromJson(json, tipo);
-            if (cargadas != null) aulas.addAll(cargadas);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Aula[] arr = JsonSafeIO.readOrRecover(p, gson, Aula[].class, new Aula[0]);
+        this.aulas.addAll(Arrays.asList(arr));
     }
 
     private void guardar() {
