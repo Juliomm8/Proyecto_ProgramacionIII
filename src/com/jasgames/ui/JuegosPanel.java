@@ -10,30 +10,37 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
 /**
- * Panel de gestión de juegos para el modo docente.
+ * JuegosPanel (Modo Docente)
  *
- * UI (rediseñada):
- * - Izquierda: catálogo del sistema (habilitado + dificultad global)
- * - Derecha: asignación por niño (solo juegos habilitados + dificultad individual)
+ * Versión "wow + intuitiva":
+ * - Catálogo y asignación en JTable con zebra y búsqueda.
+ * - Multiselección para habilitar/deshabilitar (y aplicar dificultad global) a varios juegos.
+ * - Editor claro para dificultad por estudiante:
+ *      - "Usar global" vs "Personalizar" (override).
+ *      - Aplicar a la selección (multi-fila).
  *
- * Nota: aunque existe un .form asociado, este panel construye su interfaz por código,
- * reusando nombres de campos para compatibilidad.
+ * Nota: El .form fue eliminado (este panel se construye 100% por código).
  */
 public class JuegosPanel extends JPanel {
 
-    // Campos esperados por el .form (algunos no se usan directamente)
+    // Campos (se mantienen nombres por compatibilidad con el resto del proyecto)
     private JPanel panelJuegos;
     private JPanel panelIzquierdo;
     private JPanel panelDerecho;
     private JLabel lblTituloJuegos;
-    private JPanel panelListaJuegos;
     private JButton btnGuardarEstadoJuegos;
     private JLabel lblSeleccionNino;
     private JComboBox cboNinos;
@@ -41,40 +48,57 @@ public class JuegosPanel extends JPanel {
     private JScrollPane panelAsignacionJuegos;
     private JButton btnGuardarAsignacion;
 
-    // Panel interno dentro del scroll de asignaciones
-    private JPanel panelAsignacionContenido;
-
-    // UI nueva
-    private JTextField txtBuscarCatalogo;
-    private JTextField txtBuscarAsignacion;
-    private JCheckBox chkSoloAsignados;
-    private JLabel lblResumenCatalogo;
-    private JLabel lblResumenAsignacion;
-    private JButton btnRefrescar;
-    private JButton btnHabilitarTodos;
-    private JButton btnDeshabilitarTodos;
-    private JButton btnAsignarTodos;
-    private JButton btnQuitarTodos;
-
-    // Servicios compartidos
+    // Servicios
     private final JuegoService juegoService;
     private final PerfilService perfilService;
 
-    // Mapas auxiliares: idJuego -> checkbox/spinner
-    private final Map<Integer, JCheckBox> checkBoxesJuegos = new LinkedHashMap<>();
-    private final Map<Integer, JCheckBox> checkBoxesAsignacion = new LinkedHashMap<>();
-    private final Map<Integer, JSpinner> spinnersDificultad = new LinkedHashMap<>();
-    private final Map<Integer, JSpinner> spinnersDificultadAsignacion = new LinkedHashMap<>();
-
-    // Cache simple para render
+    // Cache
     private List<Juego> cacheJuegos = new ArrayList<>();
     private List<Nino> cacheNinos = new ArrayList<>();
 
-    // Mantener cambios del catálogo incluso si el usuario filtra con el buscador
+    // Pendientes (catálogo) para no guardar hasta el botón
     private final Map<Integer, Boolean> pendingHabilitado = new HashMap<>();
     private final Map<Integer, Integer> pendingDificultadGlobal = new HashMap<>();
 
-    // Para que el resumen de asignación no “crezca” con cada repaint
+    // UI general
+    private JLabel lblResumenCatalogo;
+    private JLabel lblResumenAsignacion;
+    private JButton btnRefrescar;
+
+    // Catálogo (acciones)
+    private JTextField txtBuscarCatalogo;
+    private JButton btnHabilitarSel;
+    private JButton btnDeshabilitarSel;
+    private JButton btnMasCatalogo;
+    private JButton btnAsignarSelATodos;
+    private JSpinner spDifGlobalSel;
+    private JButton btnAplicarDifGlobalSel;
+
+    // Asignación (acciones)
+    private JTextField txtBuscarAsignacion;
+    private JCheckBox chkSoloAsignados;
+    private JButton btnAsignarSel;
+    private JButton btnQuitarSel;
+    private JButton btnMasAsignacion;
+
+    // Editor intuitivo de dificultad por estudiante
+    private JLabel lblEditorJuego;
+    private JRadioButton rbUsarGlobal;
+    private JRadioButton rbPersonalizar;
+    private JSpinner spDifPersonal;
+    private JButton btnAplicarEditor;
+    private JButton btnResetGlobalSel;
+
+    // Tablas
+    private JTable tblCatalogo;
+    private JTable tblAsignacion;
+
+    private CatalogoTableModel catalogoModel;
+    private AsignacionTableModel asignacionModel;
+
+    private TableRowSorter<CatalogoTableModel> sorterCatalogo;
+    private TableRowSorter<AsignacionTableModel> sorterAsignacion;
+
     private String resumenAsignacionBase = " ";
 
     public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
@@ -118,7 +142,7 @@ public class JuegosPanel extends JPanel {
         JLabel title = new JLabel("Gestión de Juegos");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
 
-        JLabel subtitle = new JLabel("Habilita juegos del sistema y asigna juegos/dificultad por estudiante.");
+        JLabel subtitle = new JLabel("Catálogo (global) y asignación por estudiante (override personal).");
         subtitle.setFont(subtitle.getFont().deriveFont(Font.PLAIN, 12f));
         subtitle.setForeground(new Color(90, 90, 90));
 
@@ -139,7 +163,7 @@ public class JuegosPanel extends JPanel {
     private JPanel buildCatalogoPanel() {
         JPanel card = new CardPanel(new BorderLayout(10, 10));
 
-        // TOP en 2 filas (evita que el título se corte)
+        // TOP
         JPanel top = new JPanel();
         top.setOpaque(false);
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
@@ -148,7 +172,7 @@ public class JuegosPanel extends JPanel {
         titleBlock.setOpaque(false);
         titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
 
-        lblTituloJuegos = new JLabel("Catálogo del sistema");
+        lblTituloJuegos = new JLabel("Catálogo del sistema (GLOBAL)");
         lblTituloJuegos.setFont(lblTituloJuegos.getFont().deriveFont(Font.BOLD, 15f));
 
         lblResumenCatalogo = new JLabel(" ");
@@ -159,38 +183,84 @@ public class JuegosPanel extends JPanel {
         titleBlock.add(Box.createVerticalStrut(2));
         titleBlock.add(lblResumenCatalogo);
 
+        // Acciones fila 1
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         actions.setOpaque(false);
 
         txtBuscarCatalogo = new JTextField(18);
-        txtBuscarCatalogo.setToolTipText("Buscar por nombre o descripción");
+        txtBuscarCatalogo.setToolTipText("Buscar por nombre, tipo o descripción");
 
-        btnHabilitarTodos = new JButton("Habilitar todo");
-        btnDeshabilitarTodos = new JButton("Deshabilitar todo");
+        btnHabilitarSel = new JButton("Habilitar selección");
+        btnDeshabilitarSel = new JButton("Deshabilitar selección");
+        btnAsignarSelATodos = new JButton("Asignar selección a TODOS");
+        btnAsignarSelATodos.setToolTipText("Asigna el/los juego(s) seleccionado(s) a todos los estudiantes");
+
+        btnMasCatalogo = new JButton("Más ▾");
+        btnMasCatalogo.setToolTipText("Acciones extra (todo)");
 
         actions.add(new JLabel("Buscar:"));
         actions.add(txtBuscarCatalogo);
-        actions.add(btnHabilitarTodos);
-        actions.add(btnDeshabilitarTodos);
+        actions.add(btnHabilitarSel);
+        actions.add(btnDeshabilitarSel);
+        actions.add(btnAsignarSelATodos);
+        actions.add(btnMasCatalogo);
+
+        // Acciones fila 2: dificultad global a selección
+        JPanel actions2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        actions2.setOpaque(false);
+
+        spDifGlobalSel = new JSpinner(new SpinnerNumberModel(1, 1, 5, 1));
+        ((JSpinner.DefaultEditor) spDifGlobalSel.getEditor()).getTextField().setColumns(2);
+        ((JSpinner.DefaultEditor) spDifGlobalSel.getEditor()).getTextField().setHorizontalAlignment(SwingConstants.CENTER);
+
+        btnAplicarDifGlobalSel = new JButton("Aplicar dificultad global a selección");
+        btnAplicarDifGlobalSel.setToolTipText("Cambia la dificultad GLOBAL (catálogo) para los juegos seleccionados");
+
+        JLabel hint = new JLabel("Tip: global es el valor por defecto. En la derecha puedes 'personalizar' por estudiante.");
+        hint.setForeground(new Color(110, 110, 110));
+        hint.setFont(hint.getFont().deriveFont(Font.PLAIN, 11.5f));
+
+        actions2.add(new JLabel("Dificultad global:"));
+        actions2.add(spDifGlobalSel);
+        actions2.add(btnAplicarDifGlobalSel);
+        actions2.add(Box.createHorizontalStrut(10));
+        actions2.add(hint);
 
         top.add(titleBlock);
         top.add(Box.createVerticalStrut(8));
         top.add(actions);
+        top.add(Box.createVerticalStrut(6));
+        top.add(actions2);
 
-        panelListaJuegos = new JPanel();
-        panelListaJuegos.setOpaque(true);
-        panelListaJuegos.setBackground(Color.WHITE);
-        panelListaJuegos.setLayout(new BoxLayout(panelListaJuegos, BoxLayout.Y_AXIS));
+        // Tabla
+        catalogoModel = new CatalogoTableModel();
+        tblCatalogo = createProTable(catalogoModel);
+        sorterCatalogo = new TableRowSorter<>(catalogoModel);
+        tblCatalogo.setRowSorter(sorterCatalogo);
 
-        JScrollPane scroll = new JScrollPane(panelListaJuegos);
-        styleScroll(scroll);
-        scroll.setColumnHeaderView(buildCatalogoListHeader());
+        // Multiselección (lo que pediste)
+        tblCatalogo.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+        // Editor Spinner para dificultad (edición por celda sigue disponible)
+        TableColumn colDif = tblCatalogo.getColumnModel().getColumn(CatalogoTableModel.COL_DIFICULTAD);
+        colDif.setCellEditor(new SpinnerEditor(1, 5));
+
+        // Anchos
+        setColWidth(tblCatalogo, CatalogoTableModel.COL_ID, 50);
+        setColWidth(tblCatalogo, CatalogoTableModel.COL_TIPO, 95);
+        setColWidth(tblCatalogo, CatalogoTableModel.COL_DIFICULTAD, 60);
+        setColWidth(tblCatalogo, CatalogoTableModel.COL_HABILITADO, 80);
+
+        JScrollPane scroll = new JScrollPane(tblCatalogo);
+        styleTableScroll(scroll);
+
+        // BOTTOM
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
         bottom.setBorder(new MatteBorder(1, 0, 0, 0, new Color(0, 0, 0, 18)));
 
-        btnGuardarEstadoJuegos = new JButton("Guardar cambios");
+        btnGuardarEstadoJuegos = new JButton("Guardar cambios del catálogo");
+        btnGuardarEstadoJuegos.setToolTipText("Guarda habilitado + dificultad global de los juegos");
         bottom.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
         bottom.add(btnGuardarEstadoJuegos, BorderLayout.EAST);
 
@@ -203,7 +273,6 @@ public class JuegosPanel extends JPanel {
     private JPanel buildAsignacionPanel() {
         JPanel card = new CardPanel(new BorderLayout(10, 10));
 
-        // TOP en 3 filas (más limpio y no se corta)
         JPanel top = new JPanel();
         top.setOpaque(false);
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
@@ -212,7 +281,7 @@ public class JuegosPanel extends JPanel {
         titleBlock.setOpaque(false);
         titleBlock.setLayout(new BoxLayout(titleBlock, BoxLayout.Y_AXIS));
 
-        lblTituloAsignacion = new JLabel("Asignación por estudiante");
+        lblTituloAsignacion = new JLabel("Asignación por estudiante (INDIVIDUAL)");
         lblTituloAsignacion.setFont(lblTituloAsignacion.getFont().deriveFont(Font.BOLD, 15f));
 
         lblResumenAsignacion = new JLabel(" ");
@@ -223,13 +292,12 @@ public class JuegosPanel extends JPanel {
         titleBlock.add(Box.createVerticalStrut(2));
         titleBlock.add(lblResumenAsignacion);
 
-        // Fila 1: estudiante
         JPanel rowStudent = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         rowStudent.setOpaque(false);
 
         lblSeleccionNino = new JLabel("Estudiante:");
         cboNinos = new JComboBox();
-        cboNinos.setPreferredSize(new Dimension(260, cboNinos.getPreferredSize().height));
+        cboNinos.setPreferredSize(new Dimension(300, cboNinos.getPreferredSize().height));
         cboNinos.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -245,7 +313,6 @@ public class JuegosPanel extends JPanel {
         rowStudent.add(lblSeleccionNino);
         rowStudent.add(cboNinos);
 
-        // Fila 2: filtros + acciones
         JPanel rowFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         rowFilters.setOpaque(false);
 
@@ -255,14 +322,20 @@ public class JuegosPanel extends JPanel {
         chkSoloAsignados = new JCheckBox("Solo asignados");
         chkSoloAsignados.setOpaque(false);
 
-        btnAsignarTodos = new JButton("Asignar todo");
-        btnQuitarTodos = new JButton("Quitar todo");
+        btnAsignarSel = new JButton("Asignar selección");
+        btnQuitarSel = new JButton("Quitar selección");
+        btnMasAsignacion = new JButton("Más ▾");
+
+        btnAsignarSel.setToolTipText("Marca como 'Asignado' los juegos seleccionados en la tabla");
+        btnQuitarSel.setToolTipText("Desmarca 'Asignado' para la selección");
+        btnMasAsignacion.setToolTipText("Asignar todo / Quitar todo / Reset global");
 
         rowFilters.add(new JLabel("Buscar:"));
         rowFilters.add(txtBuscarAsignacion);
         rowFilters.add(chkSoloAsignados);
-        rowFilters.add(btnAsignarTodos);
-        rowFilters.add(btnQuitarTodos);
+        rowFilters.add(btnAsignarSel);
+        rowFilters.add(btnQuitarSel);
+        rowFilters.add(btnMasAsignacion);
 
         top.add(titleBlock);
         top.add(Box.createVerticalStrut(8));
@@ -270,49 +343,190 @@ public class JuegosPanel extends JPanel {
         top.add(Box.createVerticalStrut(6));
         top.add(rowFilters);
 
-        panelAsignacionContenido = new JPanel();
-        panelAsignacionContenido.setOpaque(true);
-        panelAsignacionContenido.setBackground(Color.WHITE);
-        panelAsignacionContenido.setLayout(new BoxLayout(panelAsignacionContenido, BoxLayout.Y_AXIS));
+        // Tabla
+        asignacionModel = new AsignacionTableModel();
+        tblAsignacion = createProTable(asignacionModel);
+        sorterAsignacion = new TableRowSorter<>(asignacionModel);
+        tblAsignacion.setRowSorter(sorterAsignacion);
 
-        panelAsignacionJuegos = new JScrollPane(panelAsignacionContenido);
-        styleScroll(panelAsignacionJuegos);
-        panelAsignacionJuegos.setColumnHeaderView(buildAsignacionListHeader());
+        // Multiselección para aplicar modo/dificultad a varios
+        tblAsignacion.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+        setColWidth(tblAsignacion, AsignacionTableModel.COL_ID, 50);
+        setColWidth(tblAsignacion, AsignacionTableModel.COL_TIPO, 95);
+        setColWidth(tblAsignacion, AsignacionTableModel.COL_ASIGNADO, 80);
+        setColWidth(tblAsignacion, AsignacionTableModel.COL_MODO, 90);
+        setColWidth(tblAsignacion, AsignacionTableModel.COL_DIFICULTAD, 60);
+
+        panelAsignacionJuegos = new JScrollPane(tblAsignacion);
+        styleTableScroll(panelAsignacionJuegos);
+
+        // Centro: tabla + editor
+        JPanel center = new JPanel(new BorderLayout(0, 10));
+        center.setOpaque(false);
+        center.add(panelAsignacionJuegos, BorderLayout.CENTER);
+        center.add(buildDificultadEditorPanel(), BorderLayout.SOUTH);
+
+        // Bottom: guardar
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
         bottom.setBorder(new MatteBorder(1, 0, 0, 0, new Color(0, 0, 0, 18)));
 
-        btnGuardarAsignacion = new JButton("Guardar asignación");
+        btnGuardarAsignacion = new JButton("Guardar asignación del estudiante");
+        btnGuardarAsignacion.setToolTipText("Guarda qué juegos están asignados y las dificultades personalizadas");
         bottom.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
         bottom.add(btnGuardarAsignacion, BorderLayout.EAST);
 
         card.add(top, BorderLayout.NORTH);
-        card.add(panelAsignacionJuegos, BorderLayout.CENTER);
+        card.add(center, BorderLayout.CENTER);
         card.add(bottom, BorderLayout.SOUTH);
         return card;
     }
 
-    private void styleScroll(JScrollPane sp) {
+    private JComponent buildDificultadEditorPanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setOpaque(true);
+        p.setBackground(new Color(250, 250, 250));
+        p.setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 18)),
+                new EmptyBorder(10, 12, 10, 12)
+        ));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(4, 4, 4, 4);
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JLabel ttl = new JLabel("Dificultad para este estudiante");
+        ttl.setFont(ttl.getFont().deriveFont(Font.BOLD, 12.5f));
+
+        lblEditorJuego = new JLabel("Selecciona uno o más juegos en la tabla.");
+        lblEditorJuego.setForeground(new Color(90, 90, 90));
+
+        rbUsarGlobal = new JRadioButton("Usar GLOBAL (catálogo)");
+        rbPersonalizar = new JRadioButton("PERSONALIZAR (override)");
+        rbUsarGlobal.setOpaque(false);
+        rbPersonalizar.setOpaque(false);
+
+        ButtonGroup bg = new ButtonGroup();
+        bg.add(rbUsarGlobal);
+        bg.add(rbPersonalizar);
+        rbUsarGlobal.setSelected(true);
+
+        spDifPersonal = new JSpinner(new SpinnerNumberModel(1, 1, 5, 1));
+        ((JSpinner.DefaultEditor) spDifPersonal.getEditor()).getTextField().setColumns(2);
+        ((JSpinner.DefaultEditor) spDifPersonal.getEditor()).getTextField().setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel note = new JLabel("<html><span style='color:#666;'>Global = toma la dificultad del catálogo. " +
+                "Personal = guarda un valor fijo solo para este estudiante.</span></html>");
+        note.setFont(note.getFont().deriveFont(Font.PLAIN, 11.5f));
+
+        btnAplicarEditor = new JButton("Aplicar a selección");
+        btnResetGlobalSel = new JButton("Reset a GLOBAL (selección)");
+        btnResetGlobalSel.setToolTipText("Quita el override y vuelve a usar la dificultad global del catálogo");
+
+        // Layout
+        c.gridx = 0; c.gridy = 0; c.gridwidth = 3; c.weightx = 1;
+        p.add(ttl, c);
+
+        c.gridy = 1;
+        p.add(lblEditorJuego, c);
+
+        c.gridy = 2; c.gridwidth = 1; c.weightx = 0;
+        p.add(rbUsarGlobal, c);
+
+        c.gridx = 1; c.weightx = 0;
+        p.add(rbPersonalizar, c);
+
+        c.gridx = 2; c.weightx = 0;
+        JPanel difBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        difBox.setOpaque(false);
+        difBox.add(new JLabel("Dificultad:"));
+        difBox.add(spDifPersonal);
+        p.add(difBox, c);
+
+        c.gridx = 0; c.gridy = 3; c.gridwidth = 3; c.weightx = 1;
+        p.add(note, c);
+
+        c.gridy = 4; c.gridwidth = 1; c.weightx = 0;
+        p.add(btnAplicarEditor, c);
+
+        c.gridx = 1;
+        p.add(btnResetGlobalSel, c);
+
+        // Enable/disable spinner según modo
+        rbUsarGlobal.addActionListener(e -> spDifPersonal.setEnabled(false));
+        rbPersonalizar.addActionListener(e -> spDifPersonal.setEnabled(true));
+        spDifPersonal.setEnabled(false);
+
+        return p;
+    }
+
+    private JTable createProTable(AbstractTableModel model) {
+        JTable t = new JTable(model) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int col) {
+                Component c = super.prepareRenderer(renderer, row, col);
+                if (!(c instanceof JComponent)) return c;
+
+                boolean selected = isRowSelected(row);
+                int modelRow = convertRowIndexToModel(row);
+
+                Color zebra = (modelRow % 2 == 0) ? Color.WHITE : new Color(250, 250, 250);
+                Color bg = selected ? new Color(220, 235, 255) : zebra;
+
+                c.setBackground(bg);
+                return c;
+            }
+        };
+
+        t.setRowHeight(46);
+        t.setShowGrid(false);
+        t.setIntercellSpacing(new Dimension(0, 0));
+        t.setFillsViewportHeight(true);
+        t.setAutoCreateColumnsFromModel(true);
+
+        JTableHeader h = t.getTableHeader();
+        h.setReorderingAllowed(false);
+        h.setFont(h.getFont().deriveFont(Font.BOLD, 12f));
+
+        // Renderers
+        t.setDefaultRenderer(String.class, new ProTextRenderer());
+        t.setDefaultRenderer(Integer.class, new CenterRenderer());
+        t.setDefaultRenderer(Boolean.class, new CenterBooleanRenderer());
+
+        return t;
+    }
+
+    private void styleTableScroll(JScrollPane sp) {
         sp.setBorder(new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 18)));
-        sp.getViewport().setOpaque(false);
+        sp.getViewport().setOpaque(true);
+        sp.getViewport().setBackground(Color.WHITE);
         sp.setOpaque(false);
         sp.getVerticalScrollBar().setUnitIncrement(16);
     }
 
+    private void setColWidth(JTable t, int col, int px) {
+        TableColumn c = t.getColumnModel().getColumn(col);
+        c.setMinWidth(px);
+        c.setMaxWidth(px);
+        c.setPreferredWidth(px);
+    }
+
     // ---------------------------------------------------------------------
-    // Data
+    // Data loading
     // ---------------------------------------------------------------------
 
     private void cargarJuegos() {
         cacheJuegos = new ArrayList<>(juegoService.obtenerTodos());
         cacheJuegos.sort(Comparator.comparingInt(Juego::getId));
-
-        // El refresco vuelve a estado real del servicio
         pendingHabilitado.clear();
         pendingDificultadGlobal.clear();
 
-        renderCatalogo();
+        catalogoModel.fireAll();
+        renderCatalogoResumen();
+
+        actualizarAsignacionesParaSeleccionado();
     }
 
     private void cargarNinos() {
@@ -326,54 +540,83 @@ public class JuegosPanel extends JPanel {
             cboNinos.setSelectedIndex(0);
             actualizarAsignacionesParaSeleccionado();
         } else {
-            panelAsignacionContenido.removeAll();
-            panelAsignacionContenido.revalidate();
-            panelAsignacionContenido.repaint();
+            asignacionModel.setRows(Collections.emptyList());
         }
     }
 
     private void initListeners() {
-        btnGuardarEstadoJuegos.addActionListener(e -> onGuardarEstadosJuegos());
-        cboNinos.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
-        btnGuardarAsignacion.addActionListener(e -> onGuardarAsignacion());
-
         btnRefrescar.addActionListener(e -> {
+            stopEditingSafely(tblCatalogo);
+            stopEditingSafely(tblAsignacion);
             cargarJuegos();
             cargarNinos();
         });
 
-        btnHabilitarTodos.addActionListener(e -> {
-            for (Map.Entry<Integer, JCheckBox> e2 : checkBoxesJuegos.entrySet()) {
-                e2.getValue().setSelected(true);
-                pendingHabilitado.put(e2.getKey(), true);
+        // Filtros
+        wireSearch(txtBuscarCatalogo, this::aplicarFiltroCatalogo);
+        wireSearch(txtBuscarAsignacion, this::aplicarFiltroAsignacion);
+
+        // Catálogo: menú "Más"
+        btnMasCatalogo.addActionListener(e -> {
+            JPopupMenu m = new JPopupMenu();
+            JMenuItem it1 = new JMenuItem("Habilitar TODO");
+            JMenuItem it2 = new JMenuItem("Deshabilitar TODO");
+            it1.addActionListener(ev -> setHabilitadoCatalogoAll(true));
+            it2.addActionListener(ev -> setHabilitadoCatalogoAll(false));
+            m.add(it1);
+            m.add(it2);
+            m.show(btnMasCatalogo, 0, btnMasCatalogo.getHeight());
+        });
+
+        // Catálogo: habilitar/deshabilitar selección
+        btnHabilitarSel.addActionListener(e -> setHabilitadoCatalogoSelected(true));
+        btnDeshabilitarSel.addActionListener(e -> setHabilitadoCatalogoSelected(false));
+
+        // Catálogo: aplicar dificultad global a selección
+        btnAplicarDifGlobalSel.addActionListener(e -> onAplicarDificultadGlobalSeleccion());
+
+        // Catálogo: asignar selección a TODOS
+        btnAsignarSelATodos.addActionListener(e -> onAsignarSeleccionATodos());
+
+        // Guardar catálogo
+        btnGuardarEstadoJuegos.addActionListener(e -> onGuardarEstadosJuegos());
+
+        // Asignación
+        cboNinos.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
+        chkSoloAsignados.addActionListener(e -> aplicarFiltroAsignacion());
+        btnGuardarAsignacion.addActionListener(e -> onGuardarAsignacion());
+
+        // Asignación: menú "Más"
+        btnMasAsignacion.addActionListener(e -> {
+            JPopupMenu m = new JPopupMenu();
+            JMenuItem it1 = new JMenuItem("Asignar TODO");
+            JMenuItem it2 = new JMenuItem("Quitar TODO");
+            JMenuItem it3 = new JMenuItem("Reset GLOBAL (selección)");
+            it1.addActionListener(ev -> { asignacionModel.setAsignadoParaTodos(true); renderAsignacionResumen(); });
+            it2.addActionListener(ev -> { asignacionModel.setAsignadoParaTodos(false); renderAsignacionResumen(); });
+            it3.addActionListener(ev -> resetGlobalEnSeleccionAsignacion());
+            m.add(it1);
+            m.add(it2);
+            m.addSeparator();
+            m.add(it3);
+            m.show(btnMasAsignacion, 0, btnMasAsignacion.getHeight());
+        });
+
+        // Asignación: asignar/quitar selección
+        btnAsignarSel.addActionListener(e -> setAsignadoSeleccion(true));
+        btnQuitarSel.addActionListener(e -> setAsignadoSeleccion(false));
+
+        // Editor: aplicar y reset
+        btnAplicarEditor.addActionListener(e -> onAplicarEditorDificultad());
+        btnResetGlobalSel.addActionListener(e -> resetGlobalEnSeleccionAsignacion());
+
+        // Editor: cuando cambia selección en la tabla, actualiza hint
+        tblAsignacion.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) return;
+                updateEditorFromSelection();
             }
-            renderCatalogoResumen();
-            actualizarAsignacionesParaSeleccionado();
         });
-
-        btnDeshabilitarTodos.addActionListener(e -> {
-            for (Map.Entry<Integer, JCheckBox> e2 : checkBoxesJuegos.entrySet()) {
-                e2.getValue().setSelected(false);
-                pendingHabilitado.put(e2.getKey(), false);
-            }
-            renderCatalogoResumen();
-            actualizarAsignacionesParaSeleccionado();
-        });
-
-        btnAsignarTodos.addActionListener(e -> {
-            for (JCheckBox chk : checkBoxesAsignacion.values()) chk.setSelected(true);
-            renderAsignacionResumen();
-        });
-
-        btnQuitarTodos.addActionListener(e -> {
-            for (JCheckBox chk : checkBoxesAsignacion.values()) chk.setSelected(false);
-            renderAsignacionResumen();
-        });
-
-        chkSoloAsignados.addActionListener(e -> actualizarAsignacionesParaSeleccionado());
-
-        wireSearch(txtBuscarCatalogo, this::renderCatalogo);
-        wireSearch(txtBuscarAsignacion, this::actualizarAsignacionesParaSeleccionado);
     }
 
     private void wireSearch(JTextField field, Runnable onChange) {
@@ -385,45 +628,183 @@ public class JuegosPanel extends JPanel {
     }
 
     // ---------------------------------------------------------------------
-    // Render: catálogo
+    // Filters
     // ---------------------------------------------------------------------
 
-    private void renderCatalogo() {
-        panelListaJuegos.removeAll();
-        checkBoxesJuegos.clear();
-        spinnersDificultad.clear();
+    private void aplicarFiltroCatalogo() {
+        final String q = safeLower(txtBuscarCatalogo.getText());
 
-        String q = safeLower(txtBuscarCatalogo.getText());
+        sorterCatalogo.setRowFilter(new RowFilter<>() {
+            @Override
+            public boolean include(Entry<? extends CatalogoTableModel, ? extends Integer> entry) {
+                if (q.isBlank()) return true;
+                int modelRow = entry.getIdentifier();
+                Juego j = catalogoModel.getJuegoAt(modelRow);
+                String hay = (j.getId() + " " + safe(j.getNombre()) + " " + safe(j.getDescripcion()) + " " + safe(j.getTipo() != null ? j.getTipo().name() : ""))
+                        .toLowerCase(Locale.ROOT);
+                return hay.contains(q);
+            }
+        });
+    }
 
-        int idx = 0;
-        for (Juego juego : cacheJuegos) {
-            if (!matchesJuego(juego, q)) continue;
+    private void aplicarFiltroAsignacion() {
+        final String q = safeLower(txtBuscarAsignacion.getText());
+        final boolean solo = chkSoloAsignados.isSelected();
 
-            boolean sel = pendingHabilitado.containsKey(juego.getId())
-                    ? pendingHabilitado.get(juego.getId())
-                    : juego.isHabilitado();
+        sorterAsignacion.setRowFilter(new RowFilter<>() {
+            @Override
+            public boolean include(Entry<? extends AsignacionTableModel, ? extends Integer> entry) {
+                int modelRow = entry.getIdentifier();
+                AsignacionRow r = asignacionModel.getRowAt(modelRow);
 
-            int dif = pendingDificultadGlobal.containsKey(juego.getId())
-                    ? pendingDificultadGlobal.get(juego.getId())
-                    : clamp1to5(juego.getDificultad());
+                if (solo && !r.asignado) return false;
+                if (q.isBlank()) return true;
 
-            JComponent row = crearFilaCatalogoList(juego, sel, dif, idx++);
-            panelListaJuegos.add(row);
+                String hay = (r.idJuego + " " + safe(r.nombre) + " " + safe(r.descripcion) + " " + safe(r.tipo))
+                        .toLowerCase(Locale.ROOT);
+                return hay.contains(q);
+            }
+        });
+
+        renderAsignacionResumen();
+    }
+
+    // ---------------------------------------------------------------------
+    // Catálogo: multiselección habilitar/deshabilitar y dif global
+    // ---------------------------------------------------------------------
+
+    private void setHabilitadoCatalogoAll(boolean v) {
+        stopEditingSafely(tblCatalogo);
+        for (Juego j : cacheJuegos) pendingHabilitado.put(j.getId(), v);
+        catalogoModel.fireAll();
+        renderCatalogoResumen();
+        actualizarAsignacionesParaSeleccionado();
+    }
+
+    private void setHabilitadoCatalogoSelected(boolean v) {
+        stopEditingSafely(tblCatalogo);
+        int[] viewRows = tblCatalogo.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en el catálogo.");
+            return;
+        }
+        for (int vr : viewRows) {
+            int mr = tblCatalogo.convertRowIndexToModel(vr);
+            Juego j = catalogoModel.getJuegoAt(mr);
+            pendingHabilitado.put(j.getId(), v);
+        }
+        catalogoModel.fireAll();
+        renderCatalogoResumen();
+        actualizarAsignacionesParaSeleccionado();
+    }
+
+    private void onAplicarDificultadGlobalSeleccion() {
+        stopEditingSafely(tblCatalogo);
+        int[] viewRows = tblCatalogo.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en el catálogo para aplicar dificultad.");
+            return;
+        }
+        int nueva = clamp1to5((Integer) spDifGlobalSel.getValue());
+
+        for (int vr : viewRows) {
+            int mr = tblCatalogo.convertRowIndexToModel(vr);
+            Juego j = catalogoModel.getJuegoAt(mr);
+            pendingDificultadGlobal.put(j.getId(), nueva);
+        }
+        catalogoModel.fireAll();
+        actualizarAsignacionesParaSeleccionado();
+    }
+
+    private void onAsignarSeleccionATodos() {
+        stopEditingSafely(tblCatalogo);
+
+        int[] viewRows = tblCatalogo.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en el catálogo primero.");
+            return;
         }
 
-        renderCatalogoResumen();
-        panelListaJuegos.revalidate();
-        panelListaJuegos.repaint();
+        List<Juego> seleccion = new ArrayList<>();
+        for (int vr : viewRows) {
+            int mr = tblCatalogo.convertRowIndexToModel(vr);
+            seleccion.add(catalogoModel.getJuegoAt(mr));
+        }
 
+        // Si alguno está deshabilitado, pregunta si habilitar
+        List<Juego> deshab = new ArrayList<>();
+        for (Juego j : seleccion) if (!isJuegoHabilitadoActual(j)) deshab.add(j);
+
+        if (!deshab.isEmpty()) {
+            int r = JOptionPane.showConfirmDialog(
+                    this,
+                    "Hay " + deshab.size() + " juego(s) deshabilitado(s) en la selección.\n" +
+                            "¿Deseas HABILITARLOS y asignarlos a TODOS?",
+                    "Habilitar y asignar",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (r != JOptionPane.YES_OPTION) return;
+            for (Juego j : deshab) pendingHabilitado.put(j.getId(), true);
+            catalogoModel.fireAll();
+            renderCatalogoResumen();
+        }
+
+        if (cacheNinos.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay estudiantes registrados.");
+            return;
+        }
+
+        int ok = JOptionPane.showConfirmDialog(
+                this,
+                "¿Asignar " + seleccion.size() + " juego(s) a TODOS los estudiantes?\n\n" +
+                        "Esto agregará cada juego a la lista de asignaciones de cada niño.",
+                "Confirmar asignación masiva",
+                JOptionPane.YES_NO_OPTION
+        );
+        if (ok != JOptionPane.YES_OPTION) return;
+
+        int afectadosTotal = 0;
+        for (Juego j : seleccion) {
+            int afectados;
+            try {
+                afectados = perfilService.asignarJuegoATodos(j.getId());
+            } catch (NoSuchMethodError err) {
+                afectados = asignarJuegoATodosFallback(j.getId());
+            }
+            // suma "afectados" (niños que no lo tenían)
+            afectadosTotal += afectados;
+        }
+
+        JOptionPane.showMessageDialog(this, "Operación completada. Cambios aplicados (sumatoria): " + afectadosTotal);
+        cargarNinos();
         actualizarAsignacionesParaSeleccionado();
+    }
+
+    // Fallback: menos eficiente (se usa solo si no existe el método nuevo).
+    private int asignarJuegoATodosFallback(int idJuego) {
+        List<Nino> ninos = perfilService.obtenerTodosNinos();
+        int changed = 0;
+        for (Nino n : ninos) {
+            Set<Integer> set = n.getJuegosAsignados();
+            if (set == null) {
+                set = new HashSet<>();
+                // Intentamos setearlo si existe setter (evita romper compilación si no existe)
+                try {
+                    n.getClass().getMethod("setJuegosAsignados", Set.class).invoke(n, set);
+                } catch (Exception ignored) { }
+            }
+            if (set.add(idJuego)) {
+                changed++;
+                perfilService.asignarJuegosConDificultad(n.getId(), set, n.getDificultadPorJuego());
+            }
+        }
+        return changed;
     }
 
     private void renderCatalogoResumen() {
         int total = cacheJuegos.size();
         int habilitados = 0;
-        for (Juego j : cacheJuegos) {
-            if (isJuegoHabilitadoActual(j)) habilitados++;
-        }
+        for (Juego j : cacheJuegos) if (isJuegoHabilitadoActual(j)) habilitados++;
         lblResumenCatalogo.setText("Total: " + total + "  ·  Habilitados: " + habilitados);
     }
 
@@ -432,16 +813,18 @@ public class JuegosPanel extends JPanel {
     // ---------------------------------------------------------------------
 
     private void onGuardarEstadosJuegos() {
+        stopEditingSafely(tblCatalogo);
+
         List<Juego> juegos = juegoService.obtenerTodos();
 
         for (Juego juego : juegos) {
-            JCheckBox chk = checkBoxesJuegos.get(juego.getId());
-            if (chk != null) juego.setHabilitado(chk.isSelected());
+            Boolean hb = pendingHabilitado.get(juego.getId());
+            if (hb != null) juego.setHabilitado(hb);
 
-            JSpinner sp = spinnersDificultad.get(juego.getId());
-            if (sp != null) {
-                int nueva = (Integer) sp.getValue();
-                int anterior = juego.getDificultad();
+            Integer nd = pendingDificultadGlobal.get(juego.getId());
+            if (nd != null) {
+                int nueva = clamp1to5(nd);
+                int anterior = clamp1to5(juego.getDificultad());
 
                 if (nueva != anterior) {
                     Object[] opciones = {
@@ -463,14 +846,18 @@ public class JuegosPanel extends JPanel {
                     );
 
                     if (resp == 2 || resp == JOptionPane.CLOSED_OPTION) {
-                        sp.setValue(anterior);
+                        pendingDificultadGlobal.put(juego.getId(), anterior);
                         continue;
                     }
 
                     juego.setDificultad(nueva);
 
                     if (resp == 0) {
+                        // Aplicar a todos, incluso si tenían override
                         perfilService.aplicarDificultadJuegoATodos(juego.getId(), nueva, false);
+                    } else if (resp == 1) {
+                        // Aplicar solo a quienes NO tienen dificultad personalizada
+                        perfilService.aplicarDificultadJuegoATodos(juego.getId(), nueva, true);
                     }
                 }
             }
@@ -478,110 +865,214 @@ public class JuegosPanel extends JPanel {
 
         juegoService.guardar();
         cargarJuegos();
-        JOptionPane.showMessageDialog(this, "Cambios guardados.");
+        JOptionPane.showMessageDialog(this, "Cambios del catálogo guardados.");
     }
 
     // ---------------------------------------------------------------------
-    // Render: asignación
+    // Asignación: cargar, selección, editor
     // ---------------------------------------------------------------------
 
     private void actualizarAsignacionesParaSeleccionado() {
         Nino seleccionado = (Nino) cboNinos.getSelectedItem();
-        if (seleccionado == null) return;
+        if (seleccionado == null) {
+            asignacionModel.setRows(Collections.emptyList());
+            updateEditorFromSelection();
+            return;
+        }
 
-        Map<Integer, Boolean> prevSel = new HashMap<>();
-        Map<Integer, Integer> prevDif = new HashMap<>();
-        for (Map.Entry<Integer, JCheckBox> e : checkBoxesAsignacion.entrySet()) prevSel.put(e.getKey(), e.getValue().isSelected());
-        for (Map.Entry<Integer, JSpinner> e : spinnersDificultadAsignacion.entrySet()) prevDif.put(e.getKey(), (Integer) e.getValue().getValue());
+        Set<Integer> asignados = seleccionado.getJuegosAsignados();
+        Map<Integer, Integer> overrides = safeMap(seleccionado.getDificultadPorJuego());
 
-        panelAsignacionContenido.removeAll();
-        checkBoxesAsignacion.clear();
-        spinnersDificultadAsignacion.clear();
-
-        Set<Integer> asignados = (seleccionado.getJuegosAsignados() != null)
-                ? seleccionado.getJuegosAsignados()
-                : Collections.emptySet();
-
-        String q = safeLower(txtBuscarAsignacion.getText());
-        boolean soloAsignados = chkSoloAsignados.isSelected();
-
+        List<AsignacionRow> rows = new ArrayList<>();
         int totalHabilitados = 0;
         int totalAsignados = 0;
 
-        int idx = 0;
         for (Juego juego : cacheJuegos) {
             if (!isJuegoHabilitadoActual(juego)) continue;
             totalHabilitados++;
 
             int idJuego = juego.getId();
-            boolean estaAsignado = asignados.contains(idJuego);
+            boolean estaAsignado = asignados != null && asignados.contains(idJuego);
             if (estaAsignado) totalAsignados++;
 
-            if (soloAsignados && !estaAsignado) continue;
-            if (!matchesJuego(juego, q)) continue;
-
-            boolean sel = prevSel.containsKey(idJuego) ? prevSel.get(idJuego) : estaAsignado;
             int difGlobal = getDificultadGlobalActual(juego);
-            int difInicial = prevDif.containsKey(idJuego)
-                    ? prevDif.get(idJuego)
-                    : seleccionado.getDificultadJuego(idJuego, difGlobal);
+            boolean personal = overrides.containsKey(idJuego);
+            int difPersonal = clamp1to5(personal ? overrides.get(idJuego) : difGlobal);
 
-            JComponent row = crearFilaAsignacionList(juego, sel, clamp1to5(difInicial), difGlobal, idx++);
-            panelAsignacionContenido.add(row);
+            rows.add(new AsignacionRow(
+                    idJuego,
+                    safe(juego.getNombre()),
+                    safe(juego.getTipo() != null ? juego.getTipo().name() : ""),
+                    safe(juego.getDescripcion()),
+                    estaAsignado,
+                    difGlobal,
+                    difPersonal,
+                    personal
+            ));
         }
+
+        asignacionModel.setRows(rows);
 
         resumenAsignacionBase = "Habilitados: " + totalHabilitados + "  ·  Asignados: " + totalAsignados;
         lblResumenAsignacion.setText(resumenAsignacionBase);
 
-        panelAsignacionContenido.revalidate();
-        panelAsignacionContenido.repaint();
+        aplicarFiltroAsignacion();
         renderAsignacionResumen();
+        updateEditorFromSelection();
+    }
+
+    private void updateEditorFromSelection() {
+        int[] viewRows = tblAsignacion.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            lblEditorJuego.setText("Selecciona uno o más juegos en la tabla.");
+            rbUsarGlobal.setSelected(true);
+            spDifPersonal.setValue(1);
+            spDifPersonal.setEnabled(false);
+            return;
+        }
+
+        if (viewRows.length == 1) {
+            int mr = tblAsignacion.convertRowIndexToModel(viewRows[0]);
+            AsignacionRow r = asignacionModel.getRowAt(mr);
+
+            lblEditorJuego.setText("Seleccionado: " + r.nombre + "  (#" + r.idJuego + ")");
+
+            if (r.personalOverride) {
+                rbPersonalizar.setSelected(true);
+                spDifPersonal.setEnabled(true);
+                spDifPersonal.setValue(r.difPersonal);
+            } else {
+                rbUsarGlobal.setSelected(true);
+                spDifPersonal.setEnabled(false);
+                spDifPersonal.setValue(r.difGlobal);
+            }
+            return;
+        }
+
+        // Multi selección: muestra estado “mixto”
+        lblEditorJuego.setText("Selección múltiple (" + viewRows.length + " juegos). Elige modo y aplica.");
+        rbUsarGlobal.setSelected(true);
+        spDifPersonal.setEnabled(false);
+        spDifPersonal.setValue(1);
+    }
+
+    private void setAsignadoSeleccion(boolean v) {
+        stopEditingSafely(tblAsignacion);
+        int[] viewRows = tblAsignacion.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en la tabla.");
+            return;
+        }
+        for (int vr : viewRows) {
+            int mr = tblAsignacion.convertRowIndexToModel(vr);
+            AsignacionRow r = asignacionModel.getRowAt(mr);
+            r.asignado = v;
+            if (!v) {
+                // si quita asignación, también quita override para no dejar basura
+                r.personalOverride = false;
+                r.difPersonal = r.difGlobal;
+            }
+        }
+        asignacionModel.fireAll();
+        renderAsignacionResumen();
+        updateEditorFromSelection();
+    }
+
+    private void resetGlobalEnSeleccionAsignacion() {
+        stopEditingSafely(tblAsignacion);
+        int[] viewRows = tblAsignacion.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en la tabla.");
+            return;
+        }
+        for (int vr : viewRows) {
+            int mr = tblAsignacion.convertRowIndexToModel(vr);
+            AsignacionRow r = asignacionModel.getRowAt(mr);
+            if (!r.asignado) continue;
+            r.personalOverride = false;
+            r.difPersonal = r.difGlobal;
+        }
+        asignacionModel.fireAll();
+        updateEditorFromSelection();
+    }
+
+    private void onAplicarEditorDificultad() {
+        stopEditingSafely(tblAsignacion);
+
+        int[] viewRows = tblAsignacion.getSelectedRows();
+        if (viewRows == null || viewRows.length == 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más juegos en la tabla para aplicar cambios.");
+            return;
+        }
+
+        boolean personal = rbPersonalizar.isSelected();
+        int dif = clamp1to5((Integer) spDifPersonal.getValue());
+
+        // Si hay filas no asignadas, pregunta si las asignamos (para poder aplicar dificultad)
+        boolean hayNoAsignados = false;
+        for (int vr : viewRows) {
+            int mr = tblAsignacion.convertRowIndexToModel(vr);
+            if (!asignacionModel.getRowAt(mr).asignado) { hayNoAsignados = true; break; }
+        }
+        if (hayNoAsignados) {
+            int ok = JOptionPane.showConfirmDialog(
+                    this,
+                    "Hay juegos en la selección que NO están asignados.\n¿Deseas asignarlos también?",
+                    "Asignar y aplicar",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (ok != JOptionPane.YES_OPTION) return;
+            setAsignadoSeleccion(true);
+        }
+
+        for (int vr : viewRows) {
+            int mr = tblAsignacion.convertRowIndexToModel(vr);
+            AsignacionRow r = asignacionModel.getRowAt(mr);
+            if (!r.asignado) continue;
+
+            r.personalOverride = personal;
+            if (personal) {
+                r.difPersonal = dif; // guarda fijo para este estudiante
+            } else {
+                r.difPersonal = r.difGlobal; // vuelve a global
+            }
+        }
+
+        asignacionModel.fireAll();
+        updateEditorFromSelection();
     }
 
     private void renderAsignacionResumen() {
-        int asignados = 0;
-        for (JCheckBox chk : checkBoxesAsignacion.values()) if (chk.isSelected()) asignados++;
-        lblResumenAsignacion.setText(resumenAsignacionBase + "  ·  Seleccionados: " + asignados);
+        int sel = asignacionModel.countSeleccionados();
+        lblResumenAsignacion.setText(resumenAsignacionBase + "  ·  Seleccionados: " + sel);
     }
 
-    // ---------------------------------------------------------------------
-    // Guardar asignación
-    // ---------------------------------------------------------------------
-
     private void onGuardarAsignacion() {
+        stopEditingSafely(tblAsignacion);
+
         Nino seleccionado = (Nino) cboNinos.getSelectedItem();
         if (seleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Selecciona un niño primero.");
+            JOptionPane.showMessageDialog(this, "Selecciona un estudiante primero.");
             return;
         }
 
         Set<Integer> juegosAsignados = new HashSet<>();
         Map<Integer, Integer> dificultadPorJuego = new HashMap<>();
 
-        for (Juego juego : cacheJuegos) {
-            if (!isJuegoHabilitadoActual(juego)) continue;
-            int idJuego = juego.getId();
-            JCheckBox chk = checkBoxesAsignacion.get(idJuego);
-            if (chk != null && chk.isSelected()) {
-                juegosAsignados.add(idJuego);
+        for (AsignacionRow r : asignacionModel.getRows()) {
+            if (!r.asignado) continue;
+            juegosAsignados.add(r.idJuego);
 
-                JSpinner sp = spinnersDificultadAsignacion.get(idJuego);
-                if (sp != null) {
-                    int valor = (Integer) sp.getValue();
-                    int difGlobal = getDificultadGlobalActual(juego);
-
-                    if (valor != difGlobal) {
-                        dificultadPorJuego.put(idJuego, valor);
-                    }
-                }
+            // Guardamos override solo si el modo es PERSONAL
+            if (r.personalOverride) {
+                dificultadPorJuego.put(r.idJuego, clamp1to5(r.difPersonal));
             }
         }
 
         perfilService.asignarJuegosConDificultad(seleccionado.getId(), juegosAsignados, dificultadPorJuego);
-        perfilService.guardarCambios();
-
         JOptionPane.showMessageDialog(this, "Asignación guardada para: " + seleccionado.getNombre());
         cargarNinos();
+        actualizarAsignacionesParaSeleccionado();
     }
 
     public Set<Integer> getJuegosAsignadosParaNino(int idNino) {
@@ -600,13 +1091,6 @@ public class JuegosPanel extends JPanel {
         return safe(s).trim().toLowerCase(Locale.ROOT);
     }
 
-    private static boolean matchesJuego(Juego j, String qLower) {
-        if (qLower == null || qLower.isBlank()) return true;
-        String hay = (safe(j.getNombre()) + " " + safe(j.getDescripcion()) + " " + safe(j.getTipo() != null ? j.getTipo().name() : ""))
-                .toLowerCase(Locale.ROOT);
-        return hay.contains(qLower);
-    }
-
     private static int clamp1to5(int v) {
         if (v < 1) return 1;
         if (v > 5) return 5;
@@ -614,232 +1098,298 @@ public class JuegosPanel extends JPanel {
     }
 
     private boolean isJuegoHabilitadoActual(Juego juego) {
-        JCheckBox chk = checkBoxesJuegos.get(juego.getId());
-        if (chk != null) return chk.isSelected();
-        if (pendingHabilitado.containsKey(juego.getId())) return pendingHabilitado.get(juego.getId());
-        return juego.isHabilitado();
+        Boolean hb = pendingHabilitado.get(juego.getId());
+        return (hb != null) ? hb : juego.isHabilitado();
     }
 
     private int getDificultadGlobalActual(Juego juego) {
-        JSpinner sp = spinnersDificultad.get(juego.getId());
-        if (sp != null) return clamp1to5((Integer) sp.getValue());
-        if (pendingDificultadGlobal.containsKey(juego.getId())) return clamp1to5(pendingDificultadGlobal.get(juego.getId()));
-        return clamp1to5(juego.getDificultad());
+        Integer d = pendingDificultadGlobal.get(juego.getId());
+        return clamp1to5(d != null ? d : juego.getDificultad());
+    }
+
+    private static <K, V> Map<K, V> safeMap(Map<K, V> m) {
+        return (m == null) ? Collections.emptyMap() : m;
+    }
+
+    private static void stopEditingSafely(JTable t) {
+        if (t == null) return;
+        if (t.isEditing()) {
+            TableCellEditor ed = t.getCellEditor();
+            if (ed != null) ed.stopCellEditing();
+        }
     }
 
     // ---------------------------------------------------------------------
-    // UI components
+    // Table models
     // ---------------------------------------------------------------------
 
-    private JComponent buildCatalogoListHeader() {
-        JPanel h = new JPanel(new GridBagLayout());
-        h.setOpaque(true);
-        h.setBackground(new Color(245, 245, 245));
-        h.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 25)));
+    private final class CatalogoTableModel extends AbstractTableModel {
+        static final int COL_ID = 0;
+        static final int COL_JUEGO = 1;
+        static final int COL_TIPO = 2;
+        static final int COL_DIFICULTAD = 3;
+        static final int COL_HABILITADO = 4;
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.insets = new Insets(6, 12, 6, 12);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        private final String[] cols = {"ID", "Juego", "Tipo", "Dif.", "Habilitado"};
 
-        c.gridx = 0; c.weightx = 1;
-        h.add(headerLabel("Juego"), c);
+        @Override public int getRowCount() { return cacheJuegos.size(); }
+        @Override public int getColumnCount() { return cols.length; }
+        @Override public String getColumnName(int column) { return cols[column]; }
 
-        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        h.add(headerLabel("Dif."), c);
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return switch (columnIndex) {
+                case COL_ID, COL_DIFICULTAD -> Integer.class;
+                case COL_HABILITADO -> Boolean.class;
+                default -> String.class;
+            };
+        }
 
-        c.gridx = 2; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        h.add(headerLabel("Habilitado"), c);
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return columnIndex == COL_DIFICULTAD || columnIndex == COL_HABILITADO;
+        }
 
-        return h;
+        Juego getJuegoAt(int modelRow) {
+            return cacheJuegos.get(modelRow);
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Juego j = cacheJuegos.get(rowIndex);
+            return switch (columnIndex) {
+                case COL_ID -> j.getId();
+                case COL_JUEGO -> "<html><b>" + esc(j.getNombre()) + "</b><br><span style='color:#666;'>" + esc(shortDesc(j.getDescripcion(), 84)) + "</span></html>";
+                case COL_TIPO -> safe(j.getTipo() != null ? j.getTipo().name() : "");
+                case COL_DIFICULTAD -> getDificultadGlobalActual(j);
+                case COL_HABILITADO -> isJuegoHabilitadoActual(j);
+                default -> "";
+            };
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            Juego j = cacheJuegos.get(rowIndex);
+            if (columnIndex == COL_HABILITADO) {
+                boolean v = Boolean.TRUE.equals(aValue);
+                pendingHabilitado.put(j.getId(), v);
+                renderCatalogoResumen();
+                actualizarAsignacionesParaSeleccionado();
+                fireTableRowsUpdated(rowIndex, rowIndex);
+                return;
+            }
+            if (columnIndex == COL_DIFICULTAD) {
+                int v = 1;
+                if (aValue instanceof Integer) v = (Integer) aValue;
+                pendingDificultadGlobal.put(j.getId(), clamp1to5(v));
+                actualizarAsignacionesParaSeleccionado();
+                fireTableRowsUpdated(rowIndex, rowIndex);
+            }
+        }
+
+        void fireAll() {
+            fireTableDataChanged();
+        }
     }
 
-    private JComponent buildAsignacionListHeader() {
-        JPanel h = new JPanel(new GridBagLayout());
-        h.setOpaque(true);
-        h.setBackground(new Color(245, 245, 245));
-        h.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 25)));
+    private static final class AsignacionRow {
+        final int idJuego;
+        final String nombre;
+        final String tipo;
+        final String descripcion;
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.insets = new Insets(6, 12, 6, 12);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        boolean asignado;
 
-        c.gridx = 0; c.weightx = 1;
-        h.add(headerLabel("Juego"), c);
+        final int difGlobal;
+        int difPersonal;
+        boolean personalOverride;
 
-        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        h.add(headerLabel("Dif."), c);
+        AsignacionRow(int idJuego, String nombre, String tipo, String descripcion,
+                      boolean asignado, int difGlobal, int difPersonal, boolean personalOverride) {
+            this.idJuego = idJuego;
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.descripcion = descripcion;
+            this.asignado = asignado;
+            this.difGlobal = difGlobal;
+            this.difPersonal = difPersonal;
+            this.personalOverride = personalOverride;
+        }
 
-        c.gridx = 2; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        h.add(headerLabel("Modo"), c);
+        String modoTexto() {
+            return personalOverride ? "Personal" : "Global";
+        }
 
-        c.gridx = 3; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        h.add(headerLabel("Asignado"), c);
-
-        return h;
+        int dificultadMostrada() {
+            return personalOverride ? difPersonal : difGlobal;
+        }
     }
 
-    private JLabel headerLabel(String s) {
-        JLabel l = new JLabel(s);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 12f));
-        l.setForeground(new Color(70, 70, 70));
-        return l;
+    private final class AsignacionTableModel extends AbstractTableModel {
+        static final int COL_ID = 0;
+        static final int COL_JUEGO = 1;
+        static final int COL_TIPO = 2;
+        static final int COL_ASIGNADO = 3;
+        static final int COL_MODO = 4;
+        static final int COL_DIFICULTAD = 5;
+
+        private final String[] cols = {"ID", "Juego", "Tipo", "Asignado", "Modo", "Dif."};
+        private List<AsignacionRow> rows = new ArrayList<>();
+
+        @Override public int getRowCount() { return rows.size(); }
+        @Override public int getColumnCount() { return cols.length; }
+        @Override public String getColumnName(int column) { return cols[column]; }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return switch (columnIndex) {
+                case COL_ID, COL_DIFICULTAD -> Integer.class;
+                case COL_ASIGNADO -> Boolean.class;
+                default -> String.class;
+            };
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            // Para que sea más intuitivo, SOLO editamos "Asignado" en la tabla.
+            return columnIndex == COL_ASIGNADO;
+        }
+
+        AsignacionRow getRowAt(int modelRow) {
+            return rows.get(modelRow);
+        }
+
+        List<AsignacionRow> getRows() {
+            return rows;
+        }
+
+        void setRows(List<AsignacionRow> newRows) {
+            this.rows = (newRows == null) ? new ArrayList<>() : new ArrayList<>(newRows);
+            fireTableDataChanged();
+        }
+
+        void setAsignadoParaTodos(boolean v) {
+            for (AsignacionRow r : rows) {
+                r.asignado = v;
+                if (!v) {
+                    r.personalOverride = false;
+                    r.difPersonal = r.difGlobal;
+                }
+            }
+            fireTableDataChanged();
+        }
+
+        int countSeleccionados() {
+            int c = 0;
+            for (AsignacionRow r : rows) if (r.asignado) c++;
+            return c;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            AsignacionRow r = rows.get(rowIndex);
+            return switch (columnIndex) {
+                case COL_ID -> r.idJuego;
+                case COL_JUEGO -> "<html><b>" + esc(r.nombre) + "</b><br><span style='color:#666;'>" + esc(shortDesc(r.descripcion, 84)) + "</span></html>";
+                case COL_TIPO -> safe(r.tipo);
+                case COL_ASIGNADO -> r.asignado;
+                case COL_MODO -> r.modoTexto();
+                case COL_DIFICULTAD -> clamp1to5(r.dificultadMostrada());
+                default -> "";
+            };
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            AsignacionRow r = rows.get(rowIndex);
+            if (columnIndex == COL_ASIGNADO) {
+                r.asignado = Boolean.TRUE.equals(aValue);
+                if (!r.asignado) {
+                    r.personalOverride = false;
+                    r.difPersonal = r.difGlobal;
+                }
+                fireTableRowsUpdated(rowIndex, rowIndex);
+                renderAsignacionResumen();
+                updateEditorFromSelection();
+            }
+        }
+
+        void fireAll() {
+            fireTableDataChanged();
+        }
     }
 
-    private JComponent crearFilaCatalogoList(Juego juego, boolean selected, int dificultad, int index) {
-        ListRowPanel row = new ListRowPanel(index);
-        row.setSelectedRow(selected);
+    // ---------------------------------------------------------------------
+    // Renderers
+    // ---------------------------------------------------------------------
 
-        row.setLayout(new GridBagLayout());
-        row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 18)));
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.insets = new Insets(10, 12, 10, 12);
-        c.fill = GridBagConstraints.HORIZONTAL;
-
-        // Col 0: nombre + meta + desc
-        c.gridx = 0; c.weightx = 1;
-        row.add(buildJuegoMainCell(juego), c);
-
-        // Col 1: spinner dificultad (sin texto)
-        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
-        sp.setPreferredSize(new Dimension(64, sp.getPreferredSize().height));
-        sp.setEnabled(selected);
-        sp.addChangeListener(e -> pendingDificultadGlobal.put(juego.getId(), (Integer) sp.getValue()));
-
-        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        row.add(sp, c);
-
-        // Col 2: checkbox habilitado
-        JCheckBox chk = new JCheckBox();
-        chk.setOpaque(false);
-        chk.setSelected(selected);
-
-        chk.addItemListener(e -> {
-            boolean v = chk.isSelected();
-            sp.setEnabled(v);
-            pendingHabilitado.put(juego.getId(), v);
-            row.setSelectedRow(v);
-            renderCatalogoResumen();
-            actualizarAsignacionesParaSeleccionado();
-        });
-
-        c.gridx = 2;
-        row.add(chk, c);
-
-        checkBoxesJuegos.put(juego.getId(), chk);
-        spinnersDificultad.put(juego.getId(), sp);
-
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-        return row;
+    private static final class ProTextRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBorder(new EmptyBorder(0, 10, 0, 10));
+            setVerticalAlignment(SwingConstants.CENTER);
+            setForeground(new Color(35, 35, 35));
+            return this;
+        }
     }
 
-    private JComponent crearFilaAsignacionList(Juego juego, boolean selected, int dificultad, int difGlobal, int index) {
-        ListRowPanel row = new ListRowPanel(index);
-        row.setSelectedRow(selected);
+    private static final class CenterRenderer extends DefaultTableCellRenderer {
+        CenterRenderer() {
+            setHorizontalAlignment(SwingConstants.CENTER);
+        }
 
-        row.setLayout(new GridBagLayout());
-        row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 18)));
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.insets = new Insets(10, 12, 10, 12);
-        c.fill = GridBagConstraints.HORIZONTAL;
-
-        // Col 0: main
-        c.gridx = 0; c.weightx = 1;
-        row.add(buildJuegoMainCell(juego), c);
-
-        // Col 1: dificultad
-        JSpinner sp = new JSpinner(new SpinnerNumberModel(clamp1to5(dificultad), 1, 5, 1));
-        sp.setPreferredSize(new Dimension(64, sp.getPreferredSize().height));
-        sp.setEnabled(selected);
-
-        c.gridx = 1; c.weightx = 0; c.anchor = GridBagConstraints.CENTER;
-        row.add(sp, c);
-
-        // Col 2: modo (Global/Personal)
-        JLabel modo = pillLabel((dificultad == difGlobal) ? "Global" : "Personal");
-
-        sp.addChangeListener(e -> {
-            int v = (Integer) sp.getValue();
-            modo.setText(v == difGlobal ? "Global" : "Personal");
-        });
-
-        c.gridx = 2;
-        row.add(modo, c);
-
-        // Col 3: asignado
-        JCheckBox chk = new JCheckBox();
-        chk.setOpaque(false);
-        chk.setSelected(selected);
-
-        chk.addItemListener(e -> {
-            boolean v = chk.isSelected();
-            sp.setEnabled(v);
-            row.setSelectedRow(v);
-            renderAsignacionResumen();
-        });
-
-        c.gridx = 3;
-        row.add(chk, c);
-
-        checkBoxesAsignacion.put(juego.getId(), chk);
-        spinnersDificultadAsignacion.put(juego.getId(), sp);
-
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-        return row;
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBorder(new EmptyBorder(0, 6, 0, 6));
+            return this;
+        }
     }
 
-    private JComponent buildJuegoMainCell(Juego juego) {
-        JPanel p = new JPanel();
-        p.setOpaque(false);
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+    private static final class CenterBooleanRenderer extends DefaultTableCellRenderer {
+        private final JCheckBox chk = new JCheckBox();
 
-        JPanel line1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        line1.setOpaque(false);
+        CenterBooleanRenderer() {
+            chk.setHorizontalAlignment(SwingConstants.CENTER);
+            chk.setOpaque(true);
+        }
 
-        JLabel name = new JLabel(juego.getNombre());
-        name.setFont(name.getFont().deriveFont(Font.BOLD, 13.5f));
-
-        JLabel id = pillLabel("#" + juego.getId());
-        String tipo = (juego.getTipo() != null) ? juego.getTipo().name() : "JUEGO";
-        JLabel t = pillLabel(tipo);
-
-        line1.add(name);
-        line1.add(id);
-        line1.add(t);
-
-        JLabel desc = new JLabel(shortDesc(safe(juego.getDescripcion()), 90));
-        desc.setFont(desc.getFont().deriveFont(Font.PLAIN, 12f));
-        desc.setForeground(new Color(90, 90, 90));
-
-        p.add(line1);
-        p.add(Box.createVerticalStrut(4));
-        p.add(desc);
-        return p;
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            chk.setSelected(Boolean.TRUE.equals(value));
+            chk.setBackground(table.getBackground());
+            return chk;
+        }
     }
 
-    private String shortDesc(String s, int max) {
-        s = (s == null) ? "" : s.trim();
-        if (s.length() <= max) return s;
-        return s.substring(0, max - 1) + "…";
+    // ---------------------------------------------------------------------
+    // Spinner editor (dif. 1-5)
+    // ---------------------------------------------------------------------
+
+    private static final class SpinnerEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JSpinner spinner;
+
+        SpinnerEditor(int min, int max) {
+            spinner = new JSpinner(new SpinnerNumberModel(min, min, max, 1));
+            ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setHorizontalAlignment(SwingConstants.CENTER);
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return spinner.getValue();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            if (value instanceof Integer) spinner.setValue(value);
+            return spinner;
+        }
     }
 
-    private JLabel pillLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 11f));
-        l.setOpaque(true);
-        l.setBackground(new Color(255, 255, 255));
-        l.setForeground(new Color(70, 70, 70));
-        l.setBorder(BorderFactory.createCompoundBorder(
-                new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0, 22)),
-                new EmptyBorder(2, 8, 2, 8)
-        ));
-        return l;
-    }
+    // ---------------------------------------------------------------------
+    // Card panel
+    // ---------------------------------------------------------------------
 
     private static final class CardPanel extends JPanel {
         private final int arc;
@@ -860,7 +1410,6 @@ public class JuegosPanel extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             try {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
                 int w = getWidth();
                 int h = getHeight();
                 int pad = 1;
@@ -868,7 +1417,7 @@ public class JuegosPanel extends JPanel {
                 Color base = UIManager.getColor("Panel.background");
                 if (base == null) base = new Color(245, 245, 245);
 
-                Color fill = blend(base, Color.WHITE, 0.65f);
+                Color fill = blend(base, Color.WHITE, 0.70f);
                 Color stroke = new Color(0, 0, 0, 20);
 
                 g2.setColor(fill);
@@ -882,51 +1431,22 @@ public class JuegosPanel extends JPanel {
         }
     }
 
-    private static final class ListRowPanel extends JPanel {
-        private boolean hover = false;
-        private boolean selectedRow = false;
-        private final int index;
-
-        ListRowPanel(int index) {
-            this.index = index;
-            setOpaque(true);
-            setBackground(Color.WHITE);
-
-            MouseAdapter ma = new MouseAdapter() {
-                @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
-                @Override public void mouseExited(MouseEvent e) { hover = false; repaint(); }
-            };
-            addMouseListener(ma);
-        }
-
-        void setSelectedRow(boolean v) {
-            selectedRow = v;
-            repaint();
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            // fondo zebra + hover + selected
-            Color base = (index % 2 == 0) ? Color.WHITE : new Color(250, 250, 250);
-            Color bg = base;
-
-            if (selectedRow) bg = new Color(238, 246, 255);
-            if (hover) bg = new Color(
-                    Math.min(255, bg.getRed() + 6),
-                    Math.min(255, bg.getGreen() + 6),
-                    Math.min(255, bg.getBlue() + 6)
-            );
-
-            setBackground(bg);
-            super.paintComponent(g);
-        }
-    }
-
     private static Color blend(Color a, Color b, float t) {
         t = Math.max(0f, Math.min(1f, t));
         int r = (int) (a.getRed() + (b.getRed() - a.getRed()) * t);
         int g = (int) (a.getGreen() + (b.getGreen() - a.getGreen()) * t);
         int bl = (int) (a.getBlue() + (b.getBlue() - a.getBlue()) * t);
         return new Color(r, g, bl);
+    }
+
+    private static String shortDesc(String s, int max) {
+        s = (s == null) ? "" : s.trim();
+        if (s.length() <= max) return s;
+        return s.substring(0, Math.max(0, max - 1)) + "…";
+    }
+
+    private static String esc(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

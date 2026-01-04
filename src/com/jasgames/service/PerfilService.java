@@ -371,6 +371,35 @@ public class PerfilService {
         }
     }
 
+    /**
+     * Asigna (agrega) un juego a TODOS los niños, preservando sus juegos actuales.
+     *
+     * @return cuántos niños fueron afectados (no lo tenían y se agregó).
+     */
+    public int asignarJuegoATodos(int idJuego) {
+        ioLock.lock();
+        try {
+            int afectados = 0;
+            for (Nino n : ninos) {
+                Set<Integer> asg = n.getJuegosAsignados();
+                if (asg == null) {
+                    asg = new HashSet<>();
+                    n.setJuegosAsignados(asg);
+                }
+                if (asg.add(idJuego)) {
+                    afectados++;
+                }
+            }
+
+            if (afectados > 0) {
+                guardarNinosEnArchivo();
+            }
+            return afectados;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
     public int contarNinosEnAula(String aula) {
         if (aula == null) return 0;
         ioLock.lock();
