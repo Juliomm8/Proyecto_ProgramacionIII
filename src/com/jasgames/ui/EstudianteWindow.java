@@ -302,8 +302,29 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         }
     }
 
+    // 1) Helper para bloquear/desbloquear selección e inicio
+    private void setJuegoActivo(boolean activo) {
+        // activo = hay juego en curso
+        if (btnIniciarJuego != null) btnIniciarJuego.setEnabled(!activo && !guardandoResultado);
+        if (listaJuegosEstudiante != null) listaJuegosEstudiante.setEnabled(!activo && !guardandoResultado);
+
+        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(activo && !guardandoResultado);
+    }
+
     private void iniciarJuegoSeleccionado() {
         if (guardandoResultado) return;
+        
+        // 2) Evita iniciar si ya hay uno
+        if (juegoEnCurso != null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Ya hay un juego en curso. Finalízalo antes de iniciar otro.",
+                    "Juego en curso",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
         if (ninoActual == null) {
             cargarNinoYJuegos();
             if (ninoActual == null) return;
@@ -322,8 +343,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         Actividad actividad = new Actividad(actividadId, juego, nivel, 0);
 
         // Crear panel por ID (escalable)
-        juegoEnCurso = JuegoPanelFactory.crearPanel(actividad, this);
-        if (juegoEnCurso == null) {
+        BaseJuegoPanel panelJuego = JuegoPanelFactory.crearPanel(actividad, this);
+        if (panelJuego == null) {
             JOptionPane.showMessageDialog(
                     this,
                     "Juego no implementado aún (id=" + juego.getId() + ")",
@@ -336,14 +357,16 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         // Montar el juego en el panel central
         panelJuegoEstudiante.removeAll();
         panelJuegoEstudiante.setLayout(new BorderLayout());
-        panelJuegoEstudiante.add(juegoEnCurso, BorderLayout.CENTER);
+        panelJuegoEstudiante.add(panelJuego, BorderLayout.CENTER);
         panelJuegoEstudiante.revalidate();
         panelJuegoEstudiante.repaint();
 
         // Reset UI puntaje
         lblValorPuntaje.setText("0");
 
-        if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(true);
+        // Guardar referencia y bloquear UI
+        juegoEnCurso = panelJuego;
+        setJuegoActivo(true);
 
         // Iniciar una sola vez, pero después del layout para evitar tamaños 0 en el lienzo
         SwingUtilities.invokeLater(() -> {
@@ -353,8 +376,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
 
     private void finalizarYGuardarManual() {
         if (guardandoResultado) return;
+        // 4) Guarda: si no hay juego, no hacer nada
         if (juegoEnCurso == null) {
-            JOptionPane.showMessageDialog(this, "No hay ningún juego en curso.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            // JOptionPane.showMessageDialog(this, "No hay ningún juego en curso.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
         juegoEnCurso.finalizarJuegoForzado();
@@ -367,8 +391,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         if (btnFinalizarJuego != null) btnFinalizarJuego.setEnabled(!v && juegoEnCurso != null);
 
         // Si tienes botón de "Iniciar" o lista de juegos:
-        if (btnIniciarJuego != null) btnIniciarJuego.setEnabled(!v);
-        if (listaJuegosEstudiante != null) listaJuegosEstudiante.setEnabled(!v);
+        if (btnIniciarJuego != null) btnIniciarJuego.setEnabled(!v && juegoEnCurso == null);
+        if (listaJuegosEstudiante != null) listaJuegosEstudiante.setEnabled(!v && juegoEnCurso == null);
 
         // Si tienes navegación (volver/cerrar sesión)
         if (btnBackEstudiante != null) btnBackEstudiante.setEnabled(!v);
@@ -440,7 +464,9 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                             JOptionPane.INFORMATION_MESSAGE
                     );
 
+                    // 3) Limpiar juego y desbloquear UI
                     juegoEnCurso = null;
+                    setJuegoActivo(false);
 
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(
