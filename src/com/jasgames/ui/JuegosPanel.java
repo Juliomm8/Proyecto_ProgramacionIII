@@ -21,6 +21,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -86,6 +89,7 @@ public class JuegosPanel extends JPanel {
     private JButton btnLimpiarFiltrosNino;
     private JLabel lblNinosFiltro;
 
+    private JButton btnListaEstudiantes;
     private JCheckBox chkSoloAsignados;
     private JButton btnAsignarSel;
     private JButton btnQuitarSel;
@@ -326,7 +330,7 @@ public class JuegosPanel extends JPanel {
         txtFiltroId = new JTextField();
         txtFiltroId.setColumns(14);
         txtFiltroId.setToolTipText("Buscar por ID o nombre (ej: 23, julio, aula azul)");
-        Dimension idSize = new Dimension(140, txtFiltroId.getPreferredSize().height);
+        Dimension idSize = new Dimension(180, txtFiltroId.getPreferredSize().height);
         txtFiltroId.setPreferredSize(idSize);
         txtFiltroId.setMinimumSize(idSize);
         txtFiltroId.setEditable(true);
@@ -397,10 +401,18 @@ public class JuegosPanel extends JPanel {
         rowStudent.add(lblSeleccionNino, cs);
 
         cs.gridx = 1;
-        cs.gridwidth = 7;
+        cs.gridwidth = 6;
         cs.weightx = 1;
         cs.fill = GridBagConstraints.HORIZONTAL;
         rowStudent.add(cboNinos, cs);
+
+        btnListaEstudiantes = new JButton("Lista…");
+        btnListaEstudiantes.setToolTipText("Abrir lista completa (tabla) para buscar/seleccionar estudiante");
+        cs.gridx = 7;
+        cs.gridwidth = 1;
+        cs.weightx = 0;
+        cs.fill = GridBagConstraints.NONE;
+        rowStudent.add(btnListaEstudiantes, cs);
         JPanel rowFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         rowFilters.setOpaque(false);
 
@@ -643,6 +655,7 @@ public class JuegosPanel extends JPanel {
         btnLimpiarFiltrosNino.addActionListener(e -> {
             if (cboFiltroAula != null && cboFiltroAula.getItemCount() > 0) cboFiltroAula.setSelectedIndex(0); // "Todas"
             if (cboOrdenNino != null && cboOrdenNino.getItemCount() > 0) cboOrdenNino.setSelectedIndex(0);
+
             if (txtFiltroId != null) {
                 txtFiltroId.setText("");
                 txtFiltroId.requestFocusInWindow();
@@ -650,6 +663,12 @@ public class JuegosPanel extends JPanel {
             }
             aplicarFiltroNinosNow(true);
         });
+
+
+        // Estudiantes: selector en tabla (Lista...)
+        if (btnListaEstudiantes != null) {
+            btnListaEstudiantes.addActionListener(ev -> openStudentListDialog());
+        }
 
         // Catálogo: menú "Más"
         btnMasCatalogo.addActionListener(e -> {
@@ -725,6 +744,15 @@ public class JuegosPanel extends JPanel {
                     txtFiltroId.requestFocusInWindow();
                     txtFiltroId.selectAll();
                 }
+            }
+        });
+
+        // Atajo: Ctrl+L abre la lista completa de estudiantes
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke("ctrl L"), "openListaNinos");
+        getActionMap().put("openListaNinos", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (btnListaEstudiantes != null) btnListaEstudiantes.doClick();
             }
         });
     }
@@ -1390,6 +1418,283 @@ public class JuegosPanel extends JPanel {
         }
     }
 
+
+    // ---------------------------------------------------------------------
+    // Selector rápido: lista completa de estudiantes (tabla)
+    // ---------------------------------------------------------------------
+
+    private void openStudentListDialog() {
+        if (cacheNinos == null || cacheNinos.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay estudiantes cargados.", "Lista de estudiantes", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        final JDialog dlg = new JDialog(owner, "Lista de estudiantes", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        JPanel root = new JPanel(new BorderLayout(10, 10));
+        root.setBorder(new EmptyBorder(10, 10, 10, 10));
+        dlg.setContentPane(root);
+
+        // Top: filtros
+        JPanel top = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(0, 0, 0, 8);
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+
+        JLabel lblBuscar = new JLabel("Buscar:");
+        JTextField txt = new JTextField(24);
+        txt.setToolTipText("ID (prefijo), nombre o aula. Ej: 23, julio, azul 23");
+
+        JLabel lblAula = new JLabel("Aula:");
+        JComboBox<String> cboAulaDlg = new JComboBox<>();
+        cboAulaDlg.addItem("Todas");
+        for (String a : getAulasOrdenadas(cacheNinos)) cboAulaDlg.addItem(a);
+
+        JLabel lblCount = new JLabel(" ");
+        lblCount.setForeground(new Color(110, 110, 110));
+
+        c.gridx = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        top.add(lblBuscar, c);
+
+        c.gridx = 1; c.weightx = 0; c.fill = GridBagConstraints.HORIZONTAL;
+        top.add(txt, c);
+
+        c.gridx = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        top.add(lblAula, c);
+
+        c.gridx = 3; c.weightx = 0; c.fill = GridBagConstraints.HORIZONTAL;
+        cboAulaDlg.setPreferredSize(new Dimension(160, cboAulaDlg.getPreferredSize().height));
+        top.add(cboAulaDlg, c);
+
+        c.gridx = 4; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        top.add(lblCount, c);
+
+        root.add(top, BorderLayout.NORTH);
+
+        // Center: tabla
+        NinoPickerTableModel model = new NinoPickerTableModel(cacheNinos);
+        JTable table = new JTable(model);
+        table.setRowHeight(26);
+        table.setFillsViewportHeight(true);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // Look de header
+        JTableHeader header = table.getTableHeader();
+        header.setReorderingAllowed(false);
+
+        TableRowSorter<NinoPickerTableModel> sorter = new TableRowSorter<>(model);
+        sorter.setComparator(0, Comparator.comparingInt((Integer a) -> a));
+        table.setRowSorter(sorter);
+
+        // Zebra suave
+        table.setDefaultRenderer(Object.class, new ZebraPickerRenderer());
+        table.setDefaultRenderer(Integer.class, new ZebraPickerRenderer());
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        root.add(sp, BorderLayout.CENTER);
+
+        // Bottom: acciones
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JButton btnSelect = new JButton("Seleccionar");
+        JButton btnCancel = new JButton("Cancelar");
+        bottom.add(btnCancel);
+        bottom.add(btnSelect);
+        root.add(bottom, BorderLayout.SOUTH);
+
+        Runnable applyFilter = () -> {
+            String aula = (cboAulaDlg.getSelectedItem() != null) ? String.valueOf(cboAulaDlg.getSelectedItem()) : "Todas";
+            String q = safe(txt.getText()).trim().toLowerCase(Locale.ROOT);
+            String[] tokens = q.isEmpty() ? new String[0] : q.split("\\s+");
+
+            sorter.setRowFilter(new RowFilter<NinoPickerTableModel, Integer>() {
+                @Override
+                public boolean include(Entry<? extends NinoPickerTableModel, ? extends Integer> entry) {
+                    int id = (Integer) entry.getValue(0);
+                    String nombre = safe(String.valueOf(entry.getValue(1))).toLowerCase(Locale.ROOT);
+                    String a = safe(String.valueOf(entry.getValue(2))).toLowerCase(Locale.ROOT);
+
+                    if (!"todas".equalsIgnoreCase(aula)) {
+                        if (!a.equalsIgnoreCase(aula)) return false;
+                    }
+
+                    if (tokens.length == 0) return true;
+                    return matchesStudentTokensRecursive(id, nombre, a, tokens, 0);
+                }
+            });
+
+            lblCount.setText("Mostrando " + table.getRowCount() + "/" + model.getRowCount());
+        };
+
+        // Eventos filtros
+        txt.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { applyFilter.run(); }
+            @Override public void removeUpdate(DocumentEvent e) { applyFilter.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { applyFilter.run(); }
+        });
+        cboAulaDlg.addActionListener(e -> applyFilter.run());
+
+        // Acción seleccionar
+        Action doSelect = new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                int viewRow = table.getSelectedRow();
+                if (viewRow < 0) return;
+                int modelRow = table.convertRowIndexToModel(viewRow);
+                int id = (Integer) model.getValueAt(modelRow, 0);
+
+                Nino chosen = findNinoById(id);
+                if (chosen == null) return;
+
+                applyChosenStudent(chosen);
+                dlg.dispose();
+            }
+        };
+
+        btnSelect.addActionListener(doSelect);
+        btnCancel.addActionListener(e -> dlg.dispose());
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    doSelect.actionPerformed(null);
+                }
+            }
+        });
+
+        table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "pickStudent");
+        table.getActionMap().put("pickStudent", doSelect);
+
+        // Selección inicial
+        if (table.getRowCount() > 0) {
+            table.setRowSelectionInterval(0, 0);
+        }
+
+        applyFilter.run();
+
+        dlg.setSize(760, 520);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+
+    private void applyChosenStudent(Nino chosen) {
+        if (chosen == null) return;
+
+        // Para que siempre aparezca: quitamos filtro de aula y usamos el ID (prefijo) como búsqueda rápida.
+        if (cboFiltroAula != null && cboFiltroAula.getItemCount() > 0) {
+            cboFiltroAula.setSelectedItem("Todas");
+        }
+        if (txtFiltroId != null) {
+            txtFiltroId.setText(String.valueOf(chosen.getId()));
+        }
+
+        aplicarFiltroNinosNow(false);
+
+        // Seleccionar por ID dentro del combo filtrado
+        ComboBoxModel model = cboNinos.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            Object o = model.getElementAt(i);
+            if (o instanceof Nino && ((Nino) o).getId() == chosen.getId()) {
+                cboNinos.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        actualizarAsignacionesParaSeleccionado();
+    }
+
+    private Nino findNinoById(int id) {
+        for (Nino n : cacheNinos) {
+            if (n != null && n.getId() == id) return n;
+        }
+        return null;
+    }
+
+    private List<String> getAulasOrdenadas(List<Nino> ninos) {
+        Set<String> set = new HashSet<>();
+        for (Nino n : ninos) {
+            String a = safe(n != null ? n.getAula() : "");
+            if (!a.isBlank()) set.add(a);
+        }
+        List<String> l = new ArrayList<>(set);
+        l.sort(String.CASE_INSENSITIVE_ORDER);
+        return l;
+    }
+
+    // Recursivo: todas las palabras del buscador deben coincidir
+    private boolean matchesStudentTokensRecursive(int id, String nombreLower, String aulaLower, String[] tokens, int idx) {
+        if (tokens == null || idx >= tokens.length) return true;
+
+        String t = tokens[idx];
+        if (t == null || t.isBlank()) {
+            return matchesStudentTokensRecursive(id, nombreLower, aulaLower, tokens, idx + 1);
+        }
+
+        if (!tokenMatchesStudent(id, nombreLower, aulaLower, t)) return false;
+        return matchesStudentTokensRecursive(id, nombreLower, aulaLower, tokens, idx + 1);
+    }
+
+    private boolean tokenMatchesStudent(int id, String nombreLower, String aulaLower, String tokenLower) {
+        // Si es número: prefijo de ID
+        boolean allDigits = true;
+        for (int i = 0; i < tokenLower.length(); i++) {
+            char ch = tokenLower.charAt(i);
+            if (!Character.isDigit(ch)) { allDigits = false; break; }
+        }
+        if (allDigits) {
+            return String.valueOf(id).startsWith(tokenLower);
+        }
+        return (nombreLower != null && nombreLower.contains(tokenLower))
+                || (aulaLower != null && aulaLower.contains(tokenLower));
+    }
+
+
+    private static final class NinoPickerTableModel extends AbstractTableModel {
+        private final List<Nino> all;
+
+        NinoPickerTableModel(List<Nino> all) {
+            this.all = (all == null) ? Collections.<Nino>emptyList() : new ArrayList<>(all);
+        }
+
+        @Override public int getRowCount() { return all.size(); }
+        @Override public int getColumnCount() { return 3; }
+
+        @Override public String getColumnName(int col) {
+            switch (col) {
+                case 0: return "ID";
+                case 1: return "Nombre";
+                case 2: return "Aula";
+                default: return "";
+            }
+        }
+
+        @Override public Class<?> getColumnClass(int col) {
+            return (col == 0) ? Integer.class : String.class;
+        }
+
+        @Override public Object getValueAt(int rowIndex, int columnIndex) {
+            Nino n = all.get(rowIndex);
+            if (n == null) return null;
+
+            switch (columnIndex) {
+                case 0:
+                    return n.getId();
+                case 1: {
+                    String nombre = safe(n.getNombre());
+                    return nombre.isBlank() ? "(Sin nombre)" : nombre;
+                }
+                case 2:
+                    return safe(n.getAula());
+                default:
+                    return null;
+            }
+        }
+    }
+
+
     // ---------------------------------------------------------------------
     // Table models
     // ---------------------------------------------------------------------
@@ -1633,6 +1938,26 @@ public class JuegosPanel extends JPanel {
             return chk;
         }
     }
+
+    /**
+     * Renderer simple para tabla de selección de estudiantes (zebra + selección).
+     */
+    private static final class ZebraPickerRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setOpaque(true);
+            setBorder(new EmptyBorder(0, 8, 0, 8));
+
+            if (isSelected) {
+                setBackground(new Color(220, 235, 255));
+            } else {
+                setBackground((row % 2 == 0) ? Color.WHITE : new Color(250, 250, 250));
+            }
+            return this;
+        }
+    }
+
 
     // ---------------------------------------------------------------------
     // Spinner editor (dif. 1-5)
