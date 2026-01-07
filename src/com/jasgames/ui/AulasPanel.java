@@ -12,6 +12,7 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -68,6 +69,7 @@ public class AulasPanel extends JPanel {
         
         // Doble click en la tabla -> abrir perfiles
         activarDobleClickTabla();
+        instalarMenuContextualTabla();
 
         refrescarDatos();
     }
@@ -278,18 +280,132 @@ public class AulasPanel extends JPanel {
                     int viewRow = tblNinos.getSelectedRow();
                     if (viewRow < 0) return;
 
-                    // IMPORTANTE: Convertir índice de vista a modelo por el Sorter
                     int modelRow = tblNinos.convertRowIndexToModel(viewRow);
 
-                    Object idObj = tablaModel.getValueAt(modelRow, 1); // Columna ID
-                    Integer id = parseIntSafe(idObj);
+                    Object idObj = tblNinos.getModel().getValueAt(modelRow, 1); // Columna ID
+                    Integer id = null;
 
-                    if (id > 0 && onAbrirPerfil != null) {
+                    if (idObj instanceof Integer) id = (Integer) idObj;
+                    else if (idObj != null) {
+                        try { id = Integer.parseInt(idObj.toString().trim()); } catch (Exception ignored) {}
+                    }
+
+                    if (id != null && onAbrirPerfil != null) {
                         onAbrirPerfil.accept(id);
                     }
                 }
             }
         });
+    }
+
+    private void instalarMenuContextualTabla() {
+        JPopupMenu menu = new JPopupMenu();
+
+        JMenuItem miAbrir = new JMenuItem("Abrir en Perfiles");
+        JMenuItem miCopiarId = new JMenuItem("Copiar ID");
+        JMenuItem miMover = new JMenuItem("Mover a otra aula...");
+
+        miAbrir.addActionListener(ev -> abrirPerfilSeleccionado());
+        miCopiarId.addActionListener(ev -> copiarIdSeleccionado());
+        miMover.addActionListener(ev -> moverSeleccionadoAOtraAula());
+
+        menu.add(miAbrir);
+        menu.add(miCopiarId);
+        menu.addSeparator();
+        menu.add(miMover);
+
+        tblNinos.addMouseListener(new MouseAdapter() {
+            private void maybeShow(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+
+                int r = tblNinos.rowAtPoint(e.getPoint());
+                if (r >= 0 && r < tblNinos.getRowCount()) {
+                    tblNinos.setRowSelectionInterval(r, r);
+                } else {
+                    tblNinos.clearSelection();
+                }
+                menu.show(e.getComponent(), e.getX(), e.getY());
+            }
+
+            @Override public void mousePressed(MouseEvent e) { maybeShow(e); }
+            @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
+        });
+    }
+
+    private Integer getIdSeleccionadoTabla() {
+        int viewRow = tblNinos.getSelectedRow();
+        if (viewRow < 0) return null;
+
+        int modelRow = tblNinos.convertRowIndexToModel(viewRow);
+        Object idObj = tblNinos.getModel().getValueAt(modelRow, 1); // Columna ID
+
+        if (idObj instanceof Integer) return (Integer) idObj;
+        if (idObj == null) return null;
+
+        try { return Integer.parseInt(idObj.toString().trim()); }
+        catch (Exception ignored) { return null; }
+    }
+
+    private void abrirPerfilSeleccionado() {
+        Integer id = getIdSeleccionadoTabla();
+        if (id == null) return;
+
+        if (onAbrirPerfil != null) onAbrirPerfil.accept(id);
+    }
+
+    private void copiarIdSeleccionado() {
+        Integer id = getIdSeleccionadoTabla();
+        if (id == null) return;
+
+        Toolkit.getDefaultToolkit().getSystemClipboard()
+                .setContents(new StringSelection(String.valueOf(id)), null);
+
+        JOptionPane.showMessageDialog(this, "ID copiado: " + id, "Copiado", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void moverSeleccionadoAOtraAula() {
+        Integer id = getIdSeleccionadoTabla();
+        if (id == null) return;
+
+        Nino n = perfilService.buscarNinoPorId(id);
+        if (n == null) {
+            JOptionPane.showMessageDialog(this, "No se encontró el estudiante (id=" + id + ").",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String aulaActual = n.getAula();
+        java.util.List<String> aulas = aulaService.obtenerNombres();
+        aulas.removeIf(a -> a == null || a.isBlank() || a.equalsIgnoreCase(aulaActual));
+
+        if (aulas.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay otras aulas disponibles para mover.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JComboBox<String> cb = new JComboBox<>(aulas.toArray(new String[0]));
+        cb.setSelectedIndex(0);
+
+        int r = JOptionPane.showConfirmDialog(
+                this,
+                cb,
+                "Mover \"" + n.getNombre() + "\" (id=" + n.getId() + ") a:",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (r != JOptionPane.OK_OPTION) return;
+
+        String destino = (String) cb.getSelectedItem();
+        if (destino == null || destino.isBlank()) return;
+
+        n.setAula(destino);
+        perfilService.actualizarNino(n);   // actualiza y guarda
+        refrescarDatos();
+
+        // opcional: saltar a esa aula
+        listAulas.setSelectedValue(destino, true);
     }
 
     private void refrescarDatos() {
