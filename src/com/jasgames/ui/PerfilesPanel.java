@@ -254,11 +254,25 @@ public class PerfilesPanel extends JPanel {
         top.setOpaque(false);
 
         lblAvatarPreview = new JLabel("🙂", SwingConstants.CENTER);
-        lblAvatarPreview.setFont(lblAvatarPreview.getFont().deriveFont(Font.BOLD, 34f));
-        lblAvatarPreview.setPreferredSize(new Dimension(60, 60));
-        lblAvatarPreview.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        lblAvatarPreview.setHorizontalAlignment(SwingConstants.CENTER);
+        lblAvatarPreview.setVerticalAlignment(SwingConstants.CENTER);
+
+        // Más espacio + padding para que el emoji no se vea “chueco” o recortado
+        lblAvatarPreview.setFont(lblAvatarPreview.getFont().deriveFont(Font.PLAIN, 32f));
+        lblAvatarPreview.setPreferredSize(new Dimension(72, 72));
+        lblAvatarPreview.setMinimumSize(new Dimension(72, 72));
         lblAvatarPreview.setOpaque(true);
         lblAvatarPreview.setBackground(new Color(250, 250, 250));
+        lblAvatarPreview.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220)),
+                new EmptyBorder(6, 6, 6, 6)
+        ));
+
+        // Contenedor para centrar perfectamente el preview en el header
+        JPanel avatarBox = new JPanel(new GridBagLayout());
+        avatarBox.setOpaque(false);
+        avatarBox.setPreferredSize(new Dimension(84, 84));
+        avatarBox.add(lblAvatarPreview);
 
         JPanel info = new JPanel();
         info.setOpaque(false);
@@ -273,7 +287,7 @@ public class PerfilesPanel extends JPanel {
         info.add(t);
         info.add(lblEstado);
 
-        top.add(lblAvatarPreview, BorderLayout.WEST);
+        top.add(avatarBox, BorderLayout.WEST);
         top.add(info, BorderLayout.CENTER);
 
         card.add(top, BorderLayout.NORTH);

@@ -4,6 +4,7 @@ import com.jasgames.model.Juego;
 import com.jasgames.model.Nino;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
+import com.jasgames.util.EmojiFonts;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -353,14 +354,13 @@ public class JuegosPanel extends JPanel {
         cboNinos.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Nino) {
-                    Nino n = (Nino) value;
-                    String nombre = safe(n.getNombre());
-                    String aula = safe(n.getAula());
-                    setText((nombre.isBlank() ? "(Sin nombre)" : nombre) + "  ·  " + aula + "  ·  id=" + n.getId());
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof com.jasgames.model.Nino n) {
+                    String av = (n.getAvatar() != null && !n.getAvatar().isBlank()) ? n.getAvatar() : "🙂";
+                    lbl.setText(av + "  " + n.getNombre() + "  ·  " + n.getAula() + "  ·  id=" + n.getId());
                 }
-                return this;
+                lbl.setFont(EmojiFonts.emoji(14f));
+                return lbl;
             }
         });
 
