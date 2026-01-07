@@ -1,7 +1,7 @@
 package com.jasgames.ui;
 
 import com.jasgames.model.Juego;
-import com.jasgames.model.ResultadoJuego;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.service.ResultadoService;
 
 import javax.swing.*;
@@ -307,7 +307,7 @@ public class DashboardPanel extends JPanel {
         cbFiltroJuego.addItem("Todos");
 
         Set<Juego> juegosUnicos = new LinkedHashSet<>();
-        for (ResultadoJuego r : resultadoService.obtenerTodos()) {
+        for (SesionJuego r : resultadoService.obtenerTodos()) {
             if (r.getJuego() != null) juegosUnicos.add(r.getJuego());
         }
         for (Juego j : juegosUnicos) cbFiltroJuego.addItem(j);
@@ -321,7 +321,7 @@ public class DashboardPanel extends JPanel {
 
         // Luego cualquier aula extra que exista en resultados
         Set<String> aulasExtras = new LinkedHashSet<>();
-        for (ResultadoJuego r : resultadoService.obtenerTodos()) {
+        for (SesionJuego r : resultadoService.obtenerTodos()) {
             if (r.getAula() != null && !r.getAula().isBlank()) aulasExtras.add(r.getAula().trim());
         }
         for (String a : aulasExtras) {
@@ -348,7 +348,7 @@ public class DashboardPanel extends JPanel {
     private void actualizarTabla(boolean atajoOrdenarPorPuntajeDesc) {
         tablaModelo.setRowCount(0);
 
-        List<ResultadoJuego> lista = new ArrayList<>(resultadoService.obtenerTodos());
+        List<SesionJuego> lista = new ArrayList<>(resultadoService.obtenerTodos());
 
         // ----- 1) Filtro: Juego -----
         Object juegoSel = cbFiltroJuego.getSelectedItem();
@@ -399,16 +399,16 @@ public class DashboardPanel extends JPanel {
         String ordenSel = atajoOrdenarPorPuntajeDesc ? "Puntaje (mayor)" : (String) cbOrden.getSelectedItem();
         if (ordenSel == null) ordenSel = "Fecha (más reciente)";
 
-        Comparator<ResultadoJuego> comp;
+        Comparator<SesionJuego> comp;
         switch (ordenSel) {
             case "Fecha (más antigua)" -> comp = Comparator.comparing(
-                    ResultadoJuego::getFechaHora,
+                    SesionJuego::getFechaHora,
                     Comparator.nullsLast(Comparator.naturalOrder())
             );
-            case "Puntaje (menor)" -> comp = Comparator.comparingInt(ResultadoJuego::getPuntaje);
-            case "Puntaje (mayor)" -> comp = Comparator.comparingInt(ResultadoJuego::getPuntaje).reversed();
+            case "Puntaje (menor)" -> comp = Comparator.comparingInt(SesionJuego::getPuntaje);
+            case "Puntaje (mayor)" -> comp = Comparator.comparingInt(SesionJuego::getPuntaje).reversed();
             default -> comp = Comparator.comparing(
-                    ResultadoJuego::getFechaHora,
+                    SesionJuego::getFechaHora,
                     Comparator.nullsLast(Comparator.naturalOrder())
             ).reversed();
         }
@@ -420,7 +420,7 @@ public class DashboardPanel extends JPanel {
         DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter fmtHora = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-        for (ResultadoJuego r : lista) {
+        for (SesionJuego r : lista) {
             String nombreJuego = (r.getJuego() == null) ? "" : r.getJuego().getNombre();
 
             LocalDateTime fh = r.getFechaHora();
@@ -444,16 +444,16 @@ public class DashboardPanel extends JPanel {
         }
     }
     
-    private void actualizarKpis(List<ResultadoJuego> lista) {
+    private void actualizarKpis(List<SesionJuego> lista) {
         if (lblKpiPartidas == null) return;
 
         int total = lista.size();
         int suma = 0;
-        ResultadoJuego mejor = null;
+        SesionJuego mejor = null;
 
         Map<String, Integer> conteoAula = new HashMap<>();
 
-        for (ResultadoJuego r : lista) {
+        for (SesionJuego r : lista) {
             suma += r.getPuntaje();
 
             if (mejor == null || r.getPuntaje() > mejor.getPuntaje()) {

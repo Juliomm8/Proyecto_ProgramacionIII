@@ -2,7 +2,7 @@ package com.jasgames.service;
 
 import com.google.gson.*;
 import com.jasgames.model.Juego;
-import com.jasgames.model.ResultadoJuego;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.util.AtomicFiles;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
@@ -20,7 +20,7 @@ public class ResultadoService {
 
     private static final String ARCHIVO_RESULTADOS = "data/resultados.json";
 
-    private final List<ResultadoJuego> resultados = new ArrayList<>();
+    private final List<SesionJuego> resultados = new ArrayList<>();
     private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_RESULTADOS));
 
     private final Gson gson = new GsonBuilder()
@@ -32,7 +32,7 @@ public class ResultadoService {
         cargarDesdeArchivo();
     }
 
-    public void registrarResultado(ResultadoJuego resultado) {
+    public void registrarResultado(SesionJuego resultado) {
         if (resultado != null) {
             ioLock.lock();
             try {
@@ -44,7 +44,7 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerTodos() {
+    public List<SesionJuego> obtenerTodos() {
         ioLock.lock();
         try {
             return new ArrayList<>(resultados);
@@ -53,7 +53,7 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerPorJuego(Juego juego) {
+    public List<SesionJuego> obtenerPorJuego(Juego juego) {
         if (juego == null) return new ArrayList<>();
         ioLock.lock();
         try {
@@ -65,9 +65,9 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerPorJuegoOrdenadosPorPuntajeDesc(Juego juego) {
+    public List<SesionJuego> obtenerPorJuegoOrdenadosPorPuntajeDesc(Juego juego) {
         return obtenerPorJuego(juego).stream()
-                .sorted(Comparator.comparingInt(ResultadoJuego::getPuntaje).reversed())
+                .sorted(Comparator.comparingInt(SesionJuego::getPuntaje).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -96,11 +96,11 @@ public class ResultadoService {
             Path path = Paths.get(ARCHIVO_RESULTADOS);
             if (!Files.exists(path)) return;
 
-            ResultadoJuego[] lista = JsonSafeIO.readOrRecover(
+            SesionJuego[] lista = JsonSafeIO.readOrRecover(
                     path,
                     gson,
-                    ResultadoJuego[].class,
-                    new ResultadoJuego[0]
+                    SesionJuego[].class,
+                    new SesionJuego[0]
             );
             resultados.clear();
             if (lista != null) resultados.addAll(Arrays.asList(lista));

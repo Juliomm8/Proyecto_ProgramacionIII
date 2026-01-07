@@ -2,7 +2,7 @@ package com.jasgames.model;
 
 import java.time.LocalDateTime;
 
-public class ResultadoJuego {
+public class SesionJuego {
 
     private Integer idEstudiante;
     private String nombreEstudiante;
@@ -13,16 +13,16 @@ public class ResultadoJuego {
     private LocalDateTime fechaHora;
     private int dificultad;
 
-    public ResultadoJuego() {
+    public SesionJuego() {
         // requerido por Gson
     }
 
-    public ResultadoJuego(String nombreEstudiante, Juego juego, int dificultad, int puntaje, LocalDateTime fechaHora) {
+    public SesionJuego(String nombreEstudiante, Juego juego, int dificultad, int puntaje, LocalDateTime fechaHora) {
         this(null, nombreEstudiante, null, juego, dificultad, puntaje, fechaHora);
     }
 
-    public ResultadoJuego(Integer idEstudiante, String nombreEstudiante, String aula,
-                          Juego juego, int dificultad, int puntaje, LocalDateTime fechaHora) {
+    public SesionJuego(Integer idEstudiante, String nombreEstudiante, String aula,
+                       Juego juego, int dificultad, int puntaje, LocalDateTime fechaHora) {
         this.idEstudiante = idEstudiante;
         this.nombreEstudiante = nombreEstudiante;
         this.aula = aula;

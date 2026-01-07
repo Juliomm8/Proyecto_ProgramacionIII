@@ -5,12 +5,10 @@ import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.model.Actividad;
 import com.jasgames.model.Nino;
-import com.jasgames.model.ResultadoJuego;
-import com.jasgames.model.TipoJuego;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.service.PerfilService;
 import com.jasgames.service.ResultadoService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
-import com.jasgames.ui.juegos.JuegoColoresPanel;
 import com.jasgames.ui.juegos.JuegoListener;
 import com.jasgames.ui.juegos.JuegoPanelFactory;
 import com.jasgames.ui.login.AccesoWindow;
@@ -436,7 +434,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                 String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
                 String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
-                resultadoService.registrarResultado(new ResultadoJuego(
+                resultadoService.registrarResultado(new SesionJuego(
                         id,
                         nombre,
                         aula,
