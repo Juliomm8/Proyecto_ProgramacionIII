@@ -87,6 +87,8 @@ public class AulasPanel extends JPanel {
 
         JPanel controles = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         controles.add(new JLabel("Buscar:"));
+        
+        txtBuscar.setToolTipText("Buscar por ID, nombre, diagnóstico o aula. Ej: 'aula:azul id:23 tea'");
         controles.add(txtBuscar);
         controles.add(new JLabel("Orden:"));
         controles.add(cbOrden);
@@ -183,6 +185,9 @@ public class AulasPanel extends JPanel {
     private void configurarTabla() {
         tblNinos.setRowHeight(38);
         tblNinos.setFillsViewportHeight(true);
+        
+        tblNinos.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tblNinos.setRowSelectionAllowed(true);
 
         // Configurar Sorter
         sorterTabla = new TableRowSorter<>(tablaModel);
@@ -314,7 +319,7 @@ public class AulasPanel extends JPanel {
 
         JMenuItem miAbrir = new JMenuItem("Abrir en Perfiles");
         JMenuItem miCopiarId = new JMenuItem("Copiar ID");
-        JMenuItem miMover = new JMenuItem("Mover a otra aula...");
+        JMenuItem miMover = new JMenuItem("Mover selección a otra aula...");
 
         miAbrir.addActionListener(ev -> abrirPerfilSeleccionado());
         miCopiarId.addActionListener(ev -> copiarIdSeleccionado());
@@ -331,7 +336,10 @@ public class AulasPanel extends JPanel {
 
                 int r = tblNinos.rowAtPoint(e.getPoint());
                 if (r >= 0 && r < tblNinos.getRowCount()) {
-                    tblNinos.setRowSelectionInterval(r, r);
+                    // Si ya está seleccionada esa fila, mantenemos selección múltiple
+                    if (!tblNinos.isRowSelected(r)) {
+                        tblNinos.setRowSelectionInterval(r, r);
+                    }
                 } else {
                     tblNinos.clearSelection();
                 }
@@ -443,6 +451,25 @@ public class AulasPanel extends JPanel {
         }
     }
 
+    private List<Integer> getIdsSeleccionadosTabla() {
+        int[] viewRows = tblNinos.getSelectedRows();
+        List<Integer> ids = new ArrayList<>();
+        if (viewRows == null || viewRows.length == 0) return ids;
+
+        for (int viewRow : viewRows) {
+            int modelRow = tblNinos.convertRowIndexToModel(viewRow);
+            Object idObj = tblNinos.getModel().getValueAt(modelRow, 1); // Columna ID
+
+            Integer id = null;
+            if (idObj instanceof Integer) id = (Integer) idObj;
+            else if (idObj != null) {
+                try { id = Integer.parseInt(idObj.toString().trim()); } catch (Exception ignored) {}
+            }
+            if (id != null) ids.add(id);
+        }
+        return ids;
+    }
+
     private Integer getIdSeleccionadoTabla() {
         int viewRow = tblNinos.getSelectedRow();
         if (viewRow < 0) return null;
@@ -475,48 +502,55 @@ public class AulasPanel extends JPanel {
     }
 
     private void moverSeleccionadoAOtraAula() {
-        Integer id = getIdSeleccionadoTabla();
-        if (id == null) return;
+        List<Integer> ids = getIdsSeleccionadosTabla();
+        if (ids.isEmpty()) return;
 
-        Nino n = perfilService.buscarNinoPorId(id);
-        if (n == null) {
-            JOptionPane.showMessageDialog(this, "No se encontró el estudiante (id=" + id + ").",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String aulaActual = n.getAula();
-        java.util.List<String> aulas = aulaService.obtenerNombres();
-        aulas.removeIf(a -> a == null || a.isBlank() || a.equalsIgnoreCase(aulaActual));
+        List<String> aulas = aulaService.obtenerNombres();
+        aulas.removeIf(a -> a == null || a.isBlank());
 
         if (aulas.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay otras aulas disponibles para mover.",
-                    "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No hay aulas disponibles.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         JComboBox<String> cb = new JComboBox<>(aulas.toArray(new String[0]));
         cb.setSelectedIndex(0);
 
+        String msg = (ids.size() == 1)
+                ? "Mover el estudiante seleccionado a:"
+                : "Mover " + ids.size() + " estudiantes seleccionados a:";
+
         int r = JOptionPane.showConfirmDialog(
                 this,
                 cb,
-                "Mover \"" + n.getNombre() + "\" (id=" + n.getId() + ") a:",
+                msg,
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         );
-
         if (r != JOptionPane.OK_OPTION) return;
 
         String destino = (String) cb.getSelectedItem();
         if (destino == null || destino.isBlank()) return;
 
-        n.setAula(destino);
-        perfilService.actualizarNino(n);   // actualiza y guarda
-        refrescarDatos();
+        int movidos = 0;
+        for (Integer id : ids) {
+            Nino n = perfilService.buscarNinoPorId(id);
+            if (n == null) continue;
 
-        // opcional: saltar a esa aula
+            if (!destino.equalsIgnoreCase(n.getAula())) {
+                n.setAula(destino);
+                perfilService.actualizarNino(n);
+                movidos++;
+            }
+        }
+
+        refrescarDatos();
         listAulas.setSelectedValue(destino, true);
+
+        JOptionPane.showMessageDialog(this,
+                "Movidos: " + movidos + " estudiante(s) a \"" + destino + "\".",
+                "OK",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void refrescarDatos() {
@@ -572,17 +606,15 @@ public class AulasPanel extends JPanel {
         boolean esTodas = "Todas".equalsIgnoreCase(aulaSel);
 
         String q = (txtBuscar.getText() == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
+        String[] tokens = q.isBlank() ? new String[0] : q.split("\\s+");
         
         // Filtramos la lista (pero NO ordenamos manualmente, dejamos que el Sorter lo haga)
         List<Nino> lista = new ArrayList<>();
         for (Nino n : cacheNinos) {
             if (!esTodas && !n.getAula().equalsIgnoreCase(aulaSel)) continue;
 
-            if (!q.isBlank()) {
-                String nombre = (n.getNombre() == null) ? "" : n.getNombre().toLowerCase(Locale.ROOT);
-                String id = String.valueOf(n.getId());
-                String diag = (n.getDiagnostico() == null) ? "" : n.getDiagnostico().toLowerCase(Locale.ROOT);
-                if (!(nombre.contains(q) || id.contains(q) || diag.contains(q))) continue;
+            if (tokens.length > 0) {
+                if (!matchTokensRec(n, tokens, 0)) continue;
             }
             lista.add(n);
         }
@@ -614,6 +646,44 @@ public class AulasPanel extends JPanel {
         int prom = (total == 0) ? 0 : (suma / total);
 
         lblResumen.setText("Estudiantes: " + total + " | Puntos total: " + suma + " | Promedio: " + prom);
+    }
+
+    private boolean matchTokensRec(Nino n, String[] tokens, int idx) {
+        if (idx >= tokens.length) return true;
+
+        String t = tokens[idx];
+        if (t == null || t.isBlank()) return matchTokensRec(n, tokens, idx + 1);
+
+        boolean ok = matchOneToken(n, t);
+        return ok && matchTokensRec(n, tokens, idx + 1);
+    }
+
+    private boolean matchOneToken(Nino n, String t) {
+        String id = String.valueOf(n.getId()).toLowerCase(Locale.ROOT);
+        String nombre = (n.getNombre() == null) ? "" : n.getNombre().toLowerCase(Locale.ROOT);
+        String diag = (n.getDiagnostico() == null) ? "" : n.getDiagnostico().toLowerCase(Locale.ROOT);
+        String aula = (n.getAula() == null) ? "" : n.getAula().toLowerCase(Locale.ROOT);
+
+        // Tokens por campo: id:23 aula:azul diag:tea nom:juan
+        if (t.startsWith("id:")) {
+            String v = t.substring(3).trim();
+            return !v.isBlank() && id.contains(v);
+        }
+        if (t.startsWith("aula:")) {
+            String v = t.substring(5).trim();
+            return !v.isBlank() && aula.contains(v);
+        }
+        if (t.startsWith("diag:")) {
+            String v = t.substring(5).trim();
+            return !v.isBlank() && diag.contains(v);
+        }
+        if (t.startsWith("nom:") || t.startsWith("nombre:")) {
+            String v = t.contains(":") ? t.substring(t.indexOf(':') + 1).trim() : "";
+            return !v.isBlank() && nombre.contains(v);
+        }
+
+        // Token normal: busca en todo
+        return id.contains(t) || nombre.contains(t) || diag.contains(t) || aula.contains(t);
     }
 
     private void aplicarOrdenComboATabla() {
