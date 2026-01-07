@@ -152,10 +152,10 @@ public class AulasPanel extends JPanel {
 
                 if (isSelected) {
                     lbl.setBackground(base);
-                    lbl.setForeground("Aula Amarilla".equalsIgnoreCase(aula) ? Color.BLACK : Color.WHITE);
+                    lbl.setForeground(textoContraste(base));
                 } else {
                     lbl.setBackground(suave);
-                    lbl.setForeground(Color.BLACK);
+                    lbl.setForeground(textoContraste(suave));
                 }
 
                 return lbl;
@@ -178,8 +178,9 @@ public class AulasPanel extends JPanel {
                 Color base = aulaService.colorDeAula(aula);
 
                 if (!isSelected) {
-                    c.setBackground(fondoSuave(base));
-                    c.setForeground(Color.BLACK);
+                    Color suave = fondoSuave(base);
+                    c.setBackground(suave);
+                    c.setForeground(textoContraste(suave));
                 }
                 c.setBorder(noFocusBorder);
                 return c;
@@ -358,6 +359,16 @@ public class AulasPanel extends JPanel {
         int g = (c.getGreen() + 255) / 2;
         int b = (c.getBlue() + 255) / 2;
         return new Color(r, g, b);
+    }
+
+    private Color textoContraste(Color bg) {
+        if (bg == null) return Color.BLACK;
+
+        // Luminancia aproximada (0..255)
+        double y = 0.2126 * bg.getRed() + 0.7152 * bg.getGreen() + 0.0722 * bg.getBlue();
+
+        // Umbral: si es claro -> negro, si es oscuro -> blanco
+        return (y >= 150) ? Color.BLACK : Color.WHITE;
     }
     
     private void crearAulaDialog() {
