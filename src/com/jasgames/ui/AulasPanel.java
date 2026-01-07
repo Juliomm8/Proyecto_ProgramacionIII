@@ -70,6 +70,7 @@ public class AulasPanel extends JPanel {
         // Doble click en la tabla -> abrir perfiles
         activarDobleClickTabla();
         instalarMenuContextualTabla();
+        instalarMenuContextualListaAulas();
 
         refrescarDatos();
     }
@@ -147,9 +148,19 @@ public class AulasPanel extends JPanel {
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
                 String aula = (value == null) ? "" : value.toString();
-                int count = conteoPorAula.getOrDefault(aula, 0);
+                
+                int count;
+                String label;
 
-                lbl.setText(aula + "  (" + count + ")");
+                if ("Todas".equalsIgnoreCase(aula)) {
+                    count = (cacheNinos == null) ? 0 : cacheNinos.size();
+                    label = "Todas las aulas";
+                } else {
+                    count = conteoPorAula.getOrDefault(aula, 0);
+                    label = aula;
+                }
+
+                lbl.setText(label + "  (" + count + ")");
                 lbl.setHorizontalAlignment(SwingConstants.CENTER);
                 lbl.setOpaque(true);
 
@@ -195,7 +206,7 @@ public class AulasPanel extends JPanel {
 
                 if (c instanceof JLabel lbl) {
                     String text = (value == null) ? "" : String.valueOf(value);
-                    lbl.setToolTipText(text.isBlank() ? null : text); // ✅ tooltip con texto completo
+                    lbl.setToolTipText(text.isBlank() ? null : text);
                 }
 
                 // Zebra + selección (igual que ya tenías)
@@ -216,7 +227,7 @@ public class AulasPanel extends JPanel {
 
                     if (!isSelected) {
                         c.setBackground(suave);
-                        c.setForeground(textoContraste(suave)); // ✅ usando el método del Paso 2
+                        c.setForeground(textoContraste(suave));
                     } else {
                         c.setBackground(base);
                         c.setForeground(textoContraste(base));
@@ -331,6 +342,106 @@ public class AulasPanel extends JPanel {
             @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
         });
     }
+    
+    private void instalarMenuContextualListaAulas() {
+        JPopupMenu menu = new JPopupMenu();
+
+        JMenuItem miRenombrar = new JMenuItem("Renombrar aula...");
+        JMenuItem miCopiar = new JMenuItem("Copiar nombre");
+        JMenuItem miColor = new JMenuItem("Cambiar color...");
+
+        miRenombrar.addActionListener(e -> renombrarAulaDialog());
+        miCopiar.addActionListener(e -> copiarNombreAula());
+        miColor.addActionListener(e -> cambiarColorDialog());
+
+        menu.add(miRenombrar);
+        menu.add(miCopiar);
+        menu.addSeparator();
+        menu.add(miColor);
+
+        listAulas.addMouseListener(new MouseAdapter() {
+            private void maybeShow(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+
+                int idx = listAulas.locationToIndex(e.getPoint());
+                if (idx >= 0) listAulas.setSelectedIndex(idx);
+
+                String sel = listAulas.getSelectedValue();
+                boolean has = sel != null && !sel.isBlank();
+                boolean isTodas = has && "Todas".equalsIgnoreCase(sel);
+                boolean isAzul = has && "Aula Azul".equalsIgnoreCase(sel);
+
+                miRenombrar.setEnabled(has && !isTodas && !isAzul);
+                miCopiar.setEnabled(has && !isTodas);
+                miColor.setEnabled(has && !isTodas);
+
+                menu.show(e.getComponent(), e.getX(), e.getY());
+            }
+
+            @Override public void mousePressed(MouseEvent e) { maybeShow(e); }
+            @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
+        });
+    }
+
+    private void copiarNombreAula() {
+        String aulaSel = listAulas.getSelectedValue();
+        if (aulaSel == null || aulaSel.isBlank() || "Todas".equalsIgnoreCase(aulaSel)) return;
+
+        Toolkit.getDefaultToolkit().getSystemClipboard()
+                .setContents(new StringSelection(aulaSel), null);
+
+        JOptionPane.showMessageDialog(this, "Copiado: " + aulaSel, "OK", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void renombrarAulaDialog() {
+        String aulaSel = listAulas.getSelectedValue();
+        if (aulaSel == null || aulaSel.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if ("Todas".equalsIgnoreCase(aulaSel)) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula específica (no 'Todas').", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if ("Aula Azul".equalsIgnoreCase(aulaSel)) {
+            JOptionPane.showMessageDialog(this, "No se puede renombrar 'Aula Azul' (aula por defecto del sistema).", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String nuevo = JOptionPane.showInputDialog(this, "Nuevo nombre para \"" + aulaSel + "\":", aulaSel);
+        if (nuevo == null) return;
+        nuevo = nuevo.trim();
+        if (nuevo.isBlank()) return;
+        if (nuevo.equalsIgnoreCase(aulaSel)) return;
+
+        // evitar duplicados
+        for (String a : aulaService.obtenerNombres()) {
+            if (a != null && a.equalsIgnoreCase(nuevo)) {
+                JOptionPane.showMessageDialog(this, "Esa aula ya existe.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            Color c = aulaService.colorDeAula(aulaSel);
+            String hex = com.jasgames.service.AulaService.toHex(c);
+
+            // 1) crear la nueva con el mismo color
+            aulaService.crearAula(nuevo, hex);
+
+            // 2) migrar estudiantes del nombre viejo al nuevo
+            perfilService.migrarAula(aulaSel, nuevo);
+
+            // 3) eliminar el aula vieja (ya sin estudiantes)
+            aulaService.eliminarAula(aulaSel, nuevo, perfilService);
+
+            refrescarDatos();
+            listAulas.setSelectedValue(nuevo, true);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private Integer getIdSeleccionadoTabla() {
         int viewRow = tblNinos.getSelectedRow();
@@ -426,14 +537,25 @@ public class AulasPanel extends JPanel {
 
         // Modelo
         aulasModel.clear();
+        aulasModel.addElement("Todas"); // ✅ nueva opción
+        
         List<String> nombres = aulaService.obtenerNombres();
         for (String a : nombres) aulasModel.addElement(a);
 
-        // Selección: mantener si se puede; si no, la primera
-        if (seleccionActual != null && nombres.contains(seleccionActual)) {
-            listAulas.setSelectedValue(seleccionActual, true);
-        } else if (!nombres.isEmpty()) {
-            listAulas.setSelectedIndex(0);
+        // Selección: mantener si se puede; si no, "Todas"
+        if (seleccionActual != null) {
+            boolean found = false;
+            for (int i = 0; i < aulasModel.size(); i++) {
+                String v = aulasModel.get(i);
+                if (v != null && v.equalsIgnoreCase(seleccionActual)) {
+                    listAulas.setSelectedIndex(i);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && !aulasModel.isEmpty()) listAulas.setSelectedIndex(0); // "Todas"
+        } else {
+            if (!aulasModel.isEmpty()) listAulas.setSelectedIndex(0); // "Todas"
         }
     }
 
@@ -446,13 +568,15 @@ public class AulasPanel extends JPanel {
             lblResumen.setText("Selecciona un aula para ver estudiantes.");
             return;
         }
+        
+        boolean esTodas = "Todas".equalsIgnoreCase(aulaSel);
 
         String q = (txtBuscar.getText() == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
         
         // Filtramos la lista (pero NO ordenamos manualmente, dejamos que el Sorter lo haga)
         List<Nino> lista = new ArrayList<>();
         for (Nino n : cacheNinos) {
-            if (!n.getAula().equalsIgnoreCase(aulaSel)) continue;
+            if (!esTodas && !n.getAula().equalsIgnoreCase(aulaSel)) continue;
 
             if (!q.isBlank()) {
                 String nombre = (n.getNombre() == null) ? "" : n.getNombre().toLowerCase(Locale.ROOT);
@@ -481,8 +605,8 @@ public class AulasPanel extends JPanel {
         aplicarOrdenComboATabla();
 
         // Resumen + barra de color
-        lblTituloAula.setText("Aula: " + aulaSel);
-        aplicarBarraAula(aulaSel);
+        lblTituloAula.setText(esTodas ? "Todas las aulas" : "Aula: " + aulaSel);
+        aplicarBarraAula(esTodas ? "Todas" : aulaSel);
 
         int total = lista.size();
         int suma = 0;
@@ -519,7 +643,15 @@ public class AulasPanel extends JPanel {
     }
 
     private void aplicarBarraAula(String aula) {
-        Color c = aulaService.colorDeAula(aula);
+        Color c;
+
+        if (aula == null || aula.isBlank() || "Todas".equalsIgnoreCase(aula)) {
+            c = new Color(180, 180, 180); // ✅ neutral
+        } else {
+            c = aulaService.colorDeAula(aula);
+            if (c == null) c = new Color(180, 180, 180);
+        }
+
         Border borde = BorderFactory.createMatteBorder(0, 0, 6, 0, c);
         setBorder(BorderFactory.createCompoundBorder(
                 borde,
@@ -578,6 +710,11 @@ public class AulasPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Selecciona un aula.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        if ("Todas".equalsIgnoreCase(aulaSel)) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula específica (no 'Todas').", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         Color actual = aulaService.colorDeAula(aulaSel);
         Color nuevo = JColorChooser.showDialog(this, "Nuevo color para " + aulaSel, actual);
@@ -595,6 +732,11 @@ public class AulasPanel extends JPanel {
         String aulaSel = listAulas.getSelectedValue();
         if (aulaSel == null) {
             JOptionPane.showMessageDialog(this, "Selecciona un aula.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if ("Todas".equalsIgnoreCase(aulaSel)) {
+            JOptionPane.showMessageDialog(this, "Selecciona un aula específica (no 'Todas').", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
