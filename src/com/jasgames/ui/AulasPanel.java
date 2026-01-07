@@ -44,6 +44,10 @@ public class AulasPanel extends JPanel {
             "Edad (menor)"
     });
     private final JButton btnRefrescar = new JButton("Refrescar");
+    
+    // Botones de acción sobre la selección
+    private JButton btnMoverSeleccion;
+    private JButton btnCopiarIds;
 
     private final JLabel lblTituloAula = new JLabel("Aulas", SwingConstants.LEFT);
     private final JLabel lblResumen = new JLabel(" ");
@@ -98,6 +102,14 @@ public class AulasPanel extends JPanel {
         JButton btnColorAula = new JButton("Color");
         JButton btnEliminarAula = new JButton("Eliminar aula");
         
+        // Botones nuevos para selección múltiple
+        btnMoverSeleccion = new JButton("Mover selección...");
+        btnCopiarIds = new JButton("Copiar IDs");
+        
+        // Inicialmente deshabilitados hasta que se seleccione algo
+        btnMoverSeleccion.setEnabled(false);
+        btnCopiarIds.setEnabled(false);
+        
         btnNuevaAula.addActionListener(e -> crearAulaDialog());
         btnColorAula.addActionListener(e -> cambiarColorDialog());
         btnEliminarAula.addActionListener(e -> eliminarAulaDialog());
@@ -105,6 +117,10 @@ public class AulasPanel extends JPanel {
         controles.add(btnNuevaAula);
         controles.add(btnColorAula);
         controles.add(btnEliminarAula);
+        
+        // Agregamos los nuevos botones al panel
+        controles.add(btnMoverSeleccion);
+        controles.add(btnCopiarIds);
 
         header.add(controles, BorderLayout.EAST);
         return header;
@@ -268,6 +284,14 @@ public class AulasPanel extends JPanel {
         tblNinos.getColumnModel().getColumn(4).setPreferredWidth(60);  // Edad
         tblNinos.getColumnModel().getColumn(5).setPreferredWidth(70);  // Puntos
         tblNinos.getColumnModel().getColumn(7).setPreferredWidth(60);  // Juegos
+        
+        // Listener de selección para habilitar/deshabilitar botones
+        tblNinos.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            boolean has = tblNinos.getSelectedRowCount() > 0;
+            if (btnMoverSeleccion != null) btnMoverSeleccion.setEnabled(has);
+            if (btnCopiarIds != null) btnCopiarIds.setEnabled(has);
+        });
     }
 
     private void inicializarListeners() {
@@ -284,6 +308,10 @@ public class AulasPanel extends JPanel {
             @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarTabla(); }
             @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarTabla(); }
         });
+        
+        // Listeners de los nuevos botones
+        btnMoverSeleccion.addActionListener(e -> moverSeleccionadoAOtraAula());
+        btnCopiarIds.addActionListener(e -> copiarIdsSeleccionados());
     }
     
     private void activarDobleClickTabla() {
@@ -499,6 +527,26 @@ public class AulasPanel extends JPanel {
                 .setContents(new StringSelection(String.valueOf(id)), null);
 
         JOptionPane.showMessageDialog(this, "ID copiado: " + id, "Copiado", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void copiarIdsSeleccionados() {
+        java.util.List<Integer> ids = getIdsSeleccionadosTabla();
+        if (ids.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Selecciona uno o más estudiantes en la tabla.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // formato: 12, 15, 18
+        String txt = ids.stream()
+                .sorted()
+                .map(String::valueOf)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
+
+        Toolkit.getDefaultToolkit().getSystemClipboard()
+                .setContents(new StringSelection(txt), null);
+
+        JOptionPane.showMessageDialog(this, "IDs copiados: " + txt, "OK", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void moverSeleccionadoAOtraAula() {
