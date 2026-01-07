@@ -7,7 +7,7 @@ import com.jasgames.model.Actividad;
 import com.jasgames.model.Nino;
 import com.jasgames.model.SesionJuego;
 import com.jasgames.service.PerfilService;
-import com.jasgames.service.ResultadoService;
+import com.jasgames.service.SesionService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
 import com.jasgames.ui.juegos.JuegoListener;
 import com.jasgames.ui.juegos.JuegoPanelFactory;
@@ -46,7 +46,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private final JFrame ventanaAnterior;
     private final JuegoService juegoService;
     private final PerfilService perfilService;
-    private final ResultadoService resultadoService;
+    private final SesionService sesionService;
 
     private Nino ninoActual;
     private BaseJuegoPanel juegoEnCurso;
@@ -66,7 +66,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         this.ventanaAnterior = ventanaAnterior;
         this.juegoService = context.getJuegoService();
         this.perfilService = context.getPerfilService();
-        this.resultadoService = context.getResultadoService();
+        this.sesionService = context.getResultadoService();
 
         setContentPane(panelEstudianteMain);
         setTitle("JAS Games - Modo Estudiante");
@@ -434,7 +434,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                 String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
                 String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
-                resultadoService.registrarResultado(new SesionJuego(
+                sesionService.registrarResultado(new SesionJuego(
                         id,
                         nombre,
                         aula,

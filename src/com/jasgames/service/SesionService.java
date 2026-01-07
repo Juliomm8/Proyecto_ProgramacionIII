@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-public class ResultadoService {
+public class SesionService {
 
     private static final String ARCHIVO_RESULTADOS = "data/resultados.json";
 
@@ -28,7 +28,7 @@ public class ResultadoService {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
-    public ResultadoService() {
+    public SesionService() {
         cargarDesdeArchivo();
     }
 

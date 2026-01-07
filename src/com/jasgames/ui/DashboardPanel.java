@@ -2,7 +2,7 @@ package com.jasgames.ui;
 
 import com.jasgames.model.Juego;
 import com.jasgames.model.SesionJuego;
-import com.jasgames.service.ResultadoService;
+import com.jasgames.service.SesionService;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -33,7 +33,7 @@ public class DashboardPanel extends JPanel {
     private JTable tblResultados;
 
     // --- Servicios / Tabla ---
-    private final ResultadoService resultadoService;
+    private final SesionService sesionService;
     private DefaultTableModel tablaModelo;
 
     // --- Filtros nuevos  ---
@@ -63,8 +63,8 @@ public class DashboardPanel extends JPanel {
     };
 
     // Constructor principal: lo usará DocenteWindow
-    public DashboardPanel(ResultadoService resultadoService) {
-        this.resultadoService = resultadoService;
+    public DashboardPanel(SesionService sesionService) {
+        this.sesionService = sesionService;
 
         setLayout(new BorderLayout());
         add(panelDashboard, BorderLayout.CENTER);
@@ -81,7 +81,7 @@ public class DashboardPanel extends JPanel {
 
     // Constructor sin parámetros SOLO para el diseñador de IntelliJ
     public DashboardPanel() {
-        this(new ResultadoService());
+        this(new SesionService());
     }
 
     private void inicializarTabla() {
@@ -307,7 +307,7 @@ public class DashboardPanel extends JPanel {
         cbFiltroJuego.addItem("Todos");
 
         Set<Juego> juegosUnicos = new LinkedHashSet<>();
-        for (SesionJuego r : resultadoService.obtenerTodos()) {
+        for (SesionJuego r : sesionService.obtenerTodos()) {
             if (r.getJuego() != null) juegosUnicos.add(r.getJuego());
         }
         for (Juego j : juegosUnicos) cbFiltroJuego.addItem(j);
@@ -321,7 +321,7 @@ public class DashboardPanel extends JPanel {
 
         // Luego cualquier aula extra que exista en resultados
         Set<String> aulasExtras = new LinkedHashSet<>();
-        for (SesionJuego r : resultadoService.obtenerTodos()) {
+        for (SesionJuego r : sesionService.obtenerTodos()) {
             if (r.getAula() != null && !r.getAula().isBlank()) aulasExtras.add(r.getAula().trim());
         }
         for (String a : aulasExtras) {
@@ -348,7 +348,7 @@ public class DashboardPanel extends JPanel {
     private void actualizarTabla(boolean atajoOrdenarPorPuntajeDesc) {
         tablaModelo.setRowCount(0);
 
-        List<SesionJuego> lista = new ArrayList<>(resultadoService.obtenerTodos());
+        List<SesionJuego> lista = new ArrayList<>(sesionService.obtenerTodos());
 
         // ----- 1) Filtro: Juego -----
         Object juegoSel = cbFiltroJuego.getSelectedItem();
