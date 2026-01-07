@@ -329,6 +329,7 @@ public class PerfilesPanel extends JPanel {
         GridBagConstraints gc = new GridBagConstraints();
         gc.insets = new Insets(6, 6, 6, 6);
         gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.anchor = GridBagConstraints.NORTHWEST;
         gc.gridy = 0;
 
         addField(formPerfilesPanel, gc, 0, "ID:", txtIdNino);
@@ -337,6 +338,16 @@ public class PerfilesPanel extends JPanel {
         addField(formPerfilesPanel, gc, 3, "Aula:", cbAula);
         addField(formPerfilesPanel, gc, 4, "Diagnóstico:", txtDiagnosticoNino);
         addField(formPerfilesPanel, gc, 5, "Avatar:", cbAvatar);
+
+        // Empuja los campos hacia arriba (evita que queden centrados con mucho espacio vacío)
+        GridBagConstraints filler = new GridBagConstraints();
+        filler.gridx = 0;
+        filler.gridy = 6;
+        filler.gridwidth = 2;
+        filler.weighty = 1;
+        filler.fill = GridBagConstraints.VERTICAL;
+        formPerfilesPanel.add(Box.createVerticalGlue(), filler);
+
 
         card.add(formPerfilesPanel, BorderLayout.CENTER);
 
@@ -534,6 +545,7 @@ public class PerfilesPanel extends JPanel {
         if (n == null) return;
 
         txtIdNino.setText(String.valueOf(getIdSafe(n)));
+        txtIdNino.setEditable(false);
         txtNombreNino.setText(safe(getPropString(n, "getNombre")));
 
         Integer edad = getPropInt(n, "getEdad");
@@ -620,6 +632,7 @@ public class PerfilesPanel extends JPanel {
             cargarNinosDesdeService();
             aplicarFiltrosYOrden();
             seleccionarPorId(id);
+            txtIdNino.setEditable(false);
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "El ID debe ser un número válido", "Validación",
@@ -716,6 +729,8 @@ public class PerfilesPanel extends JPanel {
 
     private void limpiarCampos() {
         txtIdNino.setText("");
+        txtIdNino.setEditable(true);
+        txtIdNino.requestFocusInWindow();
         txtNombreNino.setText("");
         spEdadNino.setValue(6);
         txtDiagnosticoNino.setText("");
