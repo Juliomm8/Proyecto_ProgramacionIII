@@ -3,6 +3,7 @@ package com.jasgames.ui;
 import com.jasgames.model.Nino;
 import com.jasgames.service.AulaService;
 import com.jasgames.service.PerfilService;
+import com.jasgames.util.EmojiFonts;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -258,14 +259,14 @@ public class PerfilesPanel extends JPanel {
         lblAvatarPreview.setVerticalAlignment(SwingConstants.CENTER);
 
         // Más espacio + padding para que el emoji no se vea “chueco” o recortado
-        lblAvatarPreview.setFont(lblAvatarPreview.getFont().deriveFont(Font.PLAIN, 32f));
+        EmojiFonts.apply(lblAvatarPreview, 32f);
         lblAvatarPreview.setPreferredSize(new Dimension(72, 72));
         lblAvatarPreview.setMinimumSize(new Dimension(72, 72));
         lblAvatarPreview.setOpaque(true);
         lblAvatarPreview.setBackground(new Color(250, 250, 250));
         lblAvatarPreview.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220)),
-                new EmptyBorder(6, 6, 6, 6)
+                new EmptyBorder(5, 5, 5, 5)
         ));
 
         // Contenedor para centrar perfectamente el preview en el header
@@ -308,6 +309,17 @@ public class PerfilesPanel extends JPanel {
         cbAula.setPrototypeDisplayValue("Aula XXXXXXX");
 
         cbAvatar = new JComboBox<>(AVATARES);
+        EmojiFonts.apply(cbAvatar, 18f);
+        cbAvatar.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                lbl.setFont(EmojiFonts.emoji(18f));
+                return lbl;
+            }
+        });
         cbAvatar.addActionListener(e -> {
             String av = (String) cbAvatar.getSelectedItem();
             if (av != null && !av.isBlank()) lblAvatarPreview.setText(av);
@@ -789,7 +801,7 @@ public class PerfilesPanel extends JPanel {
             if (avatar.isBlank()) avatar = "🙂";
 
             JLabel av = new JLabel(avatar, SwingConstants.CENTER);
-            av.setFont(av.getFont().deriveFont(Font.BOLD, 22f));
+            av.setFont(EmojiFonts.emoji(22f));
             av.setPreferredSize(new Dimension(36, 36));
 
             JPanel txt = new JPanel();
