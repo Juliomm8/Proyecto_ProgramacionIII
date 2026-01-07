@@ -26,7 +26,7 @@ public class DocenteWindow extends JFrame {
 
     private final JuegoService juegoService;
     private final PerfilService perfilService;
-    
+
     private PerfilesPanel perfilesPanel;
 
     public DocenteWindow(AppContext context, JFrame ventanaAnterior) {
@@ -81,7 +81,7 @@ public class DocenteWindow extends JFrame {
 
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
 
-        perfilesPanel = new PerfilesPanel(perfilService);
+        perfilesPanel = new PerfilesPanel(perfilService, context.getAulaService());
         tabbedPanePrincipal.addTab("Perfiles", perfilesPanel);
 
         tabbedPanePrincipal.addTab("Aulas", new AulasPanel(context, (int idNino) -> {
@@ -107,5 +107,15 @@ public class DocenteWindow extends JFrame {
                 dispose();
             });
         }
+
+        // Refrescar combos/listas cuando se entra a Perfiles (p.ej. aulas recién creadas)
+        if (tabbedPanePrincipal != null) {
+            tabbedPanePrincipal.addChangeListener(ev -> {
+                if (perfilesPanel != null && tabbedPanePrincipal.getSelectedComponent() == perfilesPanel) {
+                    perfilesPanel.refrescarAulas();
+                }
+            });
+        }
     }
+
 }

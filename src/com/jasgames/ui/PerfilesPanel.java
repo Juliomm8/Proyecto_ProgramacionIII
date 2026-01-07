@@ -460,9 +460,24 @@ public class PerfilesPanel extends JPanel {
         if (cbAula.getItemCount() == 0) cbAula.addItem("Aula Azul");
     }
 
+    /**
+     * Refresca únicamente las aulas de los combos (sin depender de que exista un alumno en esa aula).
+     * Útil cuando se crean aulas nuevas desde AulasPanel.
+     */
+    public void refrescarAulas() {
+        Object selFiltro = (cbAulaFiltro != null) ? cbAulaFiltro.getSelectedItem() : null;
+        Object selForm = (cbAula != null) ? cbAula.getSelectedItem() : null;
+
+        refrescarOpcionesAula();
+
+        // Reintentar selección anterior (si todavía existe)
+        if (cbAulaFiltro != null && selFiltro != null) cbAulaFiltro.setSelectedItem(selFiltro);
+        if (cbAula != null && selForm != null) cbAula.setSelectedItem(selForm);
+    }
+
     @SuppressWarnings("unchecked")
     private List<String> tryGetAulasFromService(AulaService svc) {
-        String[] candidates = {"obtenerNombresAulas", "listarNombresAulas", "getNombresAulas", "obtenerAulas", "listarAulas"};
+        String[] candidates = {"obtenerNombres", "obtenerNombresAulas", "listarNombresAulas", "getNombresAulas", "obtenerAulas", "listarAulas", "obtenerTodas"};
         for (String mName : candidates) {
             try {
                 Method m = svc.getClass().getMethod(mName);
