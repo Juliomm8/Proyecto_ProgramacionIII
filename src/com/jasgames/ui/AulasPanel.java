@@ -172,17 +172,41 @@ public class AulasPanel extends JPanel {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                            boolean hasFocus, int row, int column) {
-                JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-                String aula = String.valueOf(tablaModel.getValueAt(row, 3)); // columna "Aula"
-                Color base = aulaService.colorDeAula(aula);
-
-                if (!isSelected) {
-                    Color suave = fondoSuave(base);
-                    c.setBackground(suave);
-                    c.setForeground(textoContraste(suave));
+                if (c instanceof JLabel lbl) {
+                    String text = (value == null) ? "" : String.valueOf(value);
+                    lbl.setToolTipText(text.isBlank() ? null : text); 
                 }
-                c.setBorder(noFocusBorder);
+
+                // Zebra + selección (igual que ya tenías)
+                if (!isSelected) {
+                    if (row % 2 == 0) {
+                        c.setBackground(new Color(245, 245, 245));
+                    } else {
+                        c.setBackground(Color.WHITE);
+                    }
+                }
+
+                // Fondo por aula (tu lógica)
+                String aulaSeleccionada = listAulas.getSelectedValue();
+                Color base = aulaService.colorDeAula(aulaSeleccionada);
+
+                if (base != null) {
+                    Color suave = fondoSuave(base);
+
+                    if (!isSelected) {
+                        c.setBackground(suave);
+                        c.setForeground(textoContraste(suave));
+                    } else {
+                        c.setBackground(base);
+                        c.setForeground(textoContraste(base));
+                    }
+                }
+                
+                if (c instanceof JComponent jc) {
+                    jc.setBorder(noFocusBorder);
+                }
                 return c;
             }
         };
