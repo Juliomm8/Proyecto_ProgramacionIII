@@ -8,6 +8,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,6 +33,7 @@ public class AulasPanel extends JPanel {
         @Override public boolean isCellEditable(int row, int column) { return false; }
     };
     private final JTable tblNinos = new JTable(tablaModel);
+    private TableRowSorter<DefaultTableModel> sorterTabla;
 
     private final JTextField txtBuscar = new JTextField(16);
     private final JComboBox<String> cbOrden = new JComboBox<>(new String[]{
@@ -167,6 +171,19 @@ public class AulasPanel extends JPanel {
         tblNinos.setRowHeight(38);
         tblNinos.setFillsViewportHeight(true);
 
+        // Configurar Sorter
+        sorterTabla = new TableRowSorter<>(tablaModel);
+        sorterTabla.setSortsOnUpdates(true);
+        tblNinos.setRowSorter(sorterTabla);
+        tblNinos.getTableHeader().setReorderingAllowed(false);
+
+        // Comparadores numéricos para columnas: 1 (ID), 4 (Edad), 5 (Puntos), 7 (Juegos)
+        Comparator<Object> intComparator = (a, b) -> Integer.compare(parseIntSafe(a), parseIntSafe(b));
+        if (tblNinos.getColumnCount() > 1) sorterTabla.setComparator(1, intComparator);
+        if (tblNinos.getColumnCount() > 4) sorterTabla.setComparator(4, intComparator);
+        if (tblNinos.getColumnCount() > 5) sorterTabla.setComparator(5, intComparator);
+        if (tblNinos.getColumnCount() > 7) sorterTabla.setComparator(7, intComparator);
+
         // Renderer general para colorear filas por aula (pastel)
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
             @Override
@@ -176,7 +193,7 @@ public class AulasPanel extends JPanel {
 
                 if (c instanceof JLabel lbl) {
                     String text = (value == null) ? "" : String.valueOf(value);
-                    lbl.setToolTipText(text.isBlank() ? null : text); 
+                    lbl.setToolTipText(text.isBlank() ? null : text); // ✅ tooltip con texto completo
                 }
 
                 // Zebra + selección (igual que ya tenías)
@@ -197,7 +214,7 @@ public class AulasPanel extends JPanel {
 
                     if (!isSelected) {
                         c.setBackground(suave);
-                        c.setForeground(textoContraste(suave));
+                        c.setForeground(textoContraste(suave)); // ✅ usando el método del Paso 2
                     } else {
                         c.setBackground(base);
                         c.setForeground(textoContraste(base));
@@ -258,18 +275,16 @@ public class AulasPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
-                    int row = tblNinos.getSelectedRow();
-                    if (row < 0) return;
+                    int viewRow = tblNinos.getSelectedRow();
+                    if (viewRow < 0) return;
 
-                    Object idObj = tablaModel.getValueAt(row, 1); // Columna ID
-                    Integer id = null;
+                    // IMPORTANTE: Convertir índice de vista a modelo por el Sorter
+                    int modelRow = tblNinos.convertRowIndexToModel(viewRow);
 
-                    if (idObj instanceof Integer) id = (Integer) idObj;
-                    else if (idObj != null) {
-                        try { id = Integer.parseInt(idObj.toString().trim()); } catch (Exception ignored) {}
-                    }
+                    Object idObj = tablaModel.getValueAt(modelRow, 1); // Columna ID
+                    Integer id = parseIntSafe(idObj);
 
-                    if (id != null && onAbrirPerfil != null) {
+                    if (id > 0 && onAbrirPerfil != null) {
                         onAbrirPerfil.accept(id);
                     }
                 }
@@ -317,9 +332,8 @@ public class AulasPanel extends JPanel {
         }
 
         String q = (txtBuscar.getText() == null) ? "" : txtBuscar.getText().trim().toLowerCase(Locale.ROOT);
-        String orden = (String) cbOrden.getSelectedItem();
-        if (orden == null) orden = "Puntos (mayor)";
-
+        
+        // Filtramos la lista (pero NO ordenamos manualmente, dejamos que el Sorter lo haga)
         List<Nino> lista = new ArrayList<>();
         for (Nino n : cacheNinos) {
             if (!n.getAula().equalsIgnoreCase(aulaSel)) continue;
@@ -331,14 +345,6 @@ public class AulasPanel extends JPanel {
                 if (!(nombre.contains(q) || id.contains(q) || diag.contains(q))) continue;
             }
             lista.add(n);
-        }
-
-        // Orden
-        switch (orden) {
-            case "Nombre (A-Z)" -> lista.sort(Comparator.comparing(Nino::getNombre, String.CASE_INSENSITIVE_ORDER));
-            case "ID (menor)" -> lista.sort(Comparator.comparingInt(Nino::getId));
-            case "Edad (menor)" -> lista.sort(Comparator.comparingInt(Nino::getEdad));
-            default -> lista.sort(Comparator.comparingInt(Nino::getPuntosTotales).reversed());
         }
 
         // Tabla
@@ -355,6 +361,9 @@ public class AulasPanel extends JPanel {
             });
         }
 
+        // Aplicar orden del combo al Sorter
+        aplicarOrdenComboATabla();
+
         // Resumen + barra de color
         lblTituloAula.setText("Aula: " + aulaSel);
         aplicarBarraAula(aulaSel);
@@ -365,6 +374,32 @@ public class AulasPanel extends JPanel {
         int prom = (total == 0) ? 0 : (suma / total);
 
         lblResumen.setText("Estudiantes: " + total + " | Puntos total: " + suma + " | Promedio: " + prom);
+    }
+
+    private void aplicarOrdenComboATabla() {
+        if (sorterTabla == null) return;
+
+        String opt = String.valueOf(cbOrden.getSelectedItem());
+        List<RowSorter.SortKey> keys = new ArrayList<>();
+
+        // Columnas: 1=ID, 2=Nombre, 4=Edad, 5=Puntos
+        switch (opt) {
+            case "Puntos (mayor)":
+                keys.add(new RowSorter.SortKey(5, SortOrder.DESCENDING));
+                break;
+            case "Nombre (A-Z)":
+                keys.add(new RowSorter.SortKey(2, SortOrder.ASCENDING));
+                break;
+            case "ID (menor)":
+                keys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
+                break;
+            case "Edad (menor)":
+                keys.add(new RowSorter.SortKey(4, SortOrder.ASCENDING));
+                break;
+        }
+
+        sorterTabla.setSortKeys(keys);
+        sorterTabla.sort();
     }
 
     private void aplicarBarraAula(String aula) {
@@ -393,6 +428,11 @@ public class AulasPanel extends JPanel {
 
         // Umbral: si es claro -> negro, si es oscuro -> blanco
         return (y >= 150) ? Color.BLACK : Color.WHITE;
+    }
+
+    private int parseIntSafe(Object v) {
+        try { return Integer.parseInt(String.valueOf(v).trim()); }
+        catch (Exception e) { return 0; }
     }
     
     private void crearAulaDialog() {
