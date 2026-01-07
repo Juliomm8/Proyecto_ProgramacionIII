@@ -415,7 +415,14 @@ public class AulasPanel extends JPanel {
             opciones.removeIf(a -> a.equalsIgnoreCase(aulaSel));
 
             if (opciones.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Crea otra aula primero para migrar estudiantes.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No puedes eliminar esta aula porque tiene estudiantes.\n" +
+                                "Crea otra aula para migrar estudiantes.",
+                        "Aviso",
+                        JOptionPane.WARNING_MESSAGE
+                );
+
                 return;
             }
 
