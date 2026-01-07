@@ -434,15 +434,36 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                 String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
                 String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
-                sesionService.registrarResultado(new SesionJuego(
-                        id,
-                        nombre,
-                        aula,
-                        actividad.getJuego(),
-                        actividad.getNivel(),
-                        puntaje,
-                        LocalDateTime.now()
-                ));
+                SesionJuego sesion = new SesionJuego(
+        id,
+        nombre,
+        aula,
+        actividad.getJuego(),
+        actividad.getNivel(),
+        puntaje,
+        LocalDateTime.now()
+);
+
+// Copiar métricas desde Actividad (Paso 2: plumbing)
+if (actividad != null) {
+    sesion.setDuracionMs(actividad.getDuracionMs());
+    sesion.setFechaFin(LocalDateTime.now());
+
+    sesion.setRondasTotales(actividad.getRondasMeta());
+    sesion.setRondasCompletadas(actividad.getRondasJugadas());
+
+    sesion.setAciertosTotales(actividad.getRondasCorrectas());
+    sesion.setErroresTotales(actividad.getErroresTotales());
+    sesion.setIntentosTotales(actividad.getIntentosTotales());
+    sesion.setPistasUsadas(actividad.getPistasUsadas());
+    sesion.setAciertosPrimerIntento(actividad.getAciertosPrimerIntento());
+
+    sesion.setIntentosMaxPorRonda(actividad.getIntentosMaxPorRonda());
+    sesion.setPistasDesdeIntento(actividad.getPistasDesdeIntento());
+}
+
+sesionService.registrarResultado(sesion);
+
 
                 if (ninoActual != null) {
                     ninoActual.agregarPuntos(puntaje);

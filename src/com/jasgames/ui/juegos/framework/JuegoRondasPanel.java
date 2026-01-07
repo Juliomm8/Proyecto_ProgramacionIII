@@ -174,6 +174,7 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
             actualizarProgreso();
 
             if (rondasCorrectas >= getRondasMeta()) {
+                volcarMetricasFinDeSesion();
                 finalizarJuego(calcularPuntosFinales());
                 return;
             }
@@ -188,6 +189,41 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
         erroresTotales++;
         setFeedback((feedback == null || feedback.isBlank()) ? "Intenta de nuevo" : feedback);
     }
+
+
+/**
+ * Vuelca métricas base de la sesión hacia {@link Actividad} para que EstudianteWindow
+ * pueda persistirlas en {@link com.jasgames.model.SesionJuego}.
+ *
+ * Nota: en este paso (plumbing) usamos aproximaciones simples.
+ * En el siguiente paso se implementará el sistema real de 3 intentos por ronda + pistas.
+ */
+protected void volcarMetricasFinDeSesion() {
+    if (actividadActual == null) return;
+
+    int meta = getRondasMeta();
+
+    actividadActual.setRondasMeta(meta);
+    // Este framework finaliza cuando se completan las rondas correctas (meta alcanzada)
+    actividadActual.setRondasJugadas(meta);
+    actividadActual.setRondasCorrectas(rondasCorrectas);
+
+    actividadActual.setErroresTotales(erroresTotales);
+
+    // Aproximación: 1 intento por acierto + 1 por cada error
+    actividadActual.setIntentosTotales(rondasCorrectas + erroresTotales);
+
+    // Defaults definidos por la ruta del proyecto
+    actividadActual.setIntentosMaxPorRonda(3);
+    actividadActual.setPistasDesdeIntento(2);
+
+    // Aún no se implementan pistas/primer intento real (se hará en el próximo paso)
+    actividadActual.setPistasUsadas(0);
+    actividadActual.setAciertosPrimerIntento(0);
+
+    // Compatibilidad con campo antiguo
+    actividadActual.setIntentosFallidos(erroresTotales);
+}
 
     protected final void actualizarProgreso() {
         int meta = getRondasMeta();

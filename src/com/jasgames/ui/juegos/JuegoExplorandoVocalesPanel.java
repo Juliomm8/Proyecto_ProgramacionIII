@@ -477,16 +477,36 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             b.setEnabled(false);
         }
 
-        // ✅ Guardar intentos fallidos
+        // ✅ Guardar métricas de sesión (sin mostrarlas como "castigo" en UI)
         if (actividadActual != null) {
+            // Compatibilidad (campo antiguo)
             actividadActual.setIntentosFallidos(intentosFallidos);
+
+            // Métricas nuevas (Paso 2: plumbing)
+            actividadActual.setErroresTotales(intentosFallidos);
+
+            // Este juego avanza de ronda solo cuando acierta, por eso:
+            actividadActual.setRondasMeta(5);
+            actividadActual.setRondasJugadas(5);
+            actividadActual.setRondasCorrectas(5);
+
+            // Aproximación: al menos 1 intento correcto por ronda + fallos
+            actividadActual.setIntentosTotales(5 + intentosFallidos);
+
+            // Defaults de proyecto
+            actividadActual.setIntentosMaxPorRonda(3);
+            actividadActual.setPistasDesdeIntento(2);
+
+            // Aún no implementamos pistas/primer intento real aquí (Paso 3)
+            actividadActual.setPistasUsadas(0);
+            actividadActual.setAciertosPrimerIntento(0);
         }
 
-        // ✅ UI final (nada de pantalla vacía)
+        // ✅ UI final (nada de pantalla vacía) - TEA friendly: no mostramos fallos como "penalización"
         lblProgreso.setText("Completado");
         lblPregunta.setText("<html><div style='text-align:center;'>"
                 + "¡Excelente! 🎉<br/>"
-                + "Intentos fallidos: " + intentosFallidos
+                + "¡Buen trabajo!"
                 + "</div></html>");
 
         lblVocal.setVisible(true);

@@ -13,6 +13,7 @@ public abstract class BaseJuegoPanel extends JPanel {
     protected Actividad actividadActual;
     protected JuegoListener listener;
     private boolean juegoFinalizado = false;
+    private final long inicioMs;
 
     /**
      * Constructor base.
@@ -22,6 +23,9 @@ public abstract class BaseJuegoPanel extends JPanel {
     public BaseJuegoPanel(Actividad actividad, JuegoListener listener) {
         this.actividadActual = actividad;
         this.listener = listener;
+
+        // Medición de duración de sesión (para métricas/analítica, no para presionar al niño)
+        this.inicioMs = System.currentTimeMillis();
 
         configurarEstiloBase();
     }
@@ -52,7 +56,13 @@ public abstract class BaseJuegoPanel extends JPanel {
             this.actividadActual.setPuntos(puntajeObtenido);
         }
 
-        // 2. Avisamos a la ventana principal para que cambie de pantalla
+        // 2. Guardar duración de la sesión (ms) en Actividad para que luego se persista en SesionJuego
+        if (this.actividadActual != null) {
+            long dur = System.currentTimeMillis() - inicioMs;
+            this.actividadActual.setDuracionMs(Math.max(0L, dur));
+        }
+
+        // 3. Notificar a la ventana/controlador
         if (listener != null) {
             listener.onJuegoTerminado(this.actividadActual);
         }
