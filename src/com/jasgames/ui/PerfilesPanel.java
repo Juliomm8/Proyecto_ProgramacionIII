@@ -134,7 +134,7 @@ public class PerfilesPanel extends JPanel {
     public PerfilesPanel(PerfilService perfilService) {
         this(perfilService, new AulaService(perfilService), new PiaService());
     }
-    
+
     private static class DefaultDeps {
         final PerfilService perfilService = new PerfilService();
         final AulaService aulaService = new AulaService(perfilService);

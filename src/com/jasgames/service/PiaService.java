@@ -3,6 +3,7 @@ package com.jasgames.service;
 import com.google.gson.*;
 import com.jasgames.model.ObjetivoPIA;
 import com.jasgames.model.PIA;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.util.AtomicFiles;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
@@ -126,6 +127,63 @@ public class PiaService {
             obj.evaluarCompletadoSiAplica();
 
             guardarEnArchivo();
+            return true;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+    
+    /**
+     * Aplica automáticamente el progreso de una sesión al PIA activo del niño (si existe).
+     * Busca un objetivo no completado para el juego jugado y actualiza sus contadores.
+     * También vincula la sesión al PIA y al objetivo.
+     * 
+     * @param sesion La sesión de juego recién terminada.
+     * @return true si se aplicó a algún PIA, false si no había PIA activo o no aplicaba.
+     */
+    public boolean aplicarSesion(SesionJuego sesion) {
+        if (sesion == null || sesion.getIdEstudiante() == null || sesion.getJuego() == null) {
+            return false;
+        }
+
+        ioLock.lock();
+        try {
+            // 1. Buscar PIA activo del niño
+            PIA pia = null;
+            for (PIA p : pias) {
+                if (p != null && p.getIdNino() == sesion.getIdEstudiante() && p.isActivo()) {
+                    pia = p;
+                    break;
+                }
+            }
+            if (pia == null) return false;
+
+            // 2. Buscar objetivo para este juego (que no esté completado)
+            ObjetivoPIA objetivo = null;
+            for (ObjetivoPIA obj : pia.getObjetivos()) {
+                if (obj.getJuegoId() == sesion.getJuego().getId() && !obj.isCompletado()) {
+                    objetivo = obj;
+                    break; // Tomamos el primero que coincida
+                }
+            }
+            
+            // Si no hay objetivo específico, no hacemos nada (o podríamos registrar actividad genérica en el futuro)
+            if (objetivo == null) return false;
+
+            // 3. Actualizar progreso
+            objetivo.setProgresoRondasCorrectas(objetivo.getProgresoRondasCorrectas() + sesion.getAciertosTotales());
+            objetivo.setProgresoSesionesCompletadas(objetivo.getProgresoSesionesCompletadas() + 1);
+            
+            // 4. Evaluar si se completó
+            objetivo.evaluarCompletadoSiAplica();
+
+            // 5. Vincular sesión
+            sesion.setIdPia(pia.getIdPia());
+            sesion.setIdObjetivoPia(objetivo.getIdObjetivo());
+
+            // 6. Guardar cambios en PIA
+            guardarEnArchivo();
+
             return true;
         } finally {
             ioLock.unlock();

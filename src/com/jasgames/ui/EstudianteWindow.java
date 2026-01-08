@@ -503,6 +503,10 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                     sesion.setDificultadFinal(dec.getDificultadSiguiente());
                     sesion.setDificultadAdaptada(dec.isCambio());
                 }
+                
+                // ✅ APLICAR PIA (si existe)
+                // Esto actualiza el progreso del PIA y vincula la sesión
+                piaService.aplicarSesion(sesion);
 
                 // Persistir
                 sesionService.registrarResultado(sesion);
