@@ -78,6 +78,9 @@ public class PerfilesPanel extends JPanel {
     
     // ---------------------- UI: PIA ----------------------
     private JLabel lblPiaEstado;
+    private JLabel lblPiaAyuda;
+    private JLabel lblPiaObjetivoActivo;
+
     private JTextArea txtPiaObjetivoGeneral;
 
     private JTable tblObjetivos;
@@ -392,64 +395,12 @@ public class PerfilesPanel extends JPanel {
         addField(formPerfilesPanel, gc, 4, "Diagnóstico:", txtDiagnosticoNino);
         addField(formPerfilesPanel, gc, 5, "Avatar:", cbAvatar);
         
-        // --- Título PIA ---
+        // --- PIA (Plan Individual de Aprendizaje) ---
         gc.gridy = 6;
-        JLabel lblTituloPia = new JLabel("PIA (Plan Individual de Aprendizaje)");
-        lblTituloPia.setFont(lblTituloPia.getFont().deriveFont(Font.BOLD));
         gc.gridx = 0;
         gc.gridwidth = 2;
-        formPerfilesPanel.add(lblTituloPia, gc);
-        gc.gridy++;
-
-        // Estado
-        lblPiaEstado = new JLabel("PIA: —");
-        gc.gridx = 0;
-        gc.gridwidth = 2;
-        formPerfilesPanel.add(lblPiaEstado, gc);
-        gc.gridy++;
-
-        // Objetivo general
-        txtPiaObjetivoGeneral = new JTextArea(3, 20);
-        txtPiaObjetivoGeneral.setLineWrap(true);
-        txtPiaObjetivoGeneral.setWrapStyleWord(true);
-        JScrollPane spObjGen = new JScrollPane(txtPiaObjetivoGeneral);
-        addField(formPerfilesPanel, gc, gc.gridy, "Objetivo general", spObjGen);
-        gc.gridy++;
-
-        // Tabla objetivos
-        JScrollPane spTabla = new JScrollPane(tblObjetivos);
-        spTabla.setPreferredSize(new Dimension(10, 120)); // altura razonable
-        gc.gridx = 0;
-        gc.gridwidth = 2;
-        formPerfilesPanel.add(spTabla, gc);
-        gc.gridy++;
-
-        // Inputs nuevo objetivo
-        spObjJuegoId = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
-        txtObjDescripcion = new JTextField();
-        spObjMetaRondas = new JSpinner(new SpinnerNumberModel(3, 1, 50, 1));
-        spObjMetaSesiones = new JSpinner(new SpinnerNumberModel(1, 1, 50, 1));
-
-        addField(formPerfilesPanel, gc, gc.gridy, "Juego ID", spObjJuegoId); gc.gridy++;
-        addField(formPerfilesPanel, gc, gc.gridy, "Descripción", txtObjDescripcion); gc.gridy++;
-        addField(formPerfilesPanel, gc, gc.gridy, "Meta rondas correctas", spObjMetaRondas); gc.gridy++;
-        addField(formPerfilesPanel, gc, gc.gridy, "Meta sesiones completadas", spObjMetaSesiones); gc.gridy++;
-
-        // Botones PIA
-        btnCrearPia = new JButton("Crear PIA");
-        btnGuardarPia = new JButton("Guardar PIA");
-        btnCerrarPia = new JButton("Cerrar PIA");
-        btnAgregarObjetivo = new JButton("Agregar objetivo");
-
-        JPanel accionesPia = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        accionesPia.add(btnCrearPia);
-        accionesPia.add(btnGuardarPia);
-        accionesPia.add(btnCerrarPia);
-        accionesPia.add(btnAgregarObjetivo);
-
-        gc.gridx = 0;
-        gc.gridwidth = 2;
-        formPerfilesPanel.add(accionesPia, gc);
+        gc.weightx = 1.0;
+        formPerfilesPanel.add(buildPiaSection(), gc);
         gc.gridy++;
 
         // Empuja los campos hacia arriba (evita que queden centrados con mucho espacio vacío)
@@ -496,6 +447,152 @@ public class PerfilesPanel extends JPanel {
         });
 
         return card;
+    }
+    
+    private JPanel buildPiaSection() {
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setOpaque(false);
+        root.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),
+                "PIA – Plan Individual de Aprendizaje",
+                TitledBorder.LEFT, TitledBorder.TOP
+        ));
+
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.insets = new Insets(6, 8, 6, 8);
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.anchor = GridBagConstraints.NORTHWEST;
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.weightx = 1.0;
+
+        // Texto guía (para que se entienda sin explicación)
+        JLabel lblIntro = new JLabel(
+                "<html>" +
+                "<b>¿Qué es?</b> Un plan con objetivos medibles para este estudiante.<br>" +
+                "<b>Cómo usarlo:</b> 1) Crear PIA  2) Escribir objetivo general  3) Agregar objetivos por juego.<br>" +
+                "El progreso se actualizará automáticamente cuando el estudiante juegue." +
+                "</html>"
+        );
+        root.add(lblIntro, gc);
+        gc.gridy++;
+
+        // Estado + botones
+        lblPiaEstado = new JLabel("<html><b>PIA:</b> —</html>");
+        lblPiaObjetivoActivo = new JLabel("Objetivo en progreso: —");
+
+        JPanel estadoLeft = new JPanel();
+        estadoLeft.setOpaque(false);
+        estadoLeft.setLayout(new BoxLayout(estadoLeft, BoxLayout.Y_AXIS));
+        estadoLeft.add(lblPiaEstado);
+        estadoLeft.add(Box.createVerticalStrut(2));
+        estadoLeft.add(lblPiaObjetivoActivo);
+
+        btnCrearPia = new JButton("Crear PIA");
+        btnGuardarPia = new JButton("Guardar PIA");
+        btnCerrarPia = new JButton("Cerrar PIA");
+
+        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        acciones.setOpaque(false);
+        acciones.add(btnCrearPia);
+        acciones.add(btnGuardarPia);
+        acciones.add(btnCerrarPia);
+
+        JPanel filaEstado = new JPanel(new BorderLayout(10, 0));
+        filaEstado.setOpaque(false);
+        filaEstado.add(estadoLeft, BorderLayout.CENTER);
+        filaEstado.add(acciones, BorderLayout.EAST);
+
+        root.add(filaEstado, gc);
+        gc.gridy++;
+
+        // Ayuda dinámica (cambia según si hay PIA activo o no)
+        lblPiaAyuda = new JLabel("Selecciona un estudiante para gestionar su PIA.");
+        root.add(lblPiaAyuda, gc);
+        gc.gridy++;
+
+        // Objetivo general
+        JLabel lblObj = new JLabel("<html><b>Objetivo general</b> (resumen para el docente)</html>");
+        root.add(lblObj, gc);
+        gc.gridy++;
+
+        txtPiaObjetivoGeneral = new JTextArea(3, 20);
+        txtPiaObjetivoGeneral.setLineWrap(true);
+        txtPiaObjetivoGeneral.setWrapStyleWord(true);
+        JScrollPane spObjGen = new JScrollPane(txtPiaObjetivoGeneral);
+        spObjGen.setPreferredSize(new Dimension(10, 70));
+
+        root.add(spObjGen, gc);
+        gc.gridy++;
+
+        // Objetivos (tabla) + leyenda
+        JLabel lblTabla = new JLabel("<html><b>Objetivos medibles</b> (por juego)</html>");
+        root.add(lblTabla, gc);
+        gc.gridy++;
+
+        JLabel lblLeyenda = new JLabel("MetaRondas/ProgRondas: rondas correctas | MetaSes/ProgSes: sesiones completadas");
+        root.add(lblLeyenda, gc);
+        gc.gridy++;
+
+        JScrollPane spTabla = new JScrollPane(tblObjetivos);
+        spTabla.setPreferredSize(new Dimension(10, 120));
+        root.add(spTabla, gc);
+        gc.gridy++;
+
+        // Panel “Agregar objetivo”
+        JPanel nuevo = new JPanel(new GridBagLayout());
+        nuevo.setOpaque(false);
+        nuevo.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),
+                "Agregar objetivo",
+                TitledBorder.LEFT, TitledBorder.TOP
+        ));
+
+        GridBagConstraints g2 = new GridBagConstraints();
+        g2.insets = new Insets(4, 6, 4, 6);
+        g2.fill = GridBagConstraints.HORIZONTAL;
+        g2.anchor = GridBagConstraints.NORTHWEST;
+
+        spObjJuegoId = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
+        txtObjDescripcion = new JTextField();
+        spObjMetaRondas = new JSpinner(new SpinnerNumberModel(3, 1, 200, 1));
+        spObjMetaSesiones = new JSpinner(new SpinnerNumberModel(1, 1, 200, 1));
+
+        // Tips para que se entienda
+        JLabel hintJuego = new JLabel("Tip: usa el ID del juego tal como aparece en la pestaña “Juegos”.");
+        hintJuego.setFont(hintJuego.getFont().deriveFont(Font.PLAIN, 11f));
+
+        addField(nuevo, g2, 0, "Juego (ID):", spObjJuegoId);
+        g2.gridy = 1; g2.gridx = 0; g2.gridwidth = 2; g2.weightx = 1;
+        nuevo.add(hintJuego, g2);
+        g2.gridwidth = 1;
+
+        addField(nuevo, g2, 2, "Descripción (qué se quiere lograr):", txtObjDescripcion);
+        addField(nuevo, g2, 3, "Meta (rondas correctas):", spObjMetaRondas);
+        addField(nuevo, g2, 4, "Meta (sesiones):", spObjMetaSesiones);
+
+        btnAgregarObjetivo = new JButton("Agregar objetivo");
+        JPanel filaBtn = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        filaBtn.setOpaque(false);
+        filaBtn.add(btnAgregarObjetivo);
+
+        g2.gridy = 5; g2.gridx = 0; g2.gridwidth = 2;
+        nuevo.add(filaBtn, g2);
+
+        root.add(nuevo, gc);
+        gc.gridy++;
+
+        // Empuja hacia arriba
+        gc.weighty = 1.0;
+        root.add(Box.createVerticalGlue(), gc);
+
+        // Dejar botones/inputs listos (se actualiza al seleccionar niño)
+        setPiaEdicionEnabled(false);
+
+        // Listeners del PIA (si ya los tienes, no dupliques)
+        initListenersPia();
+
+        return root;
     }
     
     private void addField(JPanel panel, GridBagConstraints gc, int row, String label, JComponent field) {
@@ -704,24 +801,35 @@ public class PerfilesPanel extends JPanel {
         Nino ninoSeleccionado = listaNinos.getSelectedValue();
 
         if (ninoSeleccionado == null) {
-            lblPiaEstado.setText("PIA: —");
+            lblPiaEstado.setText("<html><b>PIA:</b> —</html>");
+            lblPiaObjetivoActivo.setText("Objetivo en progreso: —");
+            lblPiaAyuda.setText("Selecciona un estudiante para ver o crear su PIA.");
             txtPiaObjetivoGeneral.setText("");
-            setPiaButtonsEnabled(false);
+            btnCrearPia.setEnabled(false);
+            setPiaEdicionEnabled(false);
             return;
         }
 
         piaActual = piaService.obtenerActivo(getIdSafe(ninoSeleccionado));
         if (piaActual == null) {
-            lblPiaEstado.setText("PIA: Sin PIA activo");
+            lblPiaEstado.setText("<html><b>PIA:</b> Sin PIA activo</html>");
+            lblPiaObjetivoActivo.setText("Objetivo en progreso: —");
+            lblPiaAyuda.setText("Crea un PIA para definir objetivos. El progreso se llenará automáticamente cuando el estudiante juegue.");
             txtPiaObjetivoGeneral.setText("");
-            setPiaButtonsEnabled(true);
-            btnGuardarPia.setEnabled(false);
-            btnCerrarPia.setEnabled(false);
-            btnAgregarObjetivo.setEnabled(false);
+            btnCrearPia.setEnabled(true);
+            setPiaEdicionEnabled(false);
             return;
         }
 
-        lblPiaEstado.setText("PIA activo: " + piaActual.getIdPia());
+        lblPiaEstado.setText("<html><b>PIA:</b> Activo</html>");
+        ObjetivoPIA obj = piaActual.getObjetivoActivo();
+        lblPiaObjetivoActivo.setText(
+                (obj == null)
+                        ? "Objetivo en progreso: (no hay objetivos)"
+                        : "Objetivo en progreso: Juego " + obj.getJuegoId() + " — " + obj.getDescripcion()
+        );
+        lblPiaAyuda.setText("Edita el objetivo general y agrega objetivos por juego. (El sistema actualizará progreso automáticamente)");
+        
         txtPiaObjetivoGeneral.setText(piaActual.getObjetivoGeneral() == null ? "" : piaActual.getObjetivoGeneral());
 
         for (ObjetivoPIA o : piaActual.getObjetivos()) {
@@ -737,13 +845,18 @@ public class PerfilesPanel extends JPanel {
         }
 
         btnCrearPia.setEnabled(false);
-        btnGuardarPia.setEnabled(true);
-        btnCerrarPia.setEnabled(true);
-        btnAgregarObjetivo.setEnabled(true);
+        setPiaEdicionEnabled(true);
     }
 
-    private void setPiaButtonsEnabled(boolean enabled) {
-        if (btnCrearPia != null) btnCrearPia.setEnabled(enabled);
+    private void setPiaEdicionEnabled(boolean enabled) {
+        if (txtPiaObjetivoGeneral != null) txtPiaObjetivoGeneral.setEnabled(enabled);
+        if (tblObjetivos != null) tblObjetivos.setEnabled(enabled);
+
+        if (spObjJuegoId != null) spObjJuegoId.setEnabled(enabled);
+        if (txtObjDescripcion != null) txtObjDescripcion.setEnabled(enabled);
+        if (spObjMetaRondas != null) spObjMetaRondas.setEnabled(enabled);
+        if (spObjMetaSesiones != null) spObjMetaSesiones.setEnabled(enabled);
+
         if (btnGuardarPia != null) btnGuardarPia.setEnabled(enabled);
         if (btnCerrarPia != null) btnCerrarPia.setEnabled(enabled);
         if (btnAgregarObjetivo != null) btnAgregarObjetivo.setEnabled(enabled);
