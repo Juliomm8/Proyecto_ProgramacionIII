@@ -71,6 +71,40 @@ public class SesionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Devuelve las últimas N sesiones de un niño para un juego (más recientes primero).
+     */
+    public java.util.List<com.jasgames.model.SesionJuego> obtenerUltimasPorNinoYJuego(int idNino, int idJuego, int limite) {
+        ioLock.lock();
+        try {
+            if (limite <= 0) limite = 1;
+
+            java.util.List<com.jasgames.model.SesionJuego> filtradas = new java.util.ArrayList<>();
+            for (com.jasgames.model.SesionJuego s1 : resultados) {
+                if (s1 == null) continue;
+                if ((s1.getIdEstudiante() != null && s1.getIdEstudiante() == idNino) && s1.getJuego() != null && s1.getJuego().getId() == idJuego) {
+                    filtradas.add(s1);
+                }
+            }
+
+            filtradas.sort((a, b) -> {
+                java.time.LocalDateTime fa = (a.getFechaFin() != null) ? a.getFechaFin() : a.getFechaHora();
+                java.time.LocalDateTime fb = (b.getFechaFin() != null) ? b.getFechaFin() : b.getFechaHora();
+                if (fa == null && fb == null) return 0;
+                if (fa == null) return 1;
+                if (fb == null) return -1;
+                return fb.compareTo(fa);
+            });
+
+            if (filtradas.size() > limite) {
+                return new java.util.ArrayList<>(filtradas.subList(0, limite));
+            }
+            return filtradas;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
     // ---------------- PERSISTENCIA ----------------
 
     private void guardarEnArchivo() {
