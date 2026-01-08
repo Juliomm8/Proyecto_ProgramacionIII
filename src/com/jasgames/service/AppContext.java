@@ -1,3 +1,4 @@
+// AppContext.java
 package com.jasgames.service;
 
 import com.jasgames.model.Docente;
@@ -11,10 +12,11 @@ public class AppContext {
     private final AuditoriaService auditoriaService;
     private final AulaService aulaService;
 
+    private final PiaService piaService;
+
     private final AutenticacionService autenticacionService;
     private final DirectorioEscolarService directorioEscolarService;
 
-    // Sesión (quién está usando el sistema)
     private Docente docenteSesion;
     private Nino ninoSesion;
 
@@ -25,6 +27,8 @@ public class AppContext {
         this.sesionService = new SesionService();
         this.auditoriaService = new AuditoriaService();
 
+        this.piaService = new PiaService();
+
         this.autenticacionService = new AutenticacionService();
         this.directorioEscolarService = new DirectorioEscolarService(perfilService, aulaService);
     }
@@ -33,6 +37,9 @@ public class AppContext {
     public PerfilService getPerfilService() { return perfilService; }
     public SesionService getResultadoService() { return sesionService; }
     public AuditoriaService getAuditoriaService() { return auditoriaService; }
+    public AulaService getAulaService() { return aulaService; }
+
+    public PiaService getPiaService() { return piaService; }
 
     public AutenticacionService getAutenticacionService() { return autenticacionService; }
     public DirectorioEscolarService getDirectorioEscolarService() { return directorioEscolarService; }
@@ -42,6 +49,4 @@ public class AppContext {
 
     public Nino getNinoSesion() { return ninoSesion; }
     public void setNinoSesion(Nino ninoSesion) { this.ninoSesion = ninoSesion; }
-    public AulaService getAulaService() { return aulaService; }
-
 }

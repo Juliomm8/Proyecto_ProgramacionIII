@@ -3,6 +3,7 @@ package com.jasgames.ui;
 import com.jasgames.model.Nino;
 import com.jasgames.service.AulaService;
 import com.jasgames.service.PerfilService;
+import com.jasgames.service.PiaService;
 import com.jasgames.util.EmojiFonts;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ public class PerfilesPanel extends JPanel {
     // ---------------------- Servicios ----------------------
     private final PerfilService perfilService;
     private final AulaService aulaService;
+    private final PiaService piaService;
 
     // ---------------------- Datos (cache) ----------------------
     private final List<Nino> cacheNinos = new ArrayList<>();
@@ -85,17 +87,22 @@ public class PerfilesPanel extends JPanel {
             "🐨","🐙","🐢","🦄","🐞"
     };
 
-    public PerfilesPanel(PerfilService perfilService, AulaService aulaService) {
+    public PerfilesPanel(PerfilService perfilService, AulaService aulaService, PiaService piaService) {
         this.perfilService = perfilService;
         this.aulaService = aulaService;
+        this.piaService = piaService;
         initComponents();
         cargarNinosDesdeService();
         aplicarFiltrosYOrden();
     }
 
+    public PerfilesPanel(PerfilService perfilService, AulaService aulaService) {
+        this(perfilService, aulaService, null);
+    }
+
     // Back-compat (por si alguna pantalla antigua lo instancia directo)
     public PerfilesPanel(PerfilService perfilService) {
-        this(perfilService, new AulaService(perfilService));
+        this(perfilService, new AulaService(perfilService), null);
     }
 
     // ---------------------- UI ----------------------
