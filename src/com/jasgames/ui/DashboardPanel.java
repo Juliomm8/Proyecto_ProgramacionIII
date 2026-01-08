@@ -47,6 +47,7 @@ public class DashboardPanel extends JPanel {
     private JComboBox<String> cbOrden;
     private JTextField txtBuscar;
     private JButton btnLimpiar;
+    private JCheckBox chkSoloPIA;
     
     // KPIs
     private JPanel panelKpis;
@@ -93,9 +94,14 @@ public class DashboardPanel extends JPanel {
     }
 
     private void inicializarTabla() {
-        // Mejor: mostrar ID y Aula (para que el filtro tenga sentido)
+        // Tabla de resultados con métricas (útil para seguimiento y PIA)
         tablaModelo = new DefaultTableModel(
-                new Object[]{"ID", "Estudiante", "Aula", "Juego", "Dificultad", "Puntaje", "Fecha", "Hora"}, 0
+                new Object[]{
+                        "ID", "Estudiante", "Aula", "Juego", "Dificultad",
+                        "Puntaje", "Intentos", "Errores", "Pistas",
+                        "Duración(s)", "Precisión", "PIA", "Objetivo",
+                        "Fecha", "Hora"
+                }, 0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -104,6 +110,10 @@ public class DashboardPanel extends JPanel {
         };
 
         tblResultados.setModel(tablaModelo);
+
+        // Para que se vea “tabla” aunque haya pocas filas
+        tblResultados.setRowHeight(22);
+        tblResultados.setFillsViewportHeight(true);
     }
 
     private void construirFiltrosExtra() {
@@ -114,6 +124,8 @@ public class DashboardPanel extends JPanel {
         cbOrden = new JComboBox<>(new String[]{"Fecha (más reciente)", "Fecha (más antigua)", "Puntaje (mayor)", "Puntaje (menor)"});
         txtBuscar = new JTextField(14);
         btnLimpiar = new JButton("Limpiar");
+        chkSoloPIA = new JCheckBox("Solo PIA");
+        chkSoloPIA.setOpaque(false);
 
         // Cambiamos textos de botones existentes para que tengan sentido
         btnActualizarDashboard.setText("Aplicar");
@@ -140,6 +152,8 @@ public class DashboardPanel extends JPanel {
 
         panelFiltrosDashboard.add(new JLabel("Orden:"));
         panelFiltrosDashboard.add(cbOrden);
+
+        panelFiltrosDashboard.add(chkSoloPIA);
 
         panelFiltrosDashboard.add(btnActualizarDashboard);
         panelFiltrosDashboard.add(btnOrdenarPorPuntaje);
@@ -291,6 +305,7 @@ public class DashboardPanel extends JPanel {
         cbFiltroDificultad.addActionListener(e -> actualizarTabla(false));
         cbFiltroRango.addActionListener(e -> actualizarTabla(false));
         cbOrden.addActionListener(e -> actualizarTabla(false));
+        chkSoloPIA.addActionListener(e -> actualizarTabla(false));
 
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { actualizarTabla(false); }
@@ -305,6 +320,7 @@ public class DashboardPanel extends JPanel {
         cbFiltroDificultad.setSelectedItem("Todas");
         cbFiltroRango.setSelectedItem("Todo");
         cbOrden.setSelectedItem("Fecha (más reciente)");
+        chkSoloPIA.setSelected(false);
         txtBuscar.setText("");
         actualizarTabla(false);
     }
@@ -407,6 +423,11 @@ public class DashboardPanel extends JPanel {
             });
         }
 
+        // ----- 5.1) Filtro: Solo sesiones con PIA -----
+        if (chkSoloPIA != null && chkSoloPIA.isSelected()) {
+            lista.removeIf(r -> r.getIdPia() == null || r.getIdPia().isBlank());
+        }
+
         // ----- 6) Orden -----
         String ordenSel = atajoOrdenarPorPuntajeDesc ? "Puntaje (mayor)" : (String) cbOrden.getSelectedItem();
         if (ordenSel == null) ordenSel = "Fecha (más reciente)";
@@ -451,10 +472,80 @@ public class DashboardPanel extends JPanel {
                     nombreJuego,
                     r.getDificultad(),
                     r.getPuntaje(),
+                    r.getIntentosTotales(),
+                    r.getErroresTotales(),
+                    r.getPistasUsadas(),
+                    fmtDuracionSeg(r),
+                    fmtPrecision(r),
+                    fmtPia(r),
+                    fmtObjetivo(r),
                     fecha,
                     hora
             });
         }
+    }
+
+    // ---------------- Formateo de métricas (tabla) ----------------
+
+    private String fmtDuracionSeg(SesionJuego r) {
+        if (r == null) return "—";
+        long ms = r.getDuracionMs();
+        if (ms <= 0) return "—";
+        double s = ms / 1000.0;
+        return String.format(Locale.ROOT, "%.1f", s);
+    }
+
+    private String fmtPrecision(SesionJuego r) {
+        if (r == null) return "—";
+        int intentos = r.getIntentosTotales();
+        int aciertos = r.getAciertosTotales();
+        if (intentos <= 0) return "—";
+        double p = (aciertos * 100.0) / intentos;
+        return String.format(Locale.ROOT, "%.0f%%", p);
+    }
+
+    private String fmtPia(SesionJuego r) {
+        if (r == null) return "—";
+        String idPia = r.getIdPia();
+        if (idPia == null || idPia.isBlank()) return "—";
+        return "Sí";
+    }
+
+    private String fmtObjetivo(SesionJuego r) {
+        if (r == null) return "—";
+        String idPia = r.getIdPia();
+        String idObj = r.getIdObjetivoPia();
+        if (idPia == null || idPia.isBlank() || idObj == null || idObj.isBlank()) return "—";
+
+        // Intentar mostrar algo entendible: J<idJuego> + descripción
+        try {
+            for (PIA p : piaService.obtenerTodos()) {
+                if (p != null && idPia.equals(p.getIdPia())) {
+                    ObjetivoPIA o = p.getObjetivoPorId(idObj);
+                    if (o != null) {
+                        String desc = (o.getDescripcion() == null) ? "" : o.getDescripcion().trim();
+                        String base = "J" + o.getJuegoId();
+                        if (!desc.isBlank()) {
+                            // limitamos tamaño para no ensanchar demasiado la tabla
+                            if (desc.length() > 28) desc = desc.substring(0, 28) + "…";
+                            base += " — " + desc;
+                        }
+                        return base;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // si falla, volvemos al id corto
+        }
+
+        return abreviar(idObj);
+    }
+
+    private String abreviar(String s) {
+        if (s == null) return "—";
+        String t = s.trim();
+        if (t.length() <= 8) return t;
+        return t.substring(0, 8) + "…";
     }
     
     private void actualizarKpis(List<SesionJuego> lista) {
