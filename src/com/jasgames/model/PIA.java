@@ -1,34 +1,75 @@
 package com.jasgames.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class PIA {
 
-    private String idPia;                 // UUID
-    private int idNino;                   // referencia al niño (no objeto completo)
-    private boolean activo;               // PIA vigente
+    private String idPia;
+
+    // Relación con niño
+    private int idNino;
+    private String nombreNino;
+    private String aula;
+
     private String objetivoGeneral;
 
-    private List<ObjetivoPIA> objetivos;  // metas del PIA
-    private String idObjetivoActivo;      // objetivo seleccionado (nullable)
+    private boolean activo;
+    private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaCierre;
+
+    private List<ObjetivoPIA> objetivos;
 
     public PIA() {
         // requerido por Gson
         this.idPia = UUID.randomUUID().toString();
-        this.objetivos = new ArrayList<>();
+        this.nombreNino = "";
+        this.aula = "";
+        this.objetivoGeneral = "";
         this.activo = true;
-        this.idObjetivoActivo = null;
+        this.fechaCreacion = LocalDateTime.now();
+        this.fechaCierre = null;
+        this.objetivos = new ArrayList<>();
     }
 
-    public PIA(int idNino, String objetivoGeneral) {
+    public PIA(int idNino, String nombreNino, String aula, String objetivoGeneral) {
         this();
         this.idNino = idNino;
-        this.objetivoGeneral = objetivoGeneral;
+        this.nombreNino = (nombreNino == null) ? "" : nombreNino;
+        this.aula = (aula == null) ? "" : aula;
+        this.objetivoGeneral = (objetivoGeneral == null) ? "" : objetivoGeneral;
     }
 
-    // ---------------- Getters / Setters ----------------
+    public void agregarObjetivo(ObjetivoPIA obj) {
+        if (obj != null) objetivos.add(obj);
+    }
+
+    public ObjetivoPIA getObjetivoPorId(String idObjetivo) {
+        if (idObjetivo == null) return null;
+        for (ObjetivoPIA o : objetivos) {
+            if (o != null && idObjetivo.equals(o.getIdObjetivo())) return o;
+        }
+        return null;
+    }
+
+    /**
+     * Objetivo “actual”: el primero no completado (si todos completados, null).
+     */
+    public ObjetivoPIA getObjetivoActivo() {
+        for (ObjetivoPIA o : objetivos) {
+            if (o != null && !o.isCompletado()) return o;
+        }
+        return null;
+    }
+
+    public void cerrar() {
+        this.activo = false;
+        if (this.fechaCierre == null) this.fechaCierre = LocalDateTime.now();
+    }
+
+    // ---------------- Getters/Setters ----------------
 
     public String getIdPia() { return idPia; }
     public void setIdPia(String idPia) { this.idPia = idPia; }
@@ -36,29 +77,24 @@ public class PIA {
     public int getIdNino() { return idNino; }
     public void setIdNino(int idNino) { this.idNino = idNino; }
 
-    public boolean isActivo() { return activo; }
-    public void setActivo(boolean activo) { this.activo = activo; }
+    public String getNombreNino() { return nombreNino; }
+    public void setNombreNino(String nombreNino) { this.nombreNino = nombreNino; }
+
+    public String getAula() { return aula; }
+    public void setAula(String aula) { this.aula = aula; }
 
     public String getObjetivoGeneral() { return objetivoGeneral; }
     public void setObjetivoGeneral(String objetivoGeneral) { this.objetivoGeneral = objetivoGeneral; }
 
-    public List<ObjetivoPIA> getObjetivos() {
-        if (objetivos == null) objetivos = new ArrayList<>();
-        return objetivos;
-    }
-    public void setObjetivos(List<ObjetivoPIA> objetivos) {
-        this.objetivos = (objetivos == null) ? new ArrayList<>() : objetivos;
-    }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 
-    public String getIdObjetivoActivo() { return idObjetivoActivo; }
-    public void setIdObjetivoActivo(String idObjetivoActivo) { this.idObjetivoActivo = idObjetivoActivo; }
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
-    // Helpers
-    public void agregarObjetivo(ObjetivoPIA o) {
-        if (o == null) return;
-        getObjetivos().add(o);
-        if (idObjetivoActivo == null) {
-            idObjetivoActivo = o.getIdObjetivo();
-        }
-    }
+    public LocalDateTime getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDateTime fechaCierre) { this.fechaCierre = fechaCierre; }
+
+    public List<ObjetivoPIA> getObjetivos() { return objetivos; }
+    public void setObjetivos(List<ObjetivoPIA> objetivos) { this.objetivos = (objetivos == null) ? new ArrayList<>() : objetivos; }
 }

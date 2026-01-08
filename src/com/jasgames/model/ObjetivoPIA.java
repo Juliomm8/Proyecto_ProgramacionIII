@@ -1,68 +1,87 @@
 package com.jasgames.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ObjetivoPIA {
 
-    private String idObjetivo;                 // UUID
-    private String titulo;                     // ej: "Discriminación de colores"
-    private String descripcion;                // texto corto
-    private List<Integer> juegosAsociados;     // ids de juegos
+    private String idObjetivo;
 
-    // metas
-    private int metaSesiones;                  // ej: 10
-    private double metaPrecision;              // ej: 0.85 (85%)
+    // A qué juego apunta este objetivo
+    private int juegoId;
 
-    // límites de dificultad recomendados para este objetivo
-    private int dificultadMin;                 // ej: 1
-    private int dificultadMax;                 // ej: 5
+    // Texto entendible (para UI/reportes)
+    private String descripcion;
+
+    // Metas simples (puedes crecerlas luego)
+    private int metaRondasCorrectas;      // ej: 20 rondas correctas acumuladas
+    private int metaSesionesCompletadas;  // ej: 5 sesiones
+
+    // Progreso acumulado
+    private int progresoRondasCorrectas;
+    private int progresoSesionesCompletadas;
+
+    private boolean completado;
+    private LocalDateTime fechaCompletado;
 
     public ObjetivoPIA() {
         // requerido por Gson
         this.idObjetivo = UUID.randomUUID().toString();
-        this.juegosAsociados = new ArrayList<>();
-        this.metaSesiones = 10;
-        this.metaPrecision = 0.85;
-        this.dificultadMin = 1;
-        this.dificultadMax = 5;
+        this.descripcion = "";
+        this.metaRondasCorrectas = 0;
+        this.metaSesionesCompletadas = 0;
+        this.progresoRondasCorrectas = 0;
+        this.progresoSesionesCompletadas = 0;
+        this.completado = false;
+        this.fechaCompletado = null;
     }
 
-    public ObjetivoPIA(String titulo, String descripcion) {
+    public ObjetivoPIA(int juegoId, String descripcion, int metaRondasCorrectas, int metaSesionesCompletadas) {
         this();
-        this.titulo = titulo;
-        this.descripcion = descripcion;
+        this.juegoId = juegoId;
+        this.descripcion = (descripcion == null) ? "" : descripcion;
+        this.metaRondasCorrectas = Math.max(0, metaRondasCorrectas);
+        this.metaSesionesCompletadas = Math.max(0, metaSesionesCompletadas);
     }
 
-    // ---------------- Getters / Setters ----------------
+    public void evaluarCompletadoSiAplica() {
+        if (completado) return;
+
+        boolean okRondas = (metaRondasCorrectas <= 0) || (progresoRondasCorrectas >= metaRondasCorrectas);
+        boolean okSesiones = (metaSesionesCompletadas <= 0) || (progresoSesionesCompletadas >= metaSesionesCompletadas);
+
+        if (okRondas && okSesiones) {
+            completado = true;
+            fechaCompletado = LocalDateTime.now();
+        }
+    }
+
+    // ---------------- Getters/Setters ----------------
 
     public String getIdObjetivo() { return idObjetivo; }
     public void setIdObjetivo(String idObjetivo) { this.idObjetivo = idObjetivo; }
 
-    public String getTitulo() { return titulo; }
-    public void setTitulo(String titulo) { this.titulo = titulo; }
+    public int getJuegoId() { return juegoId; }
+    public void setJuegoId(int juegoId) { this.juegoId = juegoId; }
 
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public List<Integer> getJuegosAsociados() {
-        if (juegosAsociados == null) juegosAsociados = new ArrayList<>();
-        return juegosAsociados;
-    }
-    public void setJuegosAsociados(List<Integer> juegosAsociados) {
-        this.juegosAsociados = (juegosAsociados == null) ? new ArrayList<>() : juegosAsociados;
-    }
+    public int getMetaRondasCorrectas() { return metaRondasCorrectas; }
+    public void setMetaRondasCorrectas(int metaRondasCorrectas) { this.metaRondasCorrectas = Math.max(0, metaRondasCorrectas); }
 
-    public int getMetaSesiones() { return metaSesiones; }
-    public void setMetaSesiones(int metaSesiones) { this.metaSesiones = metaSesiones; }
+    public int getMetaSesionesCompletadas() { return metaSesionesCompletadas; }
+    public void setMetaSesionesCompletadas(int metaSesionesCompletadas) { this.metaSesionesCompletadas = Math.max(0, metaSesionesCompletadas); }
 
-    public double getMetaPrecision() { return metaPrecision; }
-    public void setMetaPrecision(double metaPrecision) { this.metaPrecision = metaPrecision; }
+    public int getProgresoRondasCorrectas() { return progresoRondasCorrectas; }
+    public void setProgresoRondasCorrectas(int progresoRondasCorrectas) { this.progresoRondasCorrectas = Math.max(0, progresoRondasCorrectas); }
 
-    public int getDificultadMin() { return dificultadMin; }
-    public void setDificultadMin(int dificultadMin) { this.dificultadMin = dificultadMin; }
+    public int getProgresoSesionesCompletadas() { return progresoSesionesCompletadas; }
+    public void setProgresoSesionesCompletadas(int progresoSesionesCompletadas) { this.progresoSesionesCompletadas = Math.max(0, progresoSesionesCompletadas); }
 
-    public int getDificultadMax() { return dificultadMax; }
-    public void setDificultadMax(int dificultadMax) { this.dificultadMax = dificultadMax; }
+    public boolean isCompletado() { return completado; }
+    public void setCompletado(boolean completado) { this.completado = completado; }
+
+    public LocalDateTime getFechaCompletado() { return fechaCompletado; }
+    public void setFechaCompletado(LocalDateTime fechaCompletado) { this.fechaCompletado = fechaCompletado; }
 }
