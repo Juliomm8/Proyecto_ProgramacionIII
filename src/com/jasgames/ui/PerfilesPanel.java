@@ -95,6 +95,7 @@ public class PerfilesPanel extends JPanel {
     private JButton btnGuardarPia;
     private JButton btnCerrarPia;
     private JButton btnAgregarObjetivo;
+    private JButton btnAyudaPia;
 
     // ---------------------- UI: botones ----------------------
     // Se mantienen nombres antiguos por compatibilidad.
@@ -395,8 +396,26 @@ public class PerfilesPanel extends JPanel {
         addField(formPerfilesPanel, gc, 4, "Diagnóstico:", txtDiagnosticoNino);
         addField(formPerfilesPanel, gc, 5, "Avatar:", cbAvatar);
         
-        // --- PIA (Plan Individual de Aprendizaje) ---
+        // --- Título PIA + botón ayuda ---
         gc.gridy = 6;
+
+        JLabel lblTituloPia = new JLabel("PIA (Plan Individual de Aprendizaje)");
+        lblTituloPia.setFont(lblTituloPia.getFont().deriveFont(Font.BOLD));
+
+        btnAyudaPia = crearBotonAyudaPia();
+        btnAyudaPia.addActionListener(e -> mostrarAyudaPIA());
+
+        JPanel headerPia = new JPanel(new BorderLayout(8, 0));
+        headerPia.setOpaque(false);
+        headerPia.add(lblTituloPia, BorderLayout.WEST);
+        headerPia.add(btnAyudaPia, BorderLayout.EAST);
+
+        gc.gridx = 0;
+        gc.gridwidth = 2;
+        formPerfilesPanel.add(headerPia, gc);
+        gc.gridy++;
+        
+        // --- PIA (Plan Individual de Aprendizaje) ---
         gc.gridx = 0;
         gc.gridwidth = 2;
         gc.weightx = 1.0;
@@ -466,17 +485,6 @@ public class PerfilesPanel extends JPanel {
         gc.gridy = 0;
         gc.weightx = 1.0;
 
-        // Texto guía (para que se entienda sin explicación)
-        JLabel lblIntro = new JLabel(
-                "<html>" +
-                "<b>¿Qué es?</b> Un plan con objetivos medibles para este estudiante.<br>" +
-                "<b>Cómo usarlo:</b> 1) Crear PIA  2) Escribir objetivo general  3) Agregar objetivos por juego.<br>" +
-                "El progreso se actualizará automáticamente cuando el estudiante juegue." +
-                "</html>"
-        );
-        root.add(lblIntro, gc);
-        gc.gridy++;
-
         // Estado + botones
         lblPiaEstado = new JLabel("<html><b>PIA:</b> —</html>");
         lblPiaObjetivoActivo = new JLabel("Objetivo en progreso: —");
@@ -506,9 +514,10 @@ public class PerfilesPanel extends JPanel {
         root.add(filaEstado, gc);
         gc.gridy++;
 
-        // Ayuda dinámica (cambia según si hay PIA activo o no)
-        lblPiaAyuda = new JLabel("Selecciona un estudiante para gestionar su PIA.");
-        root.add(lblPiaAyuda, gc);
+        // debajo de lblPiaEstado, opcional:
+        JLabel lblMiniAyuda = new JLabel("¿Dudas? Pulsa el botón “?”");
+        lblMiniAyuda.setFont(lblMiniAyuda.getFont().deriveFont(Font.PLAIN, 11f));
+        root.add(lblMiniAyuda, gc);
         gc.gridy++;
 
         // Objetivo general
@@ -803,7 +812,7 @@ public class PerfilesPanel extends JPanel {
         if (ninoSeleccionado == null) {
             lblPiaEstado.setText("<html><b>PIA:</b> —</html>");
             lblPiaObjetivoActivo.setText("Objetivo en progreso: —");
-            lblPiaAyuda.setText("Selecciona un estudiante para ver o crear su PIA.");
+            if (lblPiaAyuda != null) lblPiaAyuda.setText("Selecciona un estudiante para ver o crear su PIA.");
             txtPiaObjetivoGeneral.setText("");
             btnCrearPia.setEnabled(false);
             setPiaEdicionEnabled(false);
@@ -814,7 +823,7 @@ public class PerfilesPanel extends JPanel {
         if (piaActual == null) {
             lblPiaEstado.setText("<html><b>PIA:</b> Sin PIA activo</html>");
             lblPiaObjetivoActivo.setText("Objetivo en progreso: —");
-            lblPiaAyuda.setText("Crea un PIA para definir objetivos. El progreso se llenará automáticamente cuando el estudiante juegue.");
+            if (lblPiaAyuda != null) lblPiaAyuda.setText("Crea un PIA para definir objetivos. El progreso se llenará automáticamente cuando el estudiante juegue.");
             txtPiaObjetivoGeneral.setText("");
             btnCrearPia.setEnabled(true);
             setPiaEdicionEnabled(false);
@@ -828,7 +837,7 @@ public class PerfilesPanel extends JPanel {
                         ? "Objetivo en progreso: (no hay objetivos)"
                         : "Objetivo en progreso: Juego " + obj.getJuegoId() + " — " + obj.getDescripcion()
         );
-        lblPiaAyuda.setText("Edita el objetivo general y agrega objetivos por juego. (El sistema actualizará progreso automáticamente)");
+        if (lblPiaAyuda != null) lblPiaAyuda.setText("Edita el objetivo general y agrega objetivos por juego. (El sistema actualizará progreso automáticamente)");
         
         txtPiaObjetivoGeneral.setText(piaActual.getObjetivoGeneral() == null ? "" : piaActual.getObjetivoGeneral());
 
@@ -1146,6 +1155,56 @@ public class PerfilesPanel extends JPanel {
             m.invoke(obj, value);
         } catch (Exception ignored) {
         }
+    }
+    
+    private JButton crearBotonAyudaPia() {
+        JButton b = new JButton("?");
+        b.setFocusable(false);
+        b.setToolTipText("Ayuda sobre PIA (Plan Individual de Aprendizaje)");
+        b.setMargin(new Insets(2, 8, 2, 8));
+        b.setPreferredSize(new Dimension(42, 26));
+        return b;
+    }
+
+    private void mostrarAyudaPIA() {
+        String texto =
+                "PIA (Plan Individual de Aprendizaje)\n\n" +
+                "¿Qué es?\n" +
+                "Un plan con objetivos medibles para este estudiante.\n\n" +
+                "Cómo usarlo (rápido)\n" +
+                "1) Crear PIA\n" +
+                "2) Escribir el objetivo general (resumen para el docente)\n" +
+                "3) Agregar objetivos por juego (metas)\n\n" +
+                "Campos principales\n" +
+                "- Objetivo general: describe el propósito del plan.\n" +
+                "- Objetivos medibles (por juego): cada objetivo define metas.\n" +
+                "  • Juego (ID): el ID tal como aparece en la pestaña “Juegos”.\n" +
+                "  • Meta rondas correctas: cuántas rondas correctas se buscan.\n" +
+                "  • Meta sesiones: cuántas sesiones se requieren.\n\n" +
+                "¿Qué significan las columnas?\n" +
+                "- MetaRondas / ProgRondas: meta y progreso de rondas correctas.\n" +
+                "- MetaSes / ProgSes: meta y progreso de sesiones completadas.\n" +
+                "- Estado: ⏳ en progreso / ✅ completado.\n\n" +
+                "¿Cómo se actualiza el progreso?\n" +
+                "Cuando el estudiante juega, el sistema registra una sesión y suma al objetivo activo.\n\n" +
+                "Nota TEA\n" +
+                "El sistema mide errores e intentos para métricas y adaptación, sin mostrar castigos al estudiante.";
+
+        JTextArea area = new JTextArea(texto, 16, 52);
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setCaretPosition(0);
+
+        JScrollPane sp = new JScrollPane(area);
+        sp.setPreferredSize(new Dimension(650, 420));
+
+        JOptionPane.showMessageDialog(
+                this,
+                sp,
+                "Ayuda: PIA",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
     // ---------------------- Renderer: lista de niños ----------------------
