@@ -255,6 +255,25 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void aplicarPistaSuave() {
+        // Pista suave: apaga 1 vocal incorrecta adicional
+        if (botones == null || vocalCorrecta == null) return;
+
+        java.util.List<VocalButton> candidatos = new java.util.ArrayList<>();
+        for (VocalButton b : botones) {
+            if (b != null && b.isEnabled()) {
+                String letra = b.getLetra();
+                if (letra != null && !letra.equals(vocalCorrecta)) candidatos.add(b);
+            }
+        }
+        if (candidatos.isEmpty()) return;
+
+        VocalButton elegido = candidatos.get(random.nextInt(candidatos.size()));
+        elegido.fadeOutAndDisable();
+    }
+
+
+    @Override
     protected void prepararNuevaRonda() {
         setBloqueado(false);
         setFeedback(" ");
@@ -277,7 +296,7 @@ public class JuegoVocalesDivertidasPanel extends JuegoRondasPanel {
             planRondas = generarPlanRondasBalanceado();
         }
 
-        int idx = Math.min(Math.max(rondasCorrectas, 0), planRondas.size() - 1);
+        int idx = Math.min(Math.max(getIndiceRondaActual(), 0), planRondas.size() - 1);
         itemActual = planRondas.get(idx);
         vocalCorrecta = itemActual.vocalCorrecta;
 
