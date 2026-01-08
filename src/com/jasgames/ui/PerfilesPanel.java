@@ -96,6 +96,10 @@ public class PerfilesPanel extends JPanel {
     private JButton btnCerrarPia;
     private JButton btnAgregarObjetivo;
     private JButton btnAyudaPia;
+    
+    // Nuevos campos para colapsar PIA
+    private JPanel panelPiaBody;
+    private JButton btnExpandirPia;
 
     // ---------------------- UI: botones ----------------------
     // Se mantienen nombres antiguos por compatibilidad.
@@ -131,7 +135,6 @@ public class PerfilesPanel extends JPanel {
         this(perfilService, new AulaService(perfilService), new PiaService());
     }
     
-    // ✅ FIX: constructor vacío (para diseñador o pruebas)
     private static class DefaultDeps {
         final PerfilService perfilService = new PerfilService();
         final AulaService aulaService = new AulaService(perfilService);
@@ -396,30 +399,14 @@ public class PerfilesPanel extends JPanel {
         addField(formPerfilesPanel, gc, 4, "Diagnóstico:", txtDiagnosticoNino);
         addField(formPerfilesPanel, gc, 5, "Avatar:", cbAvatar);
         
-        // --- Título PIA + botón ayuda ---
-        gc.gridy = 6;
-
-        JLabel lblTituloPia = new JLabel("PIA (Plan Individual de Aprendizaje)");
-        lblTituloPia.setFont(lblTituloPia.getFont().deriveFont(Font.BOLD));
-
-        btnAyudaPia = crearBotonAyudaPia();
-        btnAyudaPia.addActionListener(e -> mostrarAyudaPIA());
-
-        JPanel headerPia = new JPanel(new BorderLayout(8, 0));
-        headerPia.setOpaque(false);
-        headerPia.add(lblTituloPia, BorderLayout.WEST);
-        headerPia.add(btnAyudaPia, BorderLayout.EAST);
-
-        gc.gridx = 0;
-        gc.gridwidth = 2;
-        formPerfilesPanel.add(headerPia, gc);
-        gc.gridy++;
-        
         // --- PIA (Plan Individual de Aprendizaje) ---
+        gc.gridy = 6;
         gc.gridx = 0;
         gc.gridwidth = 2;
         gc.weightx = 1.0;
-        formPerfilesPanel.add(buildPiaSection(), gc);
+        
+        // Usamos el nuevo panel PIA colapsable
+        formPerfilesPanel.add(buildPiaPanel(), gc);
         gc.gridy++;
 
         // Empuja los campos hacia arriba (evita que queden centrados con mucho espacio vacío)
@@ -431,8 +418,14 @@ public class PerfilesPanel extends JPanel {
         filler.fill = GridBagConstraints.VERTICAL;
         formPerfilesPanel.add(Box.createVerticalGlue(), filler);
 
+        // ✅ A) Convertir el formulario derecho en scroll
+        JScrollPane spForm = new JScrollPane(formPerfilesPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        spForm.setBorder(BorderFactory.createEmptyBorder());
+        spForm.getVerticalScrollBar().setUnitIncrement(16);
 
-        card.add(formPerfilesPanel, BorderLayout.CENTER);
+        card.add(spForm, BorderLayout.CENTER);
 
         // --- botones abajo
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
@@ -468,87 +461,130 @@ public class PerfilesPanel extends JPanel {
         return card;
     }
     
-    private JPanel buildPiaSection() {
+    private JPanel buildPiaPanel() {
         JPanel root = new JPanel(new GridBagLayout());
         root.setOpaque(false);
-        root.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(),
-                "PIA – Plan Individual de Aprendizaje",
-                TitledBorder.LEFT, TitledBorder.TOP
+        // Borde superior sutil para separar del formulario
+        root.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY),
+            BorderFactory.createEmptyBorder(10, 0, 0, 0)
         ));
 
         GridBagConstraints gc = new GridBagConstraints();
-        gc.insets = new Insets(6, 8, 6, 8);
+        gc.insets = new Insets(4, 0, 4, 0);
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.anchor = GridBagConstraints.NORTHWEST;
         gc.gridx = 0;
         gc.gridy = 0;
         gc.weightx = 1.0;
 
-        // Estado + botones
+        // 1) Header Row: Title + Help + Expand/Collapse
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setOpaque(false);
+        
+        JLabel lblTitle = new JLabel("PIA (Plan Individual de Aprendizaje)");
+        lblTitle.setFont(lblTitle.getFont().deriveFont(Font.BOLD, 14f));
+        
+        JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        headerRight.setOpaque(false);
+        
+        btnAyudaPia = crearBotonAyudaPia();
+        btnAyudaPia.addActionListener(e -> mostrarAyudaPIA());
+        
+        btnExpandirPia = new JButton("Ver detalles ▼");
+        btnExpandirPia.setFocusable(false);
+        btnExpandirPia.addActionListener(e -> togglePiaBody());
+        
+        headerRight.add(btnAyudaPia);
+        headerRight.add(btnExpandirPia);
+        
+        header.add(lblTitle, BorderLayout.WEST);
+        header.add(headerRight, BorderLayout.EAST);
+        
+        root.add(header, gc);
+        gc.gridy++;
+
+        // 2) Status Row: State + Buttons
+        JPanel statusPanel = new JPanel(new BorderLayout(10, 0));
+        statusPanel.setOpaque(false);
+        statusPanel.setBorder(new EmptyBorder(0, 8, 0, 8));
+
         lblPiaEstado = new JLabel("<html><b>PIA:</b> —</html>");
-        lblPiaObjetivoActivo = new JLabel("Objetivo en progreso: —");
-
-        JPanel estadoLeft = new JPanel();
-        estadoLeft.setOpaque(false);
-        estadoLeft.setLayout(new BoxLayout(estadoLeft, BoxLayout.Y_AXIS));
-        estadoLeft.add(lblPiaEstado);
-        estadoLeft.add(Box.createVerticalStrut(2));
-        estadoLeft.add(lblPiaObjetivoActivo);
-
+        lblPiaAyuda = new JLabel("...");
+        lblPiaAyuda.setFont(lblPiaAyuda.getFont().deriveFont(Font.PLAIN, 11f));
+        
+        JPanel statusLeft = new JPanel();
+        statusLeft.setOpaque(false);
+        statusLeft.setLayout(new BoxLayout(statusLeft, BoxLayout.Y_AXIS));
+        statusLeft.add(lblPiaEstado);
+        statusLeft.add(Box.createVerticalStrut(2));
+        statusLeft.add(lblPiaAyuda);
+        
+        // Buttons
         btnCrearPia = new JButton("Crear PIA");
         btnGuardarPia = new JButton("Guardar PIA");
         btnCerrarPia = new JButton("Cerrar PIA");
-
-        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        acciones.setOpaque(false);
-        acciones.add(btnCrearPia);
-        acciones.add(btnGuardarPia);
-        acciones.add(btnCerrarPia);
-
-        JPanel filaEstado = new JPanel(new BorderLayout(10, 0));
-        filaEstado.setOpaque(false);
-        filaEstado.add(estadoLeft, BorderLayout.CENTER);
-        filaEstado.add(acciones, BorderLayout.EAST);
-
-        root.add(filaEstado, gc);
+        
+        JPanel statusButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        statusButtons.setOpaque(false);
+        statusButtons.add(btnCrearPia);
+        statusButtons.add(btnGuardarPia);
+        statusButtons.add(btnCerrarPia);
+        
+        statusPanel.add(statusLeft, BorderLayout.WEST);
+        statusPanel.add(statusButtons, BorderLayout.EAST);
+        
+        root.add(statusPanel, gc);
         gc.gridy++;
 
-        // debajo de lblPiaEstado, opcional:
-        JLabel lblMiniAyuda = new JLabel("¿Dudas? Pulsa el botón “?”");
-        lblMiniAyuda.setFont(lblMiniAyuda.getFont().deriveFont(Font.PLAIN, 11f));
-        root.add(lblMiniAyuda, gc);
-        gc.gridy++;
+        // 3) Body Panel (Collapsible)
+        panelPiaBody = new JPanel(new GridBagLayout());
+        panelPiaBody.setOpaque(false);
+        panelPiaBody.setVisible(false); // Hidden by default
+        panelPiaBody.setBorder(new EmptyBorder(10, 8, 0, 8));
+
+        GridBagConstraints gBody = new GridBagConstraints();
+        gBody.insets = new Insets(4, 0, 4, 0);
+        gBody.fill = GridBagConstraints.HORIZONTAL;
+        gBody.anchor = GridBagConstraints.NORTHWEST;
+        gBody.gridx = 0;
+        gBody.gridy = 0;
+        gBody.weightx = 1.0;
+
+        // Content inside body
+        lblPiaObjetivoActivo = new JLabel("Objetivo en progreso: —");
+        panelPiaBody.add(lblPiaObjetivoActivo, gBody);
+        gBody.gridy++;
 
         // Objetivo general
         JLabel lblObj = new JLabel("<html><b>Objetivo general</b> (resumen para el docente)</html>");
-        root.add(lblObj, gc);
-        gc.gridy++;
+        panelPiaBody.add(lblObj, gBody);
+        gBody.gridy++;
 
         txtPiaObjetivoGeneral = new JTextArea(3, 20);
         txtPiaObjetivoGeneral.setLineWrap(true);
         txtPiaObjetivoGeneral.setWrapStyleWord(true);
         JScrollPane spObjGen = new JScrollPane(txtPiaObjetivoGeneral);
-        spObjGen.setPreferredSize(new Dimension(10, 70));
+        spObjGen.setPreferredSize(new Dimension(10, 60));
+        panelPiaBody.add(spObjGen, gBody);
+        gBody.gridy++;
 
-        root.add(spObjGen, gc);
-        gc.gridy++;
-
-        // Objetivos (tabla) + leyenda
+        // Table
         JLabel lblTabla = new JLabel("<html><b>Objetivos medibles</b> (por juego)</html>");
-        root.add(lblTabla, gc);
-        gc.gridy++;
+        panelPiaBody.add(lblTabla, gBody);
+        gBody.gridy++;
 
         JLabel lblLeyenda = new JLabel("MetaRondas/ProgRondas: rondas correctas | MetaSes/ProgSes: sesiones completadas");
-        root.add(lblLeyenda, gc);
-        gc.gridy++;
+        lblLeyenda.setFont(lblLeyenda.getFont().deriveFont(10f));
+        panelPiaBody.add(lblLeyenda, gBody);
+        gBody.gridy++;
 
         JScrollPane spTabla = new JScrollPane(tblObjetivos);
         spTabla.setPreferredSize(new Dimension(10, 120));
-        root.add(spTabla, gc);
-        gc.gridy++;
+        panelPiaBody.add(spTabla, gBody);
+        gBody.gridy++;
 
-        // Panel “Agregar objetivo”
+        // Add Objective Panel
         JPanel nuevo = new JPanel(new GridBagLayout());
         nuevo.setOpaque(false);
         nuevo.setBorder(BorderFactory.createTitledBorder(
@@ -567,7 +603,6 @@ public class PerfilesPanel extends JPanel {
         spObjMetaRondas = new JSpinner(new SpinnerNumberModel(3, 1, 200, 1));
         spObjMetaSesiones = new JSpinner(new SpinnerNumberModel(1, 1, 200, 1));
 
-        // Tips para que se entienda
         JLabel hintJuego = new JLabel("Tip: usa el ID del juego tal como aparece en la pestaña “Juegos”.");
         hintJuego.setFont(hintJuego.getFont().deriveFont(Font.PLAIN, 11f));
 
@@ -576,8 +611,8 @@ public class PerfilesPanel extends JPanel {
         nuevo.add(hintJuego, g2);
         g2.gridwidth = 1;
 
-        addField(nuevo, g2, 2, "Descripción (qué se quiere lograr):", txtObjDescripcion);
-        addField(nuevo, g2, 3, "Meta (rondas correctas):", spObjMetaRondas);
+        addField(nuevo, g2, 2, "Descripción:", txtObjDescripcion);
+        addField(nuevo, g2, 3, "Meta (rondas):", spObjMetaRondas);
         addField(nuevo, g2, 4, "Meta (sesiones):", spObjMetaSesiones);
 
         btnAgregarObjetivo = new JButton("Agregar objetivo");
@@ -588,20 +623,28 @@ public class PerfilesPanel extends JPanel {
         g2.gridy = 5; g2.gridx = 0; g2.gridwidth = 2;
         nuevo.add(filaBtn, g2);
 
-        root.add(nuevo, gc);
-        gc.gridy++;
+        panelPiaBody.add(nuevo, gBody);
+        gBody.gridy++;
 
-        // Empuja hacia arriba
-        gc.weighty = 1.0;
-        root.add(Box.createVerticalGlue(), gc);
-
-        // Dejar botones/inputs listos (se actualiza al seleccionar niño)
+        root.add(panelPiaBody, gc);
+        
+        // Init state
         setPiaEdicionEnabled(false);
-
-        // Listeners del PIA (si ya los tienes, no dupliques)
+        // Listeners del PIA
         initListenersPia();
 
         return root;
+    }
+    
+    private void togglePiaBody() {
+        boolean visible = !panelPiaBody.isVisible();
+        panelPiaBody.setVisible(visible);
+        btnExpandirPia.setText(visible ? "Ocultar detalles ▲" : "Ver detalles ▼");
+        // Revalidate to adjust layout
+        panelPiaBody.revalidate();
+        // We need to revalidate the scroll pane content
+        formPerfilesPanel.revalidate();
+        formPerfilesPanel.repaint();
     }
     
     private void addField(JPanel panel, GridBagConstraints gc, int row, String label, JComponent field) {
