@@ -1,7 +1,10 @@
 package com.jasgames.ui;
 
 import com.jasgames.model.Juego;
+import com.jasgames.model.ObjetivoPIA;
+import com.jasgames.model.PIA;
 import com.jasgames.model.SesionJuego;
+import com.jasgames.service.PiaService;
 import com.jasgames.service.SesionService;
 
 import javax.swing.*;
@@ -34,6 +37,7 @@ public class DashboardPanel extends JPanel {
 
     // --- Servicios / Tabla ---
     private final SesionService sesionService;
+    private final PiaService piaService;
     private DefaultTableModel tablaModelo;
 
     // --- Filtros nuevos  ---
@@ -50,6 +54,7 @@ public class DashboardPanel extends JPanel {
     private JLabel lblKpiPromedio;
     private JLabel lblKpiMejor;
     private JLabel lblKpiAulaActiva;
+    private JLabel lblKpiPia;
     
     private JPanel cardKpiAulaActiva;
     private String ultimaAulaActiva = null;
@@ -57,14 +62,17 @@ public class DashboardPanel extends JPanel {
     private JPanel cardKpiMejor;
     private Integer ultimoIdMejor = null;
     private String ultimoNombreMejor = null;
+    
+    private JPanel cardKpiPia;
 
     private static final String[] AULAS_PREDEFINIDAS = {
             "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
     };
 
     // Constructor principal: lo usará DocenteWindow
-    public DashboardPanel(SesionService sesionService) {
+    public DashboardPanel(SesionService sesionService, PiaService piaService) {
         this.sesionService = sesionService;
+        this.piaService = piaService;
 
         setLayout(new BorderLayout());
         add(panelDashboard, BorderLayout.CENTER);
@@ -81,7 +89,7 @@ public class DashboardPanel extends JPanel {
 
     // Constructor sin parámetros SOLO para el diseñador de IntelliJ
     public DashboardPanel() {
-        this(new SesionService());
+        this(new SesionService(), new PiaService());
     }
 
     private void inicializarTabla() {
@@ -142,13 +150,14 @@ public class DashboardPanel extends JPanel {
     }
     
     private void construirKpis() {
-        panelKpis = new JPanel(new GridLayout(1, 4, 12, 12));
+        panelKpis = new JPanel(new GridLayout(1, 5, 12, 12));
         panelKpis.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         lblKpiPartidas = crearKpi("Partidas", "0");
         lblKpiPromedio = crearKpi("Promedio", "0");
         lblKpiMejor = crearKpi("Mejor", "-");
         lblKpiAulaActiva = crearKpi("Aula activa", "-");
+        lblKpiPia = crearKpi("PIA", "—");
 
         panelKpis.add(wrapKpi(lblKpiPartidas));
         panelKpis.add(wrapKpi(lblKpiPromedio));
@@ -158,6 +167,9 @@ public class DashboardPanel extends JPanel {
 
         cardKpiAulaActiva = wrapKpi(lblKpiAulaActiva);
         panelKpis.add(cardKpiAulaActiva);
+        
+        cardKpiPia = wrapKpi(lblKpiPia);
+        panelKpis.add(cardKpiPia);
 
         habilitarClickMejor();
         habilitarClickAulaActiva();
@@ -415,6 +427,7 @@ public class DashboardPanel extends JPanel {
         lista.sort(comp);
         
         actualizarKpis(lista);
+        actualizarKpiPia();
 
         // ----- 7) Pintar tabla -----
         DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -495,6 +508,52 @@ public class DashboardPanel extends JPanel {
         lblKpiPromedio.setText(kpiHtml("Promedio", String.valueOf(promedio)));
         lblKpiMejor.setText(kpiHtml("Mejor", mejorTxt));
         lblKpiAulaActiva.setText(kpiHtml("Aula activa", aulaActiva));
+    }
+
+    private void actualizarKpiPia() {
+        if (lblKpiPia == null) return;
+
+        // Solo intentamos si el buscador es un ID numérico
+        String txt = (txtBuscar != null) ? txtBuscar.getText().trim() : "";
+        int id = -1;
+
+        try {
+            if (!txt.isBlank()) id = Integer.parseInt(txt);
+        } catch (NumberFormatException ignored) {}
+
+        if (id <= 0) {
+            lblKpiPia.setText("<html><div style='text-align:center;'>" +
+                    "<div style='font-size:12px;'>PIA</div>" +
+                    "<div style='font-size:20px; font-weight:bold;'>—</div>" +
+                    "</div></html>");
+            return;
+        }
+
+        PIA pia = piaService.obtenerActivo(id);
+        if (pia == null) {
+            lblKpiPia.setText("<html><div style='text-align:center;'>" +
+                    "<div style='font-size:12px;'>PIA</div>" +
+                    "<div style='font-size:20px; font-weight:bold;'>Sin PIA</div>" +
+                    "</div></html>");
+            return;
+        }
+
+        ObjetivoPIA obj = pia.getObjetivoActivo();
+        if (obj == null) {
+            lblKpiPia.setText("<html><div style='text-align:center;'>" +
+                    "<div style='font-size:12px;'>PIA</div>" +
+                    "<div style='font-size:20px; font-weight:bold;'>Sin objetivos</div>" +
+                    "</div></html>");
+            return;
+        }
+
+        String valor = "J" + obj.getJuegoId() + " " +
+                obj.getProgresoRondasCorrectas() + "/" + obj.getMetaRondasCorrectas();
+
+        lblKpiPia.setText("<html><div style='text-align:center;'>" +
+                "<div style='font-size:12px;'>PIA</div>" +
+                "<div style='font-size:20px; font-weight:bold;'>" + valor + "</div>" +
+                "</div></html>");
     }
 
     private String kpiHtml(String titulo, String valor) {

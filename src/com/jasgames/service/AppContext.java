@@ -3,6 +3,7 @@ package com.jasgames.service;
 
 import com.jasgames.model.Docente;
 import com.jasgames.model.Nino;
+import com.jasgames.service.PiaService;
 
 public class AppContext {
 
@@ -36,6 +37,7 @@ public class AppContext {
     public JuegoService getJuegoService() { return juegoService; }
     public PerfilService getPerfilService() { return perfilService; }
     public SesionService getResultadoService() { return sesionService; }
+    public SesionService getSesionService() { return sesionService; } // Alias
     public AuditoriaService getAuditoriaService() { return auditoriaService; }
     public AulaService getAulaService() { return aulaService; }
 
