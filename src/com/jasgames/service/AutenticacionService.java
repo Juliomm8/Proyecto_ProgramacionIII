@@ -43,6 +43,16 @@ public class AutenticacionService {
 
             for (Docente d : docentes) {
                 if (d.getUsuario() != null && d.getUsuario().trim().equalsIgnoreCase(u)) {
+                    // Si el docente tiene password plano pero no hash, intentamos migrarlo al vuelo (caso raro si falló el constructor)
+                    if ((d.getSalt() == null || d.getPasswordHash() == null) && d.getPassword() != null) {
+                         String salt = ContrasenaUtil.generarSaltBase64();
+                         String hash = ContrasenaUtil.hashPasswordBase64(d.getPassword(), salt);
+                         d.setSalt(salt);
+                         d.setPasswordHash(hash);
+                         d.setPassword(null);
+                         guardarDocentes();
+                    }
+
                     if (d.getSalt() == null || d.getPasswordHash() == null) return Optional.empty();
 
                     boolean ok = ContrasenaUtil.verificar(passwordPlano, d.getSalt(), d.getPasswordHash());
@@ -55,7 +65,57 @@ public class AutenticacionService {
         }
     }
 
-    // ---------------- internos ----------------
+    
+
+    /**
+     * Registro de nuevo docente.
+     * Retorna el Docente creado o vacío si no se pudo (usuario repetido o datos inválidos).
+     */
+    public Optional<Docente> registrarDocente(String usuario, String nombre, String passwordPlano) {
+        if (usuario == null || nombre == null || passwordPlano == null) return Optional.empty();
+
+        String u = usuario.trim().toLowerCase(Locale.ROOT);
+        String n = nombre.trim();
+
+        if (u.isBlank() || n.isBlank() || passwordPlano.isBlank()) return Optional.empty();
+        if (u.length() < 3 || passwordPlano.length() < 4) return Optional.empty();
+
+        ioLock.lock();
+        try {
+            // usuario único
+            for (Docente d : docentes) {
+                if (d.getUsuario() != null && d.getUsuario().trim().equalsIgnoreCase(u)) {
+                    return Optional.empty();
+                }
+            }
+
+            int nextId = 1;
+            for (Docente d : docentes) {
+                if (d != null && d.getId() >= nextId) nextId = d.getId() + 1;
+            }
+
+            String salt = ContrasenaUtil.generarSaltBase64();
+            String hash = ContrasenaUtil.hashPasswordBase64(passwordPlano, salt);
+
+            Docente nuevo = new Docente();
+            nuevo.setId(nextId);
+            nuevo.setUsuario(u);
+            nuevo.setNombre(n);
+            nuevo.setSalt(salt);
+            nuevo.setPasswordHash(hash);
+
+            // seguridad: eliminar password plano
+            nuevo.setPassword(null);
+
+            docentes.add(nuevo);
+            guardarDocentes();
+            return Optional.of(nuevo);
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+// ---------------- internos ----------------
 
     private void asegurarArchivoExiste() {
         ioLock.lock();

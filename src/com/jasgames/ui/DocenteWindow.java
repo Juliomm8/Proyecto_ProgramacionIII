@@ -5,13 +5,14 @@ import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 import com.jasgames.ui.login.AccesoWindow;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.*;
-
 public class DocenteWindow extends JFrame {
 
+    // Campos (se mantienen por compatibilidad con el resto del proyecto)
     private JPanel mainPanel;
     private JTabbedPane tabbedPanePrincipal;
     private JPanel tabJuegosPanel;
@@ -51,10 +52,13 @@ public class DocenteWindow extends JFrame {
             return;
         }
 
+        // IMPORTANTE: construir UI antes de setContentPane(mainPanel)
+        initUI();
+
         setContentPane(mainPanel);
         setTitle("JAS Games - Modo Docente");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(1100, 800));
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setMinimumSize(new Dimension(1100, 800));
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
 
@@ -65,6 +69,9 @@ public class DocenteWindow extends JFrame {
                     context.getAuditoriaService().logoutDocente(context.getDocenteSesion().getUsuario());
                 }
                 context.setDocenteSesion(null);
+
+                // Al cerrar, vuelve a la ventana anterior si existe
+                if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
             }
         });
 
@@ -76,7 +83,36 @@ public class DocenteWindow extends JFrame {
         this(new AppContext(), null);
     }
 
+    private void initUI() {
+        // Root
+        mainPanel = new JPanel(new BorderLayout());
+
+        // Header
+        panelHeaderDocente = new JPanel(new BorderLayout(10, 10));
+        panelHeaderDocente.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        btnBackDocente = new JButton("Volver");
+        lblTituloDocente = new JLabel("JAS Games - Modo Docente", SwingConstants.CENTER);
+        lblTituloDocente.setFont(lblTituloDocente.getFont().deriveFont(Font.BOLD, 18f));
+
+        panelHeaderDocente.add(btnBackDocente, BorderLayout.WEST);
+        panelHeaderDocente.add(lblTituloDocente, BorderLayout.CENTER);
+
+        // Tabs
+        tabbedPanePrincipal = new JTabbedPane();
+
+        // Panels "placeholder" (por compatibilidad; no son estrictamente necesarios)
+        tabJuegosPanel = new JPanel(new BorderLayout());
+        tabPerfilesPanel = new JPanel(new BorderLayout());
+        tabDashboardPanel = new JPanel(new BorderLayout());
+
+        mainPanel.add(panelHeaderDocente, BorderLayout.NORTH);
+        mainPanel.add(tabbedPanePrincipal, BorderLayout.CENTER);
+    }
+
     private void initTabs() {
+        if (tabbedPanePrincipal == null) return;
+
         tabbedPanePrincipal.removeAll();
 
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
@@ -107,14 +143,13 @@ public class DocenteWindow extends JFrame {
                         }
                 )
         );
-        tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
 
+        tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
     }
 
     private void initListeners() {
         if (btnBackDocente != null) {
             btnBackDocente.addActionListener(e -> {
-                // AUDITORÍA: logout docente
                 if (context.getDocenteSesion() != null) {
                     context.getAuditoriaService().logoutDocente(context.getDocenteSesion().getUsuario());
                 }
@@ -125,7 +160,6 @@ public class DocenteWindow extends JFrame {
             });
         }
 
-        // Refrescar combos/listas cuando se entra a Perfiles (p.ej. aulas recién creadas)
         if (tabbedPanePrincipal != null) {
             tabbedPanePrincipal.addChangeListener(ev -> {
                 if (perfilesPanel != null && tabbedPanePrincipal.getSelectedComponent() == perfilesPanel) {
@@ -134,5 +168,4 @@ public class DocenteWindow extends JFrame {
             });
         }
     }
-
 }

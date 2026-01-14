@@ -71,17 +71,24 @@ public class LoginDocenteWindow extends JFrame {
 
         root.add(form, BorderLayout.CENTER);
 
+        JPanel south = new JPanel(new BorderLayout(10, 10));
         JPanel botones = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnVolver = new JButton("Volver");
         JButton btnIngresar = new JButton("Ingresar");
         botones.add(btnVolver);
         botones.add(btnIngresar);
-        root.add(botones, BorderLayout.SOUTH);
+
+        JButton btnCrearUsuario = new JButton("Crear usuario");
+        btnCrearUsuario.setFocusPainted(false);
+
+        south.add(botones, BorderLayout.NORTH);
+        south.add(btnCrearUsuario, BorderLayout.SOUTH);
+        root.add(south, BorderLayout.SOUTH);
 
         btnVolver.addActionListener(e -> volver());
         btnIngresar.addActionListener(e -> intentarLogin());
         txtContrasena.addActionListener(e -> intentarLogin());
-
+        btnCrearUsuario.addActionListener(e -> abrirCrearUsuario());
         return root;
     }
 
@@ -108,6 +115,18 @@ public class LoginDocenteWindow extends JFrame {
         docenteWindow.setVisible(true);
 
         dispose();
+    }
+
+    private void abrirCrearUsuario() {
+        CrearDocenteDialog dialog = new CrearDocenteDialog(this, context);
+        dialog.setVisible(true);
+        String nuevoUsuario = dialog.getUsuarioCreado();
+        if (nuevoUsuario != null && !nuevoUsuario.isBlank()) {
+            txtUsuario.setText(nuevoUsuario);
+            txtContrasena.setText("");
+            txtContrasena.requestFocus();
+            lblEstado.setText("Usuario creado exitosamente.");
+        }
     }
 
     private void volver() {
