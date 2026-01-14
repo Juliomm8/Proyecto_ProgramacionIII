@@ -175,6 +175,8 @@ public class PiaService {
             mutator.accept(obj);
             obj.evaluarCompletadoSiAplica();
 
+            p.asegurarObjetivoActivoValido();
+
             guardarEnArchivo();
             return true;
         } finally {

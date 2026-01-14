@@ -141,9 +141,6 @@ public class DashboardPanel extends JPanel {
 
         panelFiltrosDashboard.add(new JLabel("Rango:"));
         panelFiltrosDashboard.add(cbFiltroRango);
-
-        panelFiltrosDashboard.add(new JLabel("Buscar:"));
-
         panelFiltrosDashboard.add(chkSoloPia);
 
         panelFiltrosDashboard.add(new JLabel("Buscar:"));

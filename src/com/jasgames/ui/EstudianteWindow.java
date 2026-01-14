@@ -441,6 +441,13 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                 String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
                 LocalDateTime fechaFin = LocalDateTime.now();
+                long durMs = actividad.getDuracionMs();
+                if (durMs < 0) durMs = 0;
+
+                // Inicio real estimado usando la duración (para reportes correctos)
+                LocalDateTime fechaInicio = (durMs > 0)
+                        ? fechaFin.minusNanos(durMs * 1_000_000L)
+                        : fechaFin;
 
                 SesionJuego sesion = new SesionJuego(
                         id,
@@ -449,13 +456,12 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                         actividad.getJuego(),
                         actividad.getNivel(),
                         0,
-                        fechaFin
+                        fechaInicio
                 );
 
                 // Copiar métricas desde Actividad
                 sesion.setFechaFin(fechaFin);
-                sesion.setDuracionMs(actividad.getDuracionMs());
-
+                sesion.setDuracionMs(durMs);
                 sesion.setRondasTotales(actividad.getRondasMeta());
                 sesion.setRondasCompletadas(actividad.getRondasJugadas());
 

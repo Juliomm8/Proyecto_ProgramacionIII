@@ -1083,11 +1083,19 @@ public class PerfilesPanel extends JPanel {
         ObjetivoPIA obj = piaActual.getObjetivoPorId(idObj);
         if (obj == null) return;
 
+        // Permite corregir el juego asociado (si cambia, reiniciamos progreso para evitar mezclas)
+        JSpinner spJuegoId = new JSpinner(new SpinnerNumberModel(obj.getJuegoId(), 1, 99, 1));
         JTextField txtDesc = new JTextField(obj.getDescripcion());
         JSpinner spRondas = new JSpinner(new SpinnerNumberModel(obj.getMetaRondasCorrectas(), 1, 999, 1));
         JSpinner spSesiones = new JSpinner(new SpinnerNumberModel(obj.getMetaSesionesCompletadas(), 1, 999, 1));
 
         JPanel p = new JPanel(new GridLayout(0, 1));
+        p.add(new JLabel("Juego (ID):"));
+        p.add(spJuegoId);
+
+        JLabel lblNota = new JLabel("<html><i>Nota:</i> si cambias el Juego (ID), el progreso del objetivo se reinicia.</html>");
+        p.add(lblNota);
+
         p.add(new JLabel("Descripción:"));
         p.add(txtDesc);
         p.add(new JLabel("Meta Rondas Correctas:"));
@@ -1095,13 +1103,28 @@ public class PerfilesPanel extends JPanel {
         p.add(new JLabel("Meta Sesiones Completadas:"));
         p.add(spSesiones);
 
-        int r = JOptionPane.showConfirmDialog(this, p, "Editar Objetivo", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int r = JOptionPane.showConfirmDialog(
+                this, p, "Editar Objetivo",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
         if (r == JOptionPane.OK_OPTION) {
             piaService.actualizarObjetivo(piaActual.getIdPia(), idObj, o -> {
+                int nuevoJuego = (Integer) spJuegoId.getValue();
+                if (nuevoJuego != o.getJuegoId()) {
+                    o.setJuegoId(nuevoJuego);
+                    o.setProgresoRondasCorrectas(0);
+                    o.setProgresoSesionesCompletadas(0);
+                    o.setCompletado(false);
+                    o.setFechaCompletado(null);
+                }
+
                 o.setDescripcion(txtDesc.getText().trim());
                 o.setMetaRondasCorrectas((Integer) spRondas.getValue());
                 o.setMetaSesionesCompletadas((Integer) spSesiones.getValue());
             });
+
             cargarPiaDelNino();
         }
     }
