@@ -73,6 +73,16 @@ public class DashboardPanel extends JPanel {
 
     // Menú contextual (click derecho) sobre la tabla
     private JPopupMenu menuTabla;
+
+    // --- UX docente (Paso 3): "Undo" al borrar + debounce de búsqueda ---
+    private JPanel panelUndo;
+    private JLabel lblUndo;
+    private JButton btnUndo;
+    private javax.swing.Timer timerUndo;
+    private int undoSegundosRestantes = 0;
+    private SesionJuego sesionEliminadaParaUndo;
+
+    private javax.swing.Timer debounceBuscar;
     
     // KPIs
     private JPanel panelKpis;
@@ -273,6 +283,19 @@ public class DashboardPanel extends JPanel {
             tabsCentro.addTab("Reporte PIA", panelReportePia);
         }
         centro.add(tabsCentro, BorderLayout.CENTER);
+
+        // Barra inferior para "Deshacer" al eliminar sesión (se muestra solo cuando aplica)
+        panelUndo = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
+        panelUndo.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)));
+        lblUndo = new JLabel(" ");
+        btnUndo = new JButton("Deshacer");
+        btnUndo.setFocusable(false);
+        btnUndo.addActionListener(e -> ejecutarUndo());
+
+        panelUndo.add(lblUndo);
+        panelUndo.add(btnUndo);
+        panelUndo.setVisible(false);
+        centro.add(panelUndo, BorderLayout.SOUTH);
 
         if (panelDashboard != null) {
             panelDashboard.remove(scrollResultados);
@@ -903,10 +926,16 @@ public class DashboardPanel extends JPanel {
         chkSoloPia.addActionListener(e -> actualizarTabla(false));
         cbOrden.addActionListener(e -> actualizarTabla(false));
 
+                // Debounce (250ms) para que no recalculen los filtros en cada tecla
+        if (debounceBuscar == null) {
+            debounceBuscar = new javax.swing.Timer(250, e -> actualizarTabla(false));
+            debounceBuscar.setRepeats(false);
+        }
+
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { actualizarTabla(false); }
-            @Override public void removeUpdate(DocumentEvent e) { actualizarTabla(false); }
-            @Override public void changedUpdate(DocumentEvent e) { actualizarTabla(false); }
+            @Override public void insertUpdate(DocumentEvent e) { debounceBuscar.restart(); }
+            @Override public void removeUpdate(DocumentEvent e) { debounceBuscar.restart(); }
+            @Override public void changedUpdate(DocumentEvent e) { debounceBuscar.restart(); }
         });
 
         instalarMenuContextualTabla();
@@ -1094,7 +1123,7 @@ public class DashboardPanel extends JPanel {
                         "Estudiante: " + nombre + "\n" +
                         "Juego: " + juego + "\n" +
                         "Fecha: " + (s.getFechaFin() != null ? s.getFechaFin().toLocalDate().toString() : "-") + "\n\n" +
-                        "Esta acción no se puede deshacer.",
+                        "Podrás deshacerla durante 10 segundos.",
                 "Confirmar eliminación",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
@@ -1102,15 +1131,18 @@ public class DashboardPanel extends JPanel {
 
         if (ok != JOptionPane.YES_OPTION) return;
 
-        boolean removed = sesionService.eliminarSesion(s.getIdSesion());
-        // Mantener consistencia del PIA si esta sesión aportaba a un objetivo
-        String idPiaAfectado = (s.getIdPia() != null) ? s.getIdPia().trim() : null;
-        if (removed && idPiaAfectado != null && !idPiaAfectado.isBlank()) {
-            piaService.recalcularProgresoPIA(idPiaAfectado, sesionService.obtenerTodos());
-        }
-        if (!removed) {
+        Optional<SesionJuego> eliminadoOpt = sesionService.eliminarSesionYDevolver(s.getIdSesion());
+        if (eliminadoOpt.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No se pudo eliminar la sesión (puede que ya no exista).", "Eliminar sesión", JOptionPane.ERROR_MESSAGE);
             return;
+        }
+
+        SesionJuego eliminado = eliminadoOpt.get();
+
+        // Mantener consistencia del PIA si esta sesión aportaba a un objetivo
+        String idPiaAfectado = (eliminado.getIdPia() != null) ? eliminado.getIdPia().trim() : null;
+        if (idPiaAfectado != null && !idPiaAfectado.isBlank()) {
+            piaService.recalcularProgresoPIA(idPiaAfectado, sesionService.obtenerTodos());
         }
 
         // Refrescar tabla y filtros
@@ -1119,7 +1151,89 @@ public class DashboardPanel extends JPanel {
 
         // Mantener el reporte PIA sincronizado
         refrescarReportePia();
+
+        // Mostrar banner de "Deshacer"
+        mostrarUndo(eliminado);
     }
+
+    // ----------------------------------------------------------------------
+    // Paso 3 — Undo (Deshacer) al eliminar sesión + feedback moderno
+    // ----------------------------------------------------------------------
+
+    private void mostrarUndo(SesionJuego eliminada) {
+        sesionEliminadaParaUndo = eliminada;
+
+        if (timerUndo != null && timerUndo.isRunning()) {
+            timerUndo.stop();
+        }
+
+        undoSegundosRestantes = 10;
+        actualizarTextoUndo();
+
+        if (panelUndo != null) panelUndo.setVisible(true);
+        if (btnUndo != null) btnUndo.setEnabled(true);
+
+        timerUndo = new javax.swing.Timer(1000, e -> {
+            undoSegundosRestantes--;
+            if (undoSegundosRestantes <= 0) {
+                ocultarUndo();
+            } else {
+                actualizarTextoUndo();
+            }
+        });
+        timerUndo.setRepeats(true);
+        timerUndo.start();
+    }
+
+    private void actualizarTextoUndo() {
+        if (lblUndo == null) return;
+        String nombre = (sesionEliminadaParaUndo != null) ? safe(sesionEliminadaParaUndo.getNombreEstudiante()) : "";
+        if (nombre.isBlank()) nombre = "sesión";
+        lblUndo.setText("Sesión eliminada (" + nombre + "). Deshacer (" + undoSegundosRestantes + "s)");
+    }
+
+    private void ocultarUndo() {
+        if (timerUndo != null) timerUndo.stop();
+        timerUndo = null;
+        undoSegundosRestantes = 0;
+        sesionEliminadaParaUndo = null;
+
+        if (panelUndo != null) panelUndo.setVisible(false);
+        if (lblUndo != null) lblUndo.setText(" ");
+    }
+
+    private void ejecutarUndo() {
+        SesionJuego s = sesionEliminadaParaUndo;
+        if (s == null) return;
+
+        if (timerUndo != null) timerUndo.stop();
+
+        boolean ok = sesionService.restaurarSesion(s);
+        if (!ok) {
+            // Si falló, mantenemos el banner un instante y luego ocultamos.
+            if (lblUndo != null) lblUndo.setText("No se pudo restaurar (ya existe una sesión con ese ID).");
+            javax.swing.Timer t = new javax.swing.Timer(2200, e -> ocultarUndo());
+            t.setRepeats(false);
+            t.start();
+            return;
+        }
+
+        // Recalcular PIA si aplica
+        String idPia = (s.getIdPia() != null) ? s.getIdPia().trim() : null;
+        if (idPia != null && !idPia.isBlank()) {
+            piaService.recalcularProgresoPIA(idPia, sesionService.obtenerTodos());
+        }
+
+        recargarCombosFiltros(true);
+        actualizarTabla(false);
+        refrescarReportePia();
+
+        if (lblUndo != null) lblUndo.setText("Sesión restaurada ✅");
+        javax.swing.Timer t = new javax.swing.Timer(1600, e -> ocultarUndo());
+        t.setRepeats(false);
+        t.start();
+    }
+
 
     private void limpiarFiltros() {
         cbFiltroJuego.setSelectedItem("Todos");

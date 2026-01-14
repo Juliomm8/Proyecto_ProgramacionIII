@@ -68,6 +68,48 @@ public class SesionService {
             ioLock.unlock();
         }
     }
+    /**
+     * Elimina una sesión por su id y devuelve la sesión eliminada (si existía).
+     * Útil para implementar "Deshacer" (Undo) desde la UI.
+     */
+    public Optional<SesionJuego> eliminarSesionYDevolver(String idSesion) {
+        if (idSesion == null || idSesion.isBlank()) return Optional.empty();
+
+        ioLock.lock();
+        try {
+            for (int i = 0; i < resultados.size(); i++) {
+                SesionJuego s = resultados.get(i);
+                if (s != null && idSesion.equals(s.getIdSesion())) {
+                    resultados.remove(i);
+                    guardarEnArchivo();
+                    return Optional.of(s);
+                }
+            }
+            return Optional.empty();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    /**
+     * Restaura una sesión previamente eliminada. Devuelve false si ya existía una sesión con el mismo id.
+     */
+    public boolean restaurarSesion(SesionJuego sesion) {
+        if (sesion == null || sesion.getIdSesion() == null || sesion.getIdSesion().isBlank()) return false;
+
+        ioLock.lock();
+        try {
+            String id = sesion.getIdSesion();
+            for (SesionJuego s : resultados) {
+                if (s != null && id.equals(s.getIdSesion())) return false;
+            }
+            resultados.add(sesion);
+            guardarEnArchivo();
+            return true;
+        } finally {
+            ioLock.unlock();
+        }
+    }
 
     public List<SesionJuego> obtenerPorJuego(Juego juego) {
         if (juego == null) return new ArrayList<>();

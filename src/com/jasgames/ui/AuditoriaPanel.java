@@ -20,6 +20,8 @@ public class AuditoriaPanel extends JPanel {
     private final JComboBox<String> cbTipo = new JComboBox<>(new String[]{"TODOS"});
     private final JTextField txtBuscar = new JTextField(18);
     private final JLabel lblConteo = new JLabel(" ");
+    private javax.swing.Timer debounceBuscar;
+
 
     private List<String> lineasOriginales = new ArrayList<>();
 
@@ -37,12 +39,18 @@ public class AuditoriaPanel extends JPanel {
         
         cbTipo.addActionListener(e -> aplicarFiltrosYMostrar());
 
+                // Debounce (250ms) para que la búsqueda no recalcule en cada tecla
+        if (debounceBuscar == null) {
+            debounceBuscar = new javax.swing.Timer(250, e -> aplicarFiltrosYMostrar());
+            debounceBuscar.setRepeats(false);
+        }
+
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { aplicarFiltrosYMostrar(); }
-            @Override public void removeUpdate(DocumentEvent e) { aplicarFiltrosYMostrar(); }
-            @Override public void changedUpdate(DocumentEvent e) { aplicarFiltrosYMostrar(); }
+            @Override public void insertUpdate(DocumentEvent e) { debounceBuscar.restart(); }
+            @Override public void removeUpdate(DocumentEvent e) { debounceBuscar.restart(); }
+            @Override public void changedUpdate(DocumentEvent e) { debounceBuscar.restart(); }
         });
-        
+
         cargar();
     }
 
