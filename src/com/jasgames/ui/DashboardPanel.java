@@ -99,6 +99,7 @@ public class DashboardPanel extends JPanel {
     private JButton btnReporteMarcarActivo;
     private JButton btnReporteIrAObjetivo;
     private JButton btnReporteRefrescar;
+    private JButton btnReporteRecalcular;
 
     private static final String[] AULAS_PREDEFINIDAS = {
             "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
@@ -286,6 +287,7 @@ public class DashboardPanel extends JPanel {
         JLabel lblN = new JLabel("Últimas sesiones:");
 
         btnReporteRefrescar = new JButton("Refrescar");
+        btnReporteRecalcular = new JButton("Recalcular progreso");
         btnReporteMarcarActivo = new JButton("Marcar como activo");
         btnReporteIrAObjetivo = new JButton("Ir al objetivo");
 
@@ -298,6 +300,7 @@ public class DashboardPanel extends JPanel {
         top.add(lblN);
         top.add(spUltimasNSesiones);
         top.add(btnReporteRefrescar);
+        top.add(btnReporteRecalcular);
         top.add(btnReporteMarcarActivo);
         top.add(btnReporteIrAObjetivo);
 
@@ -353,6 +356,7 @@ public class DashboardPanel extends JPanel {
 
         // --- listeners ---
         btnReporteRefrescar.addActionListener(e -> refrescarReportePia());
+        btnReporteRecalcular.addActionListener(e -> recalcularPiaSeleccionado());
         chkIncluirPiasCerrados.addActionListener(e -> refrescarReportePia());
 
         cbReportePia.addActionListener(e -> {
@@ -585,6 +589,35 @@ public class DashboardPanel extends JPanel {
         if (idObj == null) return;
 
         navigator.goToObjective(pia.getIdNino(), idObj);
+    }
+
+
+    private void recalcularPiaSeleccionado() {
+    PIA pia = (PIA) cbReportePia.getSelectedItem();
+    if (pia == null) {
+        JOptionPane.showMessageDialog(this, "Seleccione un PIA primero.", "PIA", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+
+    int ok = JOptionPane.showConfirmDialog(
+            this,
+            "Recalculará el progreso del PIA desde las sesiones guardadas.\n" +
+                    "Útil si se eliminaron sesiones o se corrigieron datos.\n\n" +
+                    "¿Desea continuar?",
+            "Recalcular progreso PIA",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+    );
+    if (ok != JOptionPane.YES_OPTION) return;
+
+    boolean done = piaService.recalcularProgresoPIA(pia.getIdPia(), sesionService.obtenerTodos());
+    if (!done) {
+        JOptionPane.showMessageDialog(this, "No se pudo recalcular (PIA no encontrado).", "PIA", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    refrescarReportePia();
+    JOptionPane.showMessageDialog(this, "Progreso recalculado correctamente.", "PIA", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private static class StatsObjetivo {
@@ -979,6 +1012,11 @@ public class DashboardPanel extends JPanel {
         if (ok != JOptionPane.YES_OPTION) return;
 
         boolean removed = sesionService.eliminarSesion(s.getIdSesion());
+        // Mantener consistencia del PIA si esta sesión aportaba a un objetivo
+        String idPiaAfectado = (s.getIdPia() != null) ? s.getIdPia().trim() : null;
+        if (removed && idPiaAfectado != null && !idPiaAfectado.isBlank()) {
+            piaService.recalcularProgresoPIA(idPiaAfectado, sesionService.obtenerTodos());
+        }
         if (!removed) {
             JOptionPane.showMessageDialog(this, "No se pudo eliminar la sesión (puede que ya no exista).", "Eliminar sesión", JOptionPane.ERROR_MESSAGE);
             return;

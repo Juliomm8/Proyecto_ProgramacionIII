@@ -257,7 +257,82 @@ public class PiaService {
         }
     }
 
-    // ----------------- helpers internos -----------------
+    /**
+     * Recalcula el progreso de un PIA (y sus objetivos) a partir de una lista de sesiones,
+     * usando como fuente de verdad las sesiones con idPia/idObjetivoPia.
+     *
+     * Esto es clave cuando se eliminan sesiones desde el Dashboard, para evitar progreso "inflado".
+     *
+     * @param idPia    id del PIA a recalcular
+     * @param sesiones lista de sesiones (idealmente sesionService.obtenerTodos())
+     * @return true si el PIA existía y se recalculó, false si no existe.
+     */
+    public boolean recalcularProgresoPIA(String idPia, List<SesionJuego> sesiones) {
+        if (idPia == null || idPia.isBlank()) return false;
+
+        ioLock.lock();
+        try {
+            PIA pia = obtenerPorIdInterno(idPia);
+            if (pia == null) return false;
+
+            // Agregados por objetivo
+            Map<String, Integer> rondasPorObj = new HashMap<>();
+            Map<String, Integer> sesionesPorObj = new HashMap<>();
+
+            if (sesiones != null) {
+                for (SesionJuego s : sesiones) {
+                    if (s == null) continue;
+                    if (s.getIdPia() == null || s.getIdObjetivoPia() == null) continue;
+                    if (!idPia.equals(s.getIdPia())) continue;
+
+                    String idObj = s.getIdObjetivoPia();
+                    rondasPorObj.put(
+                            idObj,
+                            rondasPorObj.getOrDefault(idObj, 0) + Math.max(0, s.getAciertosTotales())
+                    );
+                    sesionesPorObj.put(
+                            idObj,
+                            sesionesPorObj.getOrDefault(idObj, 0) + 1
+                    );
+                }
+            }
+
+            // Aplicar a cada objetivo del PIA
+            for (ObjetivoPIA obj : pia.getObjetivos()) {
+                if (obj == null) continue;
+
+                int progR = rondasPorObj.getOrDefault(obj.getIdObjetivo(), 0);
+                int progS = sesionesPorObj.getOrDefault(obj.getIdObjetivo(), 0);
+
+                obj.setProgresoRondasCorrectas(progR);
+                obj.setProgresoSesionesCompletadas(progS);
+
+                // Re-evaluar completado desde cero (si bajó por eliminación, puede descompletarse)
+                boolean okRondas = (obj.getMetaRondasCorrectas() <= 0) || (progR >= obj.getMetaRondasCorrectas());
+                boolean okSesiones = (obj.getMetaSesionesCompletadas() <= 0) || (progS >= obj.getMetaSesionesCompletadas());
+
+                if (okRondas && okSesiones) {
+                    if (!obj.isCompletado()) {
+                        obj.setCompletado(true);
+                        if (obj.getFechaCompletado() == null) obj.setFechaCompletado(LocalDateTime.now());
+                    }
+                } else {
+                    obj.setCompletado(false);
+                    obj.setFechaCompletado(null);
+                }
+            }
+
+            // Asegurar objetivo activo coherente
+            pia.asegurarObjetivoActivoValido();
+
+            guardarEnArchivo();
+            return true;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+// ----------------- helpers internos -----------------
+
 
     private int indexOf(String idPia) {
         if (idPia == null) return -1;
