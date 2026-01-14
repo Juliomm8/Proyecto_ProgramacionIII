@@ -81,7 +81,11 @@ public class DocenteWindow extends JFrame {
 
         tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
 
-        perfilesPanel = new PerfilesPanel(perfilService, context.getAulaService());
+        perfilesPanel = new PerfilesPanel(
+                perfilService,
+                context.getAulaService(),
+                context.getPiaService()
+        );
         tabbedPanePrincipal.addTab("Perfiles", perfilesPanel);
 
         tabbedPanePrincipal.addTab("Aulas", new AulasPanel(context, (int idNino) -> {
@@ -89,10 +93,23 @@ public class DocenteWindow extends JFrame {
             perfilesPanel.seleccionarNinoPorId(idNino);
         }));
 
-        tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService()));
+        tabbedPanePrincipal.addTab(
+                "Dashboard",
+                new DashboardPanel(
+                        context.getResultadoService(),
+                        context.getPiaService(),
+                        context.getAulaService(),
+                        (idNino, idObjetivo) -> {
+                            tabbedPanePrincipal.setSelectedComponent(perfilesPanel);
+                            if (perfilesPanel != null) {
+                                perfilesPanel.irAObjetivoPia(idNino, idObjetivo);
+                            }
+                        }
+                )
+        );
         tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
-    }
 
+    }
 
     private void initListeners() {
         if (btnBackDocente != null) {

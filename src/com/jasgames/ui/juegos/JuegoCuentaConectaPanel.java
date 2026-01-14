@@ -94,6 +94,24 @@ public class JuegoCuentaConectaPanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void aplicarPistaSuave() {
+        // Pista suave: desactiva 1 opción numérica incorrecta adicional
+        if (botones == null) return;
+
+        java.util.List<OpcionNumeroButton> candidatos = new java.util.ArrayList<>();
+        for (OpcionNumeroButton b : botones) {
+            if (b != null && b.isEnabled() && b.getValor() != numeroObjetivo) {
+                candidatos.add(b);
+            }
+        }
+        if (candidatos.isEmpty()) return;
+
+        OpcionNumeroButton elegido = candidatos.get(random.nextInt(candidatos.size()));
+        elegido.fadeOutAndDisable();
+    }
+
+
+    @Override
     protected void prepararNuevaRonda() {
         setBloqueado(false);
         setFeedback(" ");

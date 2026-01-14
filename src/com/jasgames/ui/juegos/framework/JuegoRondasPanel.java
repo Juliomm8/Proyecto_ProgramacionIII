@@ -12,22 +12,11 @@ import java.awt.*;
  *
  * Qué resuelve:
  * - UI consistente (instrucción, progreso, feedback)
- * - Control de rondas (meta, aciertos, errores)
+ * - Control de rondas (meta, jugadas, aciertos, errores)
+ * - 3 intentos por ronda (configurable)
+ * - Pista suave desde el 2do intento (configurable)
  * - Bloqueo de entrada (cuando hay animación)
  * - Animación estándar de pulso (latido) reutilizable
- *
- * Cómo se usa:
- * 1) En el constructor del hijo:
- *    - setInstruccion(...)
- *    - setTablero(...)
- *    - setPanelRespuestas(...)
- * 2) Implementa:
- *    - prepararNuevaRonda()
- *    - calcularPuntosFinales() (opcional)
- * 3) En acierto:
- *    - marcarAciertoConPulso(repaintTarget, antesDeSiguienteRonda)
- * 4) En error:
- *    - marcarErrorNeutro("Intenta de nuevo")
  */
 public abstract class JuegoRondasPanel extends BaseJuegoPanel {
 
@@ -38,13 +27,27 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
     private JPanel hostTablero;
     private JPanel hostRespuestas;
 
+    // Métricas principales
     protected int rondasCorrectas;
     protected int erroresTotales;
     protected boolean bloqueado;
 
+    // Nuevo: rondas jugadas (se incrementa tanto por acierto como por agotar intentos)
+    protected int rondasJugadas;
+
+    // Control por ronda
+    private int intentosEnRonda;
+    private boolean pistaAplicadaEnRonda;
+
+    // Métricas reales (para SesionJuego)
+    private int intentosTotalesReal;
+    private int pistasUsadasReal;
+    private int aciertosPrimerIntentoReal;
+
     /** Factor de escala para animación de pulso (úsalo en paint). */
     private double pulsoScale = 1.0;
     private Timer timerPulso;
+    private Timer timerAvanceRonda;
 
     protected JuegoRondasPanel(Actividad actividad, JuegoListener listener) {
         super(actividad, listener);
@@ -128,6 +131,23 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
         return 5;
     }
 
+    /** Configurable por juego si quieres. Default 3. */
+    protected int getIntentosMaxPorRonda() {
+        int v = (actividadActual != null) ? actividadActual.getIntentosMaxPorRonda() : 3;
+        return (v <= 0) ? 3 : v;
+    }
+
+    /** Configurable por juego si quieres. Default 2 (pista desde el 2do intento). */
+    protected int getPistasDesdeIntento() {
+        int v = (actividadActual != null) ? actividadActual.getPistasDesdeIntento() : 2;
+        return (v <= 0) ? 2 : v;
+    }
+
+    /** Índice 0-based de la ronda actual (cuántas rondas ya se completaron/jugaron). */
+    protected final int getIndiceRondaActual() {
+        return Math.max(0, rondasJugadas);
+    }
+
     protected final double getPulsoScale() {
         return pulsoScale;
     }
@@ -137,11 +157,26 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
     @Override
     public final void iniciarJuego() {
         detenerPulso();
+        detenerAvanceRonda();
         pulsoScale = 1.0;
 
         rondasCorrectas = 0;
+        rondasJugadas = 0;
         erroresTotales = 0;
         bloqueado = false;
+
+        intentosEnRonda = 0;
+        pistaAplicadaEnRonda = false;
+
+        intentosTotalesReal = 0;
+        pistasUsadasReal = 0;
+        aciertosPrimerIntentoReal = 0;
+
+        // Defaults en Actividad (por si luego quieres verlos en UI/reportes)
+        if (actividadActual != null) {
+            actividadActual.setIntentosMaxPorRonda(getIntentosMaxPorRonda());
+            actividadActual.setPistasDesdeIntento(getPistasDesdeIntento());
+        }
 
         setFeedback(" ");
         actualizarProgreso();
@@ -156,6 +191,16 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
     /** El hijo define cómo se prepara cada ronda. */
     protected abstract void prepararNuevaRonda();
 
+    /** Hook opcional: se llama cuando el niño llega al intento donde corresponde una pista. */
+    protected void aplicarPistaSuave() {
+        // por defecto no hace nada; cada juego puede apagar 1 distractor o dar una pista visual
+    }
+
+    /** Hook opcional: se llama cuando se agotan los intentos de la ronda (antes de pasar a la siguiente). */
+    protected void onIntentosAgotados() {
+        // por defecto no hace nada
+    }
+
     /** Default: rondasCorrectas (si quieres fijo, sobrescribe). */
     protected int calcularPuntosFinales() {
         return rondasCorrectas;
@@ -163,21 +208,57 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
 
     // -------------------- Helpers (acierto/error) --------------------
 
+    private void registrarIntento(boolean correcto) {
+        // Registra intento real
+        boolean primerIntentoEnRonda = (intentosEnRonda == 0);
+        intentosEnRonda++;
+        intentosTotalesReal++;
+
+        if (!correcto) {
+            erroresTotales++;
+        } else {
+            if (primerIntentoEnRonda) {
+                aciertosPrimerIntentoReal++;
+            }
+        }
+
+        // Pista desde el 2do intento (o lo que defina el juego)
+        if (!correcto && !pistaAplicadaEnRonda && intentosEnRonda >= getPistasDesdeIntento()) {
+            pistaAplicadaEnRonda = true;
+            pistasUsadasReal++;
+            try {
+                aplicarPistaSuave();
+            } catch (Exception ignored) {
+                // Evitar que una pista mal implementada rompa el juego
+            }
+        }
+    }
+
+    private void resetEstadoRonda() {
+        intentosEnRonda = 0;
+        pistaAplicadaEnRonda = false;
+    }
+
     protected final void marcarAciertoConPulso(JComponent repaintTarget, Runnable antesDeSiguienteRonda) {
         if (bloqueado) return;
         bloqueado = true;
+
+        registrarIntento(true);
 
         setFeedback("¡Muy bien!");
 
         reproducirPulso(repaintTarget, () -> {
             rondasCorrectas++;
+            rondasJugadas++;
             actualizarProgreso();
 
-            if (rondasCorrectas >= getRondasMeta()) {
+            if (rondasJugadas >= getRondasMeta()) {
+                volcarMetricasFinDeSesion();
                 finalizarJuego(calcularPuntosFinales());
                 return;
             }
 
+            resetEstadoRonda();
             if (antesDeSiguienteRonda != null) antesDeSiguienteRonda.run();
             bloqueado = false;
             prepararNuevaRonda();
@@ -185,13 +266,74 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
     }
 
     protected final void marcarErrorNeutro(String feedback) {
-        erroresTotales++;
+        if (bloqueado) return;
+
+        registrarIntento(false);
+
         setFeedback((feedback == null || feedback.isBlank()) ? "Intenta de nuevo" : feedback);
+
+        // Si se agotaron los intentos, avanzamos a la siguiente ronda con una pausa suave
+        if (intentosEnRonda >= getIntentosMaxPorRonda()) {
+            bloqueado = true;
+            try {
+                onIntentosAgotados();
+            } catch (Exception ignored) {}
+
+            setFeedback("Vamos con la siguiente");
+
+            detenerAvanceRonda();
+            timerAvanceRonda = new Timer(700, ev -> {
+                ((Timer) ev.getSource()).stop();
+                timerAvanceRonda = null;
+
+                rondasJugadas++;
+                actualizarProgreso();
+
+                if (rondasJugadas >= getRondasMeta()) {
+                    volcarMetricasFinDeSesion();
+                    finalizarJuego(calcularPuntosFinales());
+                    return;
+                }
+
+                resetEstadoRonda();
+                bloqueado = false;
+                prepararNuevaRonda();
+            });
+            timerAvanceRonda.setRepeats(false);
+            timerAvanceRonda.start();
+        }
+    }
+
+    /**
+     * Vuelca métricas reales de la sesión hacia {@link Actividad} para que EstudianteWindow
+     * pueda persistirlas en {@link com.jasgames.model.SesionJuego}.
+     */
+    protected void volcarMetricasFinDeSesion() {
+        if (actividadActual == null) return;
+
+        int meta = getRondasMeta();
+
+        actividadActual.setRondasMeta(meta);
+        actividadActual.setRondasJugadas(rondasJugadas);
+        actividadActual.setRondasCorrectas(rondasCorrectas);
+
+        actividadActual.setErroresTotales(erroresTotales);
+        actividadActual.setIntentosTotales(intentosTotalesReal);
+
+        actividadActual.setIntentosMaxPorRonda(getIntentosMaxPorRonda());
+        actividadActual.setPistasDesdeIntento(getPistasDesdeIntento());
+
+        actividadActual.setPistasUsadas(pistasUsadasReal);
+        actividadActual.setAciertosPrimerIntento(aciertosPrimerIntentoReal);
+
+        // Compatibilidad con campo antiguo
+        actividadActual.setIntentosFallidos(erroresTotales);
     }
 
     protected final void actualizarProgreso() {
         int meta = getRondasMeta();
-        int mostrada = Math.min(rondasCorrectas + 1, meta);
+        int mostrada = Math.min(rondasJugadas + 1, meta);
+        if (rondasJugadas >= meta) mostrada = meta;
         lblProgreso.setText("Ronda " + mostrada + "/" + meta);
     }
 
@@ -229,6 +371,13 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
         timerPulso = null;
     }
 
+    private void detenerAvanceRonda() {
+        if (timerAvanceRonda != null && timerAvanceRonda.isRunning()) {
+            timerAvanceRonda.stop();
+        }
+        timerAvanceRonda = null;
+    }
+
     /**
      * Limpieza automática cuando el panel se remueve del árbol de UI.
      * Útil para evitar Timers “fantasma” si el usuario sale de un juego.
@@ -236,6 +385,7 @@ public abstract class JuegoRondasPanel extends BaseJuegoPanel {
     @Override
     public void removeNotify() {
         detenerPulso();
+        detenerAvanceRonda();
         onAntesDeSalir();
         super.removeNotify();
     }

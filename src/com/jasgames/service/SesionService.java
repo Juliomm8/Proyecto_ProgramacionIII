@@ -2,7 +2,7 @@ package com.jasgames.service;
 
 import com.google.gson.*;
 import com.jasgames.model.Juego;
-import com.jasgames.model.ResultadoJuego;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.util.AtomicFiles;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
@@ -16,11 +16,11 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-public class ResultadoService {
+public class SesionService {
 
     private static final String ARCHIVO_RESULTADOS = "data/resultados.json";
 
-    private final List<ResultadoJuego> resultados = new ArrayList<>();
+    private final List<SesionJuego> resultados = new ArrayList<>();
     private final ReentrantLock ioLock = FileLocks.of(Paths.get(ARCHIVO_RESULTADOS));
 
     private final Gson gson = new GsonBuilder()
@@ -28,11 +28,11 @@ public class ResultadoService {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
-    public ResultadoService() {
+    public SesionService() {
         cargarDesdeArchivo();
     }
 
-    public void registrarResultado(ResultadoJuego resultado) {
+    public void registrarResultado(SesionJuego resultado) {
         if (resultado != null) {
             ioLock.lock();
             try {
@@ -44,7 +44,7 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerTodos() {
+    public List<SesionJuego> obtenerTodos() {
         ioLock.lock();
         try {
             return new ArrayList<>(resultados);
@@ -53,7 +53,23 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerPorJuego(Juego juego) {
+    /**
+     * Elimina una sesión por su id (idSesion). Devuelve true si se eliminó.
+     */
+    public boolean eliminarSesion(String idSesion) {
+        if (idSesion == null || idSesion.isBlank()) return false;
+
+        ioLock.lock();
+        try {
+            boolean removed = resultados.removeIf(s -> idSesion.equals(s.getIdSesion()));
+            if (removed) guardarEnArchivo();
+            return removed;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    public List<SesionJuego> obtenerPorJuego(Juego juego) {
         if (juego == null) return new ArrayList<>();
         ioLock.lock();
         try {
@@ -65,10 +81,44 @@ public class ResultadoService {
         }
     }
 
-    public List<ResultadoJuego> obtenerPorJuegoOrdenadosPorPuntajeDesc(Juego juego) {
+    public List<SesionJuego> obtenerPorJuegoOrdenadosPorPuntajeDesc(Juego juego) {
         return obtenerPorJuego(juego).stream()
-                .sorted(Comparator.comparingInt(ResultadoJuego::getPuntaje).reversed())
+                .sorted(Comparator.comparingInt(SesionJuego::getPuntaje).reversed())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Devuelve las últimas N sesiones de un niño para un juego (más recientes primero).
+     */
+    public java.util.List<com.jasgames.model.SesionJuego> obtenerUltimasPorNinoYJuego(int idNino, int idJuego, int limite) {
+        ioLock.lock();
+        try {
+            if (limite <= 0) limite = 1;
+
+            java.util.List<com.jasgames.model.SesionJuego> filtradas = new java.util.ArrayList<>();
+            for (com.jasgames.model.SesionJuego s1 : resultados) {
+                if (s1 == null) continue;
+                if ((s1.getIdEstudiante() != null && s1.getIdEstudiante() == idNino) && s1.getJuego() != null && s1.getJuego().getId() == idJuego) {
+                    filtradas.add(s1);
+                }
+            }
+
+            filtradas.sort((a, b) -> {
+                java.time.LocalDateTime fa = (a.getFechaFin() != null) ? a.getFechaFin() : a.getFechaHora();
+                java.time.LocalDateTime fb = (b.getFechaFin() != null) ? b.getFechaFin() : b.getFechaHora();
+                if (fa == null && fb == null) return 0;
+                if (fa == null) return 1;
+                if (fb == null) return -1;
+                return fb.compareTo(fa);
+            });
+
+            if (filtradas.size() > limite) {
+                return new java.util.ArrayList<>(filtradas.subList(0, limite));
+            }
+            return filtradas;
+        } finally {
+            ioLock.unlock();
+        }
     }
 
     // ---------------- PERSISTENCIA ----------------
@@ -96,11 +146,11 @@ public class ResultadoService {
             Path path = Paths.get(ARCHIVO_RESULTADOS);
             if (!Files.exists(path)) return;
 
-            ResultadoJuego[] lista = JsonSafeIO.readOrRecover(
+            SesionJuego[] lista = JsonSafeIO.readOrRecover(
                     path,
                     gson,
-                    ResultadoJuego[].class,
-                    new ResultadoJuego[0]
+                    SesionJuego[].class,
+                    new SesionJuego[0]
             );
             resultados.clear();
             if (lista != null) resultados.addAll(Arrays.asList(lista));

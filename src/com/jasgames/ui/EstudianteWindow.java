@@ -5,12 +5,13 @@ import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.model.Actividad;
 import com.jasgames.model.Nino;
-import com.jasgames.model.ResultadoJuego;
-import com.jasgames.model.TipoJuego;
+import com.jasgames.model.SesionJuego;
 import com.jasgames.service.PerfilService;
-import com.jasgames.service.ResultadoService;
+import com.jasgames.service.PiaService;
+import com.jasgames.service.SesionService;
+import com.jasgames.service.ScoreService;
+import com.jasgames.service.AdaptacionService;
 import com.jasgames.ui.juegos.BaseJuegoPanel;
-import com.jasgames.ui.juegos.JuegoColoresPanel;
 import com.jasgames.ui.juegos.JuegoListener;
 import com.jasgames.ui.juegos.JuegoPanelFactory;
 import com.jasgames.ui.login.AccesoWindow;
@@ -48,7 +49,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     private final JFrame ventanaAnterior;
     private final JuegoService juegoService;
     private final PerfilService perfilService;
-    private final ResultadoService resultadoService;
+    private final SesionService sesionService;
+    private final PiaService piaService;
 
     private Nino ninoActual;
     private BaseJuegoPanel juegoEnCurso;
@@ -68,7 +70,8 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         this.ventanaAnterior = ventanaAnterior;
         this.juegoService = context.getJuegoService();
         this.perfilService = context.getPerfilService();
-        this.resultadoService = context.getResultadoService();
+        this.sesionService = context.getResultadoService();
+        this.piaService = context.getPiaService();
 
         setContentPane(panelEstudianteMain);
         setTitle("JAS Games - Modo Estudiante");
@@ -336,7 +339,7 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             return;
         }
 
-        int nivel = ninoActual.getDificultadJuego(juego.getId(), juego.getDificultad());
+        int nivel = ninoActual.getDificultadEfectiva(juego.getId(), juego.getDificultad());
 
         // Id estable en int (evita overflow)
         int actividadId = (int) (System.currentTimeMillis() & 0x7fffffff);
@@ -424,10 +427,11 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     public void onJuegoTerminado(Actividad actividad) {
         if (actividad == null || actividad.getJuego() == null) return;
 
-        int puntaje = actividad.getPuntos();
-        lblValorPuntaje.setText(String.valueOf(puntaje));
-
+        // Mostrar estado mientras se guarda
+        lblValorPuntaje.setText("...");
         setGuardandoResultado(true);
+
+        final int[] scoreHolder = {0};
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -436,20 +440,88 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
                 String nombre = (ninoActual != null) ? ninoActual.getNombre() : "Desconocido";
                 String aula = (ninoActual != null) ? ninoActual.getAula() : null;
 
-                resultadoService.registrarResultado(new ResultadoJuego(
+                LocalDateTime fechaFin = LocalDateTime.now();
+                long durMs = actividad.getDuracionMs();
+                if (durMs < 0) durMs = 0;
+
+                // Inicio real estimado usando la duración (para reportes correctos)
+                LocalDateTime fechaInicio = (durMs > 0)
+                        ? fechaFin.minusNanos(durMs * 1_000_000L)
+                        : fechaFin;
+
+                SesionJuego sesion = new SesionJuego(
                         id,
                         nombre,
                         aula,
                         actividad.getJuego(),
                         actividad.getNivel(),
-                        puntaje,
-                        LocalDateTime.now()
-                ));
+                        0,
+                        fechaInicio
+                );
+
+                // Copiar métricas desde Actividad
+                sesion.setFechaFin(fechaFin);
+                sesion.setDuracionMs(durMs);
+                sesion.setRondasTotales(actividad.getRondasMeta());
+                sesion.setRondasCompletadas(actividad.getRondasJugadas());
+
+                sesion.setAciertosTotales(actividad.getRondasCorrectas());
+                sesion.setErroresTotales(actividad.getErroresTotales());
+                sesion.setIntentosTotales(actividad.getIntentosTotales());
+                sesion.setPistasUsadas(actividad.getPistasUsadas());
+                sesion.setAciertosPrimerIntento(actividad.getAciertosPrimerIntento());
+
+                sesion.setIntentosMaxPorRonda(actividad.getIntentosMaxPorRonda());
+                sesion.setPistasDesdeIntento(actividad.getPistasDesdeIntento());
+
+                // Dificultad inicial/final (adaptación automática puede modificar la final)
+                sesion.setDificultadInicial(actividad.getNivel());
+                sesion.setDificultadFinal(actividad.getNivel());
+                sesion.setDificultadAdaptada(false);
+
+                // Historial (antes de registrar la sesión actual)
+                java.util.List<SesionJuego> historial = java.util.Collections.emptyList();
+                if (id != null) {
+                    historial = sesionService.obtenerUltimasPorNinoYJuego(id, actividad.getJuego().getId(), 3);
+                }
+
+                // Score 0..100 (precisión + consistencia + tiempo)
+                int score = ScoreService.calcularScore(sesion, historial);
+                scoreHolder[0] = score;
+
+                sesion.setPuntaje(score);
+                actividad.setPuntos(score);
+
+                // Adaptación automática (usa últimas 3 sesiones, incluyendo la actual)
+                if (ninoActual != null) {
+                    java.util.List<SesionJuego> ultimas3 = new java.util.ArrayList<>();
+                    ultimas3.add(sesion);
+                    ultimas3.addAll(historial);
+                    if (ultimas3.size() > 3) ultimas3 = ultimas3.subList(0, 3);
+
+                    AdaptacionService.Decision dec = AdaptacionService.evaluarYAplicar(
+                            ninoActual,
+                            actividad.getJuego().getId(),
+                            actividad.getNivel(),
+                            ultimas3
+                    );
+
+                    sesion.setDificultadFinal(dec.getDificultadSiguiente());
+                    sesion.setDificultadAdaptada(dec.isCambio());
+                }
+                
+                // ✅ APLICAR PIA (si existe)
+                // Esto actualiza el progreso del PIA y vincula la sesión
+                piaService.aplicarSesion(sesion);
+
+                // Persistir
+                sesionService.registrarResultado(sesion);
 
                 if (ninoActual != null) {
-                    ninoActual.agregarPuntos(puntaje);
+                    ninoActual.agregarPuntos(score);
                     perfilService.actualizarNino(ninoActual);
                 }
+
                 return null;
             }
 
@@ -457,18 +529,21 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             protected void done() {
                 try {
                     get();
+                    lblValorPuntaje.setText(String.valueOf(scoreHolder[0]));
+
                     JOptionPane.showMessageDialog(
                             EstudianteWindow.this,
-                            "Puntaje guardado correctamente.",
+                            "Puntaje guardado correctamente: " + scoreHolder[0],
                             "Listo",
                             JOptionPane.INFORMATION_MESSAGE
                     );
 
-                    // 3) Limpiar juego y desbloquear UI
+                    // Limpiar juego y desbloquear UI
                     juegoEnCurso = null;
                     setJuegoActivo(false);
 
                 } catch (Exception ex) {
+                    lblValorPuntaje.setText("0");
                     JOptionPane.showMessageDialog(
                             EstudianteWindow.this,
                             "Error guardando el resultado:\n" + ex.getMessage(),

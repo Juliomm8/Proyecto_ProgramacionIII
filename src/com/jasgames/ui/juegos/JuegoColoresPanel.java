@@ -87,6 +87,24 @@ public class JuegoColoresPanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void aplicarPistaSuave() {
+        // Pista TEA-friendly: apagar 1 distractor adicional (sin decir “fallaste”)
+        if (opciones == null || opciones.isEmpty() || objetivo == null || lienzo == null) return;
+
+        // Buscar una opción incorrecta aún activa
+        java.util.List<OpcionColor> candidatos = new java.util.ArrayList<>();
+        for (OpcionColor op : opciones) {
+            if (op != null && op.enabled && op != objetivo) candidatos.add(op);
+        }
+        if (candidatos.isEmpty()) return;
+
+        OpcionColor elegido = candidatos.get(random.nextInt(candidatos.size()));
+        elegido.fadeOutAndDisable(lienzo);
+        lienzo.repaint();
+    }
+
+
+    @Override
     protected void prepararNuevaRonda() {
         setBloqueado(false);
         setFeedback(" ");

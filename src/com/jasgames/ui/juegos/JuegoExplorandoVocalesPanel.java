@@ -36,6 +36,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private int rondaIdx = 0;
     private int intentosFallidos = 0;
 
+    // Métricas reales (TEA-friendly: se guardan en JSON, no se muestran como castigo)
+    private int intentosTotales = 0;
+    private int intentosEnRonda = 0;
+    private int pistasUsadas = 0;
+    private int aciertosPrimerIntento = 0;
+
     private Character vocalActual = null;
     private VocalItem correctaActual = null;
     private String audioPreguntaActual = null;
@@ -313,6 +319,10 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         Collections.shuffle(orden);
         rondaIdx = 0;
         intentosFallidos = 0;
+        intentosTotales = 0;
+        intentosEnRonda = 0;
+        pistasUsadas = 0;
+        aciertosPrimerIntento = 0;
 
         siguienteRonda();
     }
@@ -320,6 +330,8 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     // 4) Pon guardas “si ya salí, no hagas nada” en métodos clave
     private void siguienteRonda() {
         if (disposed) return;
+
+        intentosEnRonda = 0;
 
         audioFeedbackEnCurso = false;
         audioPreguntaEnCurso = false;
@@ -377,6 +389,19 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         AudioPlayer.play(audioPreguntaActual, null);
     }
 
+    private void aplicarPistaSuaveJuego5() {
+        // Pista suave: resaltar la opción correcta (sin decir ‘error’)
+        if (correctaActual == null) return;
+        for (JButton b : btnOpciones) {
+            VocalItem it = (VocalItem) b.getClientProperty("item");
+            if (it != null && it == correctaActual && b instanceof CardButton) {
+                ((CardButton) b).setHint(true);
+                b.repaint();
+                return;
+            }
+        }
+    }
+
     private void repetirAudioPregunta() {
         if (disposed) return;
         if (audioPreguntaActual == null) return;
@@ -402,7 +427,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         VocalItem elegido = (VocalItem) b.getClientProperty("item");
         if (elegido == null) return;
 
+        // Registrar intento real por ronda
+        intentosTotales++;
+        intentosEnRonda++;
+
         if (elegido == correctaActual) {
+            if (intentosEnRonda == 1) aciertosPrimerIntento++;
             bloqueado = true;
             audioFeedbackEnCurso = true;
             btnRepetir.setEnabled(false);
@@ -439,6 +469,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
 
         } else {
             intentosFallidos++;
+
+            // Pista desde el 2do intento: resaltar respuesta correcta
+            if (intentosEnRonda == 2) {
+                pistasUsadas++;
+                aplicarPistaSuaveJuego5();
+            }
 
             // Bloquear para que no spameen clicks y no se acumulen audios
             audioFeedbackEnCurso = true;
@@ -477,16 +513,31 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             b.setEnabled(false);
         }
 
-        // ✅ Guardar intentos fallidos
+        // ✅ Guardar métricas de sesión (sin mostrarlas como "castigo" en UI)
         if (actividadActual != null) {
+            // Compatibilidad (campo antiguo)
             actividadActual.setIntentosFallidos(intentosFallidos);
+
+            // Métricas reales
+            actividadActual.setRondasMeta(5);
+            actividadActual.setRondasJugadas(5);
+            actividadActual.setRondasCorrectas(5);
+
+            actividadActual.setErroresTotales(intentosFallidos);
+            actividadActual.setIntentosTotales(intentosTotales);
+            actividadActual.setPistasUsadas(pistasUsadas);
+            actividadActual.setAciertosPrimerIntento(aciertosPrimerIntento);
+
+            // Defaults del proyecto (por ronda)
+            actividadActual.setIntentosMaxPorRonda(3);
+            actividadActual.setPistasDesdeIntento(2);
         }
 
-        // ✅ UI final (nada de pantalla vacía)
+        // ✅ UI final (nada de pantalla vacía) - TEA friendly: no mostramos fallos como "penalización"
         lblProgreso.setText("Completado");
         lblPregunta.setText("<html><div style='text-align:center;'>"
                 + "¡Excelente! 🎉<br/>"
-                + "Intentos fallidos: " + intentosFallidos
+                + "¡Buen trabajo!"
                 + "</div></html>");
 
         lblVocal.setVisible(true);
@@ -621,6 +672,7 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
     private static class CardButton extends JButton {
         private boolean hover = false;
         private boolean correct = false;
+        private boolean hint = false;
 
         CardButton() {
             setOpaque(false);
@@ -646,6 +698,12 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         void resetVisual() {
             hover = false;
             correct = false;
+            hint = false;
+            repaint();
+        }
+
+        void setHint(boolean v) {
+            hint = v;
             repaint();
         }
 
@@ -683,9 +741,10 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
             // borde
             Color border = new Color(215, 221, 235);
             if (correct) border = new Color(70, 200, 120);
+            else if (hint) border = new Color(110, 160, 255);
             else if (hover) border = new Color(110, 160, 255);
 
-            g2.setStroke(new BasicStroke(correct ? 5f : 4f));
+            g2.setStroke(new BasicStroke(correct ? 5f : (hint ? 5f : 4f)));
             g2.setColor(border);
             g2.drawRoundRect(pad, pad, w - 2 * pad, h - 2 * pad, arc, arc);
 

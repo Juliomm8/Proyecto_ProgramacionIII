@@ -153,6 +153,25 @@ public class JuegoSigueSeriePanel extends JuegoRondasPanel {
     }
 
     @Override
+    protected void aplicarPistaSuave() {
+        // Pista suave: apaga 1 distractor adicional
+        if (botones == null || respuestaCorrecta == null) return;
+
+        java.util.List<OpcionFichaButton> candidatos = new java.util.ArrayList<>();
+        for (OpcionFichaButton b : botones) {
+            if (b != null && b.isEnabled()) {
+                Ficha f = b.getFicha();
+                if (f != null && !f.equals(respuestaCorrecta)) candidatos.add(b);
+            }
+        }
+        if (candidatos.isEmpty()) return;
+
+        OpcionFichaButton elegido = candidatos.get(random.nextInt(candidatos.size()));
+        elegido.fadeOutAndDisable();
+    }
+
+
+    @Override
     protected void prepararNuevaRonda() {
         setBloqueado(false);
         setFeedback(" ");
