@@ -13,6 +13,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -39,7 +45,7 @@ public class DashboardPanel extends JPanel {
     private JLabel lblTituloDashboard;
     private JPanel panelFiltrosDashboard;
     private JLabel lblFiltroJuego;
-    private JComboBox cbFiltroJuego;
+    private JComboBox<Object> cbFiltroJuego;
     private JButton btnActualizarDashboard;
     private JButton btnOrdenarPorPuntaje;
     private JScrollPane scrollResultados;
@@ -100,6 +106,7 @@ public class DashboardPanel extends JPanel {
     private JButton btnReporteIrAObjetivo;
     private JButton btnReporteRefrescar;
     private JButton btnReporteRecalcular;
+    private JButton btnReporteExportarCsv;
 
     private static final String[] AULAS_PREDEFINIDAS = {
             "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
@@ -288,6 +295,7 @@ public class DashboardPanel extends JPanel {
 
         btnReporteRefrescar = new JButton("Refrescar");
         btnReporteRecalcular = new JButton("Recalcular progreso");
+        btnReporteExportarCsv = new JButton("Exportar CSV");
         btnReporteMarcarActivo = new JButton("Marcar como activo");
         btnReporteIrAObjetivo = new JButton("Ir al objetivo");
 
@@ -301,6 +309,7 @@ public class DashboardPanel extends JPanel {
         top.add(spUltimasNSesiones);
         top.add(btnReporteRefrescar);
         top.add(btnReporteRecalcular);
+        top.add(btnReporteExportarCsv);
         top.add(btnReporteMarcarActivo);
         top.add(btnReporteIrAObjetivo);
 
@@ -357,6 +366,7 @@ public class DashboardPanel extends JPanel {
         // --- listeners ---
         btnReporteRefrescar.addActionListener(e -> refrescarReportePia());
         btnReporteRecalcular.addActionListener(e -> recalcularPiaSeleccionado());
+        btnReporteExportarCsv.addActionListener(e -> exportarReportePiaCsv());
         chkIncluirPiasCerrados.addActionListener(e -> refrescarReportePia());
 
         cbReportePia.addActionListener(e -> {
@@ -591,6 +601,62 @@ public class DashboardPanel extends JPanel {
         navigator.goToObjective(pia.getIdNino(), idObj);
     }
 
+    private void exportarReportePiaCsv() {
+        PIA pia = (PIA) cbReportePia.getSelectedItem();
+        if (pia == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un PIA para exportar.", "Exportar CSV", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar reporte PIA");
+        String nombreArchivo = "Reporte_PIA_" + pia.getIdNino() + "_" + LocalDate.now() + ".csv";
+        fileChooser.setSelectedFile(new File(nombreArchivo));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            if (!fileToSave.getName().toLowerCase().endsWith(".csv")) {
+                fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".csv");
+            }
+
+            try (BufferedWriter writer = Files.newBufferedWriter(fileToSave.toPath(), StandardCharsets.UTF_8)) {
+                writer.write("\ufeff"); // BOM for Excel
+                writer.write("ID_OBJ;Juego;Descripción;ProgresoRondas;MetaRondas;ProgresoSesiones;MetaSesiones;Estado;Precisión;ErroresProm;DuraciónProm;ÚltimaSesion");
+                writer.newLine();
+
+                List<SesionJuego> sesiones = sesionService.obtenerTodos();
+
+                for (ObjetivoPIA o : pia.getObjetivos()) {
+                    if (o == null) continue;
+                    StatsObjetivo st = calcularStatsObjetivo(pia, o, sesiones);
+
+                    String line = String.join(";",
+                            safe(o.getIdObjetivo()),
+                            String.valueOf(o.getJuegoId()),
+                            safe(o.getDescripcion()).replace(";", ","),
+                            String.valueOf(o.getProgresoRondasCorrectas()),
+                            String.valueOf(o.getMetaRondasCorrectas()),
+                            String.valueOf(o.getProgresoSesionesCompletadas()),
+                            String.valueOf(o.getMetaSesionesCompletadas()),
+                            o.isCompletado() ? "Completado" : "Pendiente",
+                            st.precisionTxt,
+                            st.erroresPromTxt,
+                            st.duracionPromTxt,
+                            st.ultimaTxt
+                    );
+                    writer.write(line);
+                    writer.newLine();
+                }
+
+                JOptionPane.showMessageDialog(this, "Reporte exportado correctamente.", "Exportar CSV", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error al guardar el archivo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     private void recalcularPiaSeleccionado() {
     PIA pia = (PIA) cbReportePia.getSelectedItem();
@@ -712,7 +778,7 @@ public class DashboardPanel extends JPanel {
         card.add(lbl, BorderLayout.CENTER);
         return card;
     }
-    
+
     private void habilitarClickMejor() {
         if (cardKpiMejor == null) return;
 
@@ -745,7 +811,7 @@ public class DashboardPanel extends JPanel {
             lblKpiMejor.addMouseListener(click);
         }
     }
-    
+
     private void habilitarClickAulaActiva() {
         if (cardKpiAulaActiva == null) return;
 
@@ -1183,7 +1249,7 @@ public class DashboardPanel extends JPanel {
             ).reversed();
         }
         lista.sort(comp);
-        
+
         actualizarKpis(lista);
         actualizarKpiPia();
 
@@ -1239,8 +1305,8 @@ public class DashboardPanel extends JPanel {
             });
         }
     }
-    
-    
+
+
     private String obtenerTextoObjetivo(SesionJuego s) {
         if (s == null) return "—";
         if (s.getIdPia() == null || s.getIdPia().isBlank()) return "—";
