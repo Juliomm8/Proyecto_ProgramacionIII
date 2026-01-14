@@ -30,6 +30,27 @@ public class AulaService {
         guardar();
     }
 
+    /**
+     * Fuerza una recarga del catálogo desde disco (data/aulas.json).
+     * Útil cuando otras pantallas modifican aulas y se quiere refrescar combos.
+     */
+    public void refrescarDesdeDisco(PerfilService perfilService) {
+        ioLock.lock();
+        try {
+            cargar();
+            inicializarSiVacio();
+            // mantiene compatibilidad (si existían aulas en ninos.json)
+            if (perfilService != null) sincronizarConAulasDeNinos(perfilService);
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    /** Atajo: recarga desde disco sin sincronizar con perfiles. */
+    public void refrescarDesdeDisco() {
+        refrescarDesdeDisco(null);
+    }
+
     public List<Aula> obtenerTodas() {
         ioLock.lock();
         try {

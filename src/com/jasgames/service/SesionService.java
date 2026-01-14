@@ -53,6 +53,22 @@ public class SesionService {
         }
     }
 
+    /**
+     * Elimina una sesión por su id (idSesion). Devuelve true si se eliminó.
+     */
+    public boolean eliminarSesion(String idSesion) {
+        if (idSesion == null || idSesion.isBlank()) return false;
+
+        ioLock.lock();
+        try {
+            boolean removed = resultados.removeIf(s -> idSesion.equals(s.getIdSesion()));
+            if (removed) guardarEnArchivo();
+            return removed;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
     public List<SesionJuego> obtenerPorJuego(Juego juego) {
         if (juego == null) return new ArrayList<>();
         ioLock.lock();

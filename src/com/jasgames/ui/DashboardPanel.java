@@ -40,7 +40,7 @@ public class DashboardPanel extends JPanel {
     // --- Servicios / Tabla ---
     private final SesionService sesionService;
     private final PiaService piaService;
-    private final AulaService aulaService;
+    private final AulaService aulaServiceField;
 
     private final java.util.List<SesionJuego> filasTabla = new java.util.ArrayList<>();
     private DefaultTableModel tablaModelo;
@@ -53,6 +53,7 @@ public class DashboardPanel extends JPanel {
     private JCheckBox chkSoloPia;
     private JTextField txtBuscar;
     private JButton btnLimpiar;
+    private JButton btnEliminarSesion;
     
     // KPIs
     private JPanel panelKpis;
@@ -79,7 +80,7 @@ public class DashboardPanel extends JPanel {
     public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService) {
         this.sesionService = sesionService;
         this.piaService = piaService;
-        this.aulaService = aulaService;
+        this.aulaServiceField = aulaService;
 
         setLayout(new BorderLayout());
         add(panelDashboard, BorderLayout.CENTER);
@@ -127,6 +128,8 @@ public class DashboardPanel extends JPanel {
         cbOrden = new JComboBox<>(new String[]{"Fecha (más reciente)", "Fecha (más antigua)", "Puntaje (mayor)", "Puntaje (menor)"});
         txtBuscar = new JTextField(14);
         btnLimpiar = new JButton("Limpiar");
+        btnEliminarSesion = new JButton("Eliminar sesión");
+        btnEliminarSesion.setEnabled(false);
         chkSoloPia = new JCheckBox("Solo PIA");
 
         // Cambiamos textos de botones existentes para que tengan sentido
@@ -159,6 +162,7 @@ public class DashboardPanel extends JPanel {
         panelFiltrosDashboard.add(btnActualizarDashboard);
         panelFiltrosDashboard.add(btnOrdenarPorPuntaje);
         panelFiltrosDashboard.add(btnLimpiar);
+        panelFiltrosDashboard.add(btnEliminarSesion);
 
         panelFiltrosDashboard.revalidate();
         panelFiltrosDashboard.repaint();
@@ -294,6 +298,9 @@ public class DashboardPanel extends JPanel {
         });
 
         btnLimpiar.addActionListener(e -> limpiarFiltros());
+        if (btnEliminarSesion != null) {
+            btnEliminarSesion.addActionListener(e -> eliminarSesionSeleccionada());
+        }
 
         // Aplicar en vivo (sin apretar "Aplicar")
         cbFiltroJuego.addActionListener(e -> actualizarTabla(false));
@@ -322,6 +329,55 @@ public class DashboardPanel extends JPanel {
                 }
             }
         });
+
+        // Habilitar/deshabilitar botón eliminar según selección
+        tblResultados.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            if (btnEliminarSesion != null) {
+                btnEliminarSesion.setEnabled(tblResultados.getSelectedRow() >= 0);
+            }
+        });
+    }
+
+    private void eliminarSesionSeleccionada() {
+        int viewRow = tblResultados.getSelectedRow();
+        if (viewRow < 0) return;
+
+        int modelRow = tblResultados.convertRowIndexToModel(viewRow);
+        if (modelRow < 0 || modelRow >= filasTabla.size()) return;
+
+        SesionJuego s = filasTabla.get(modelRow);
+        if (s == null || s.getIdSesion() == null || s.getIdSesion().isBlank()) {
+            JOptionPane.showMessageDialog(this, "No se pudo identificar la sesión seleccionada.", "Eliminar sesión", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String nombre = (s.getNombreEstudiante() != null) ? s.getNombreEstudiante() : "(sin nombre)";
+        String juego = (s.getJuego() != null) ? s.getJuego().toString() : "(sin juego)";
+
+        int ok = JOptionPane.showConfirmDialog(
+                this,
+                "¿Eliminar esta sesión?\n\n" +
+                        "Estudiante: " + nombre + "\n" +
+                        "Juego: " + juego + "\n" +
+                        "Fecha: " + (s.getFechaFin() != null ? s.getFechaFin().toLocalDate().toString() : "-") + "\n\n" +
+                        "Esta acción no se puede deshacer.",
+                "Confirmar eliminación",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (ok != JOptionPane.YES_OPTION) return;
+
+        boolean removed = sesionService.eliminarSesion(s.getIdSesion());
+        if (!removed) {
+            JOptionPane.showMessageDialog(this, "No se pudo eliminar la sesión (puede que ya no exista).", "Eliminar sesión", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Refrescar tabla y filtros
+        recargarCombosFiltros(true);
+        actualizarTabla(false);
     }
 
     private void limpiarFiltros() {
@@ -357,8 +413,14 @@ public class DashboardPanel extends JPanel {
         cbFiltroAula.addItem("Todas");
 
         Set<String> aulasBase = new LinkedHashSet<>();
-        if (aulaService != null) {
-            aulasBase.addAll(aulaService.obtenerNombres());
+        if (aulaServiceField != null) {
+            // Asegura que el combo muestre el catálogo más reciente (si se modificó desde otra pestaña)
+            try {
+                aulaServiceField.refrescarDesdeDisco();
+            } catch (Exception ignored) {
+                // Si falla la recarga, usamos lo que ya tenga cargado.
+            }
+            aulasBase.addAll(aulaServiceField.obtenerNombres());
         } else {
             aulasBase.addAll(Arrays.asList(AULAS_PREDEFINIDAS));
         }

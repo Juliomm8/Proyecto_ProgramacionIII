@@ -17,6 +17,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -995,11 +996,38 @@ public class PerfilesPanel extends JPanel {
         if (btnEliminarObjetivo != null) btnEliminarObjetivo.setEnabled(enabled && tblObjetivos.getSelectedRow() >= 0);
     }
     
+    private static void clearActionListeners(AbstractButton b) {
+        if (b == null) return;
+        for (ActionListener al : b.getActionListeners()) {
+            b.removeActionListener(al);
+        }
+    }
+
     private void initListenersPia() {
-        // Si este método se llama más de una vez (por ejemplo, desde el constructor y desde el builder
-        // del panel PIA), no debemos volver a registrar listeners. Esto duplicaba acciones.
-        if (listenersPiaInicializados) return;
-        listenersPiaInicializados = true;
+        // Este método puede llamarse varias veces (constructor + builder). Para evitar duplicados
+        // (ej. crear objetivo 2 veces), hacemos "rebind": limpiamos listeners anteriores y volvemos a añadirlos.
+        if (btnCrearPia == null || btnGuardarPia == null || btnCerrarPia == null || btnAgregarObjetivo == null) {
+            return; // aún no se construyó el panel PIA
+        }
+
+        clearActionListeners(btnCrearPia);
+        clearActionListeners(btnGuardarPia);
+        clearActionListeners(btnCerrarPia);
+        clearActionListeners(btnAgregarObjetivo);
+        clearActionListeners(btnSetObjetivoActivo);
+        clearActionListeners(btnEditarObjetivo);
+        clearActionListeners(btnEliminarObjetivo);
+
+        // Evitar duplicar listeners de selección en la tabla
+        try {
+            if (tblObjetivos != null && tblObjetivos.getSelectionModel() instanceof DefaultListSelectionModel) {
+                DefaultListSelectionModel m = (DefaultListSelectionModel) tblObjetivos.getSelectionModel();
+                for (ListSelectionListener l : m.getListSelectionListeners()) {
+                    m.removeListSelectionListener(l);
+                }
+            }
+        } catch (Exception ignored) {
+        }
 
         btnCrearPia.addActionListener(e -> {
             Nino ninoSeleccionado = listaNinos.getSelectedValue();
@@ -1032,6 +1060,10 @@ public class PerfilesPanel extends JPanel {
         btnAgregarObjetivo.addActionListener(e -> {
             if (piaActual == null) return;
 
+            // Protege contra doble-disparo (doble click / Enter) mientras se procesa
+            btnAgregarObjetivo.setEnabled(false);
+            try {
+
             int juegoId = (int) spObjJuegoId.getValue();
             String desc = txtObjDescripcion.getText().trim();
             int metaRondas = (int) spObjMetaRondas.getValue();
@@ -1046,6 +1078,9 @@ public class PerfilesPanel extends JPanel {
 
             txtObjDescripcion.setText("");
             cargarPiaDelNino();
+            } finally {
+                btnAgregarObjetivo.setEnabled(true);
+            }
         });
         // Selección / cambio de objetivo activo
         if (btnSetObjetivoActivo != null) {
