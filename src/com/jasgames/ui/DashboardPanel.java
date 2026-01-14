@@ -14,6 +14,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
@@ -54,6 +55,9 @@ public class DashboardPanel extends JPanel {
     private JTextField txtBuscar;
     private JButton btnLimpiar;
     private JButton btnEliminarSesion;
+
+    // Menú contextual (click derecho) sobre la tabla
+    private JPopupMenu menuTabla;
     
     // KPIs
     private JPanel panelKpis;
@@ -286,6 +290,18 @@ public class DashboardPanel extends JPanel {
         cbFiltroAula.setSelectedItem(aula);
     }
 
+    private void seleccionarJuegoEnFiltro(int idJuego) {
+        if (cbFiltroJuego == null || idJuego <= 0) return;
+
+        for (int i = 0; i < cbFiltroJuego.getItemCount(); i++) {
+            Object it = cbFiltroJuego.getItemAt(i);
+            if (it instanceof Juego && ((Juego) it).getId() == idJuego) {
+                cbFiltroJuego.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
     private void inicializarListeners() {
         btnActualizarDashboard.addActionListener(e -> {
             recargarCombosFiltros(true);
@@ -316,6 +332,92 @@ public class DashboardPanel extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { actualizarTabla(false); }
         });
 
+        instalarMenuContextualTabla();
+
+        // Habilitar/deshabilitar botón eliminar según selección
+        tblResultados.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            if (btnEliminarSesion != null) {
+                btnEliminarSesion.setEnabled(tblResultados.getSelectedRow() >= 0);
+            }
+        });
+    }
+
+    private void instalarMenuContextualTabla() {
+        if (tblResultados == null) return;
+        if (menuTabla != null) return; // evitar duplicados
+
+        menuTabla = new JPopupMenu();
+
+        JMenuItem miVer = new JMenuItem("Ver detalle…");
+        JMenuItem miFiltrarEst = new JMenuItem("Filtrar por este estudiante");
+        JMenuItem miFiltrarJuego = new JMenuItem("Filtrar por este juego");
+        JMenuItem miFiltrarAula = new JMenuItem("Filtrar por esta aula");
+        JMenuItem miSoloPia = new JMenuItem("Ver solo sesiones con PIA");
+        JMenuItem miCopiar = new JMenuItem("Copiar resumen");
+        JMenuItem miCopiarId = new JMenuItem("Copiar ID de sesión");
+        JMenuItem miEliminar = new JMenuItem("Eliminar sesión…");
+
+        miVer.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s != null) mostrarDetalleSesion(s);
+        });
+
+        miFiltrarEst.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s == null) return;
+            if (txtBuscar != null) {
+                if (s.getIdEstudiante() != null) txtBuscar.setText(String.valueOf(s.getIdEstudiante()));
+                else txtBuscar.setText(safe(s.getNombreEstudiante()));
+            }
+            actualizarTabla(false);
+        });
+
+        miFiltrarJuego.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s == null || s.getJuego() == null) return;
+            seleccionarJuegoEnFiltro(s.getJuego().getId());
+            actualizarTabla(false);
+        });
+
+        miFiltrarAula.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s == null) return;
+            seleccionarAulaEnFiltro(s.getAula());
+            actualizarTabla(false);
+        });
+
+        miSoloPia.addActionListener(e -> {
+            if (chkSoloPia != null) chkSoloPia.setSelected(true);
+            actualizarTabla(false);
+        });
+
+        miCopiar.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s == null) return;
+            copiarAlPortapapeles(resumenSesion(s));
+        });
+
+        miCopiarId.addActionListener(e -> {
+            SesionJuego s = getSesionSeleccionada();
+            if (s == null) return;
+            copiarAlPortapapeles(s.getIdSesion() == null ? "" : s.getIdSesion());
+        });
+
+        miEliminar.addActionListener(e -> eliminarSesionSeleccionada());
+
+        menuTabla.add(miVer);
+        menuTabla.addSeparator();
+        menuTabla.add(miFiltrarEst);
+        menuTabla.add(miFiltrarJuego);
+        menuTabla.add(miFiltrarAula);
+        menuTabla.add(miSoloPia);
+        menuTabla.addSeparator();
+        menuTabla.add(miCopiar);
+        menuTabla.add(miCopiarId);
+        menuTabla.addSeparator();
+        menuTabla.add(miEliminar);
+
         tblResultados.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -328,15 +430,69 @@ public class DashboardPanel extends JPanel {
                     }
                 }
             }
-        });
 
-        // Habilitar/deshabilitar botón eliminar según selección
-        tblResultados.getSelectionModel().addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting()) return;
-            if (btnEliminarSesion != null) {
-                btnEliminarSesion.setEnabled(tblResultados.getSelectedRow() >= 0);
+            @Override
+            public void mousePressed(MouseEvent e) { maybeShowPopup(e); }
+
+            @Override
+            public void mouseReleased(MouseEvent e) { maybeShowPopup(e); }
+
+            private void maybeShowPopup(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+
+                int viewRow = tblResultados.rowAtPoint(e.getPoint());
+                if (viewRow >= 0) {
+                    tblResultados.setRowSelectionInterval(viewRow, viewRow);
+                } else {
+                    tblResultados.clearSelection();
+                }
+
+                SesionJuego s = getSesionSeleccionada();
+                boolean hay = s != null;
+                miVer.setEnabled(hay);
+                miFiltrarEst.setEnabled(hay);
+                miFiltrarJuego.setEnabled(hay && s.getJuego() != null);
+                miFiltrarAula.setEnabled(hay && s.getAula() != null && !s.getAula().isBlank());
+                miCopiar.setEnabled(hay);
+                miCopiarId.setEnabled(hay && s.getIdSesion() != null && !s.getIdSesion().isBlank());
+                miEliminar.setEnabled(hay);
+                miSoloPia.setEnabled(chkSoloPia != null && !chkSoloPia.isSelected());
+
+                menuTabla.show(e.getComponent(), e.getX(), e.getY());
             }
         });
+    }
+
+    private SesionJuego getSesionSeleccionada() {
+        int viewRow = tblResultados.getSelectedRow();
+        if (viewRow < 0) return null;
+        int modelRow = tblResultados.convertRowIndexToModel(viewRow);
+        if (modelRow < 0 || modelRow >= filasTabla.size()) return null;
+        return filasTabla.get(modelRow);
+    }
+
+    private void copiarAlPortapapeles(String texto) {
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texto == null ? "" : texto), null);
+        } catch (Exception ignored) {
+            // En algunos entornos el clipboard puede fallar; no es crítico.
+        }
+    }
+
+    private String resumenSesion(SesionJuego s) {
+        if (s == null) return "";
+        String juego = (s.getJuego() != null) ? safe(s.getJuego().getNombre()) : "—";
+        String fecha = (s.getFechaFin() != null) ? s.getFechaFin().toLocalDate().toString() : (s.getFechaHora() != null ? s.getFechaHora().toLocalDate().toString() : "—");
+        String durTxt = (s.getDuracionMs() > 0) ? String.format(Locale.US, "%.1fs", s.getDuracionMs() / 1000.0) : "—";
+        String piaTxt = (s.getIdPia() != null && !s.getIdPia().isBlank()) ? "Sí" : "—";
+
+        return "Sesión: " + safe(s.getIdSesion()) + "\n" +
+                "Estudiante: " + safe(s.getNombreEstudiante()) + " (ID: " + s.getIdEstudiante() + ")\n" +
+                "Aula: " + safe(s.getAula()) + "\n" +
+                "Juego: " + juego + " | Dificultad: " + s.getDificultad() + "\n" +
+                "Puntaje: " + s.getPuntaje() + " | Intentos: " + s.getIntentosTotales() + " | Errores: " + s.getErroresTotales() + "\n" +
+                "Duración: " + durTxt + " | PIA: " + piaTxt + "\n" +
+                "Fecha: " + fecha;
     }
 
     private void eliminarSesionSeleccionada() {
