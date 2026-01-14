@@ -5,6 +5,7 @@ import com.jasgames.service.AppContext;
 import com.jasgames.ui.DocenteWindow;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Optional;
 
@@ -16,6 +17,11 @@ public class LoginDocenteWindow extends JFrame {
     private JTextField txtUsuario;
     private JPasswordField txtContrasena;
     private JLabel lblEstado;
+
+    private JCheckBox chkVer;
+
+    private Border bordeNormal;
+    private final Border bordeError = BorderFactory.createLineBorder(new Color(204, 51, 51), 2, true);
 
     public LoginDocenteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
@@ -29,13 +35,38 @@ public class LoginDocenteWindow extends JFrame {
         setContentPane(crearContenido());
     }
 
-    private JPanel crearContenido() {
-        JPanel root = new JPanel(new BorderLayout(15, 15));
-        root.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    /**
+     * Permite prellenar el usuario (por ejemplo, después de crear una cuenta).
+     */
+    public void sugerirUsuario(String usuario) {
+        if (txtUsuario != null) {
+            txtUsuario.setText(usuario != null ? usuario : "");
+        }
+    }
 
-        JLabel titulo = new JLabel("Ingreso Docente", SwingConstants.CENTER);
-        titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 20f));
-        root.add(titulo, BorderLayout.NORTH);
+    private JPanel crearContenido() {
+        JPanel root = new JPanel(new BorderLayout(14, 14));
+        root.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        JLabel app = new JLabel("JAS Games", SwingConstants.CENTER);
+        app.setAlignmentX(Component.CENTER_ALIGNMENT);
+        app.setFont(app.getFont().deriveFont(Font.BOLD, 24f));
+
+        JLabel titulo = new JLabel("Ingreso de docente", SwingConstants.CENTER);
+        titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titulo.setFont(titulo.getFont().deriveFont(Font.BOLD, 16f));
+
+        JLabel subt = new JLabel("Accede para administrar aulas, perfiles y reportes", SwingConstants.CENTER);
+        subt.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        header.add(app);
+        header.add(Box.createVerticalStrut(3));
+        header.add(titulo);
+        header.add(Box.createVerticalStrut(2));
+        header.add(subt);
+        root.add(header, BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -51,7 +82,7 @@ public class LoginDocenteWindow extends JFrame {
         c.gridx = 1;
         c.weightx = 1.0;
         txtUsuario = new JTextField(18);
-        txtUsuario.setPreferredSize(new Dimension(220, 28));
+        txtUsuario.setPreferredSize(new Dimension(240, 30));
         form.add(txtUsuario, c);
 
         c.gridx = 0; c.gridy = 1;
@@ -60,9 +91,22 @@ public class LoginDocenteWindow extends JFrame {
 
         c.gridx = 1;
         c.weightx = 1.0;
+        JPanel passRow = new JPanel(new BorderLayout(8, 0));
+        passRow.setOpaque(false);
+
         txtContrasena = new JPasswordField(18);
-        txtContrasena.setPreferredSize(new Dimension(220, 28));
-        form.add(txtContrasena, c);
+        txtContrasena.setPreferredSize(new Dimension(240, 30));
+        passRow.add(txtContrasena, BorderLayout.CENTER);
+
+        chkVer = new JCheckBox("Ver");
+        chkVer.setFocusPainted(false);
+        chkVer.addActionListener(e -> actualizarModoPassword());
+        passRow.add(chkVer, BorderLayout.EAST);
+
+        form.add(passRow, c);
+
+        // Guardamos el borde normal para poder “pintar” errores sin arruinar el look
+        bordeNormal = txtUsuario.getBorder();
 
         lblEstado = new JLabel(" ");
         lblEstado.setHorizontalAlignment(SwingConstants.CENTER);
@@ -71,24 +115,35 @@ public class LoginDocenteWindow extends JFrame {
 
         root.add(form, BorderLayout.CENTER);
 
-        JPanel south = new JPanel(new BorderLayout(10, 10));
+        JPanel south = new JPanel();
+        south.setLayout(new BoxLayout(south, BoxLayout.Y_AXIS));
+
         JPanel botones = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnVolver = new JButton("Volver");
         JButton btnIngresar = new JButton("Ingresar");
         botones.add(btnVolver);
         botones.add(btnIngresar);
 
-        JButton btnCrearUsuario = new JButton("Crear usuario");
-        btnCrearUsuario.setFocusPainted(false);
+        JButton btnCrearUsuario = linkButton("¿No tienes cuenta? Crear usuario docente");
+        btnCrearUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        south.add(botones, BorderLayout.NORTH);
-        south.add(btnCrearUsuario, BorderLayout.SOUTH);
+        south.add(botones);
+        south.add(Box.createVerticalStrut(8));
+        south.add(btnCrearUsuario);
         root.add(south, BorderLayout.SOUTH);
 
         btnVolver.addActionListener(e -> volver());
         btnIngresar.addActionListener(e -> intentarLogin());
+        txtUsuario.addActionListener(e -> txtContrasena.requestFocusInWindow());
         txtContrasena.addActionListener(e -> intentarLogin());
         btnCrearUsuario.addActionListener(e -> abrirCrearUsuario());
+
+        // Limpia estado visual cuando el usuario escribe
+        txtUsuario.getDocument().addDocumentListener(new SimpleDocumentListener(this::limpiarErrores));
+        txtContrasena.getDocument().addDocumentListener(new SimpleDocumentListener(this::limpiarErrores));
+
+        // Estado inicial
+        actualizarModoPassword();
         return root;
     }
 
@@ -96,8 +151,13 @@ public class LoginDocenteWindow extends JFrame {
         String usuario = (txtUsuario.getText() != null) ? txtUsuario.getText().trim() : "";
         String contrasena = new String(txtContrasena.getPassword());
 
+        limpiarErrores();
+
         if (usuario.isBlank() || contrasena.isBlank()) {
-            lblEstado.setText("Completa usuario y contraseña.");
+            marcarError(usuario.isBlank(), contrasena.isBlank());
+            setEstado("Completa usuario y contraseña.", true);
+            if (usuario.isBlank()) txtUsuario.requestFocusInWindow();
+            else txtContrasena.requestFocusInWindow();
             return;
         }
 
@@ -105,7 +165,10 @@ public class LoginDocenteWindow extends JFrame {
         context.getAuditoriaService().loginDocente(usuario, docenteOpt.isPresent());
 
         if (docenteOpt.isEmpty()) {
-            lblEstado.setText("Credenciales incorrectas.");
+            marcarError(true, true);
+            setEstado("Usuario o contraseña incorrectos.", true);
+            txtContrasena.setText("");
+            txtContrasena.requestFocusInWindow();
             return;
         }
 
@@ -124,13 +187,62 @@ public class LoginDocenteWindow extends JFrame {
         if (nuevoUsuario != null && !nuevoUsuario.isBlank()) {
             txtUsuario.setText(nuevoUsuario);
             txtContrasena.setText("");
-            txtContrasena.requestFocus();
-            lblEstado.setText("Usuario creado exitosamente.");
+            txtContrasena.requestFocusInWindow();
+            setEstado("Usuario creado. Ahora inicia sesión.", false);
         }
     }
 
     private void volver() {
         dispose();
         if (ventanaAnterior != null) ventanaAnterior.setVisible(true);
+    }
+
+    private void actualizarModoPassword() {
+        if (txtContrasena == null) return;
+        if (chkVer != null && chkVer.isSelected()) {
+            txtContrasena.setEchoChar((char) 0);
+        } else {
+            // '•' = bullet, se ve bien en la mayoría de Look&Feels
+            txtContrasena.setEchoChar('\u2022');
+        }
+    }
+
+    private void setEstado(String msg, boolean esError) {
+        lblEstado.setText(msg != null ? msg : " ");
+        lblEstado.setForeground(esError ? new Color(204, 51, 51) : new Color(0, 128, 0));
+    }
+
+    private void limpiarErrores() {
+        if (txtUsuario != null && bordeNormal != null) txtUsuario.setBorder(bordeNormal);
+        if (txtContrasena != null && bordeNormal != null) txtContrasena.setBorder(bordeNormal);
+        if (lblEstado != null) {
+            lblEstado.setText(" ");
+            lblEstado.setForeground(UIManager.getColor("Label.foreground"));
+        }
+    }
+
+    private void marcarError(boolean usuarioError, boolean passError) {
+        if (usuarioError && txtUsuario != null) txtUsuario.setBorder(bordeError);
+        if (passError && txtContrasena != null) txtContrasena.setBorder(bordeError);
+    }
+
+    private JButton linkButton(String text) {
+        JButton b = new JButton(text);
+        b.setFocusPainted(false);
+        b.setBorderPainted(false);
+        b.setContentAreaFilled(false);
+        b.setOpaque(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setForeground(new Color(0, 102, 204));
+        return b;
+    }
+
+    /** Mini helper para no escribir el DocumentListener completo. */
+    private static class SimpleDocumentListener implements javax.swing.event.DocumentListener {
+        private final Runnable r;
+        SimpleDocumentListener(Runnable r) { this.r = r; }
+        @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
+        @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
+        @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { r.run(); }
     }
 }

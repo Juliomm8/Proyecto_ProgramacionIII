@@ -31,6 +31,9 @@ public class AccesoEstudianteWindow extends JFrame {
     private final JButton btnAtras = new JButton("Atrás");
     private final JButton btnSalir = new JButton("Salir");
 
+    // Salida protegida (mantener presionado) para evitar que el niño salga sin querer
+    private javax.swing.Timer holdSalir;
+
     private Color colorAula(String aula) {
         return context.getAulaService().colorDeAula(aula);
     }
@@ -90,12 +93,57 @@ public class AccesoEstudianteWindow extends JFrame {
         this.directorio = context.getDirectorioEscolarService();
 
         setTitle("JAS Games - Acceso Estudiante");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // Evita cerrar con la X por accidente (salida protegida)
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(950, 650);
         setLocationRelativeTo(null);
 
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                // Hint suave
+                btnSalir.doClick();
+            }
+        });
+
         setContentPane(crearContenido());
+        instalarSalidaProtegida();
         cargarAulas();
+    }
+
+    private void instalarSalidaProtegida() {
+        // Click normal solo muestra un hint; el cierre real es manteniendo presionado.
+        btnSalir.addActionListener(e -> {
+            String old = lblTitulo.getText();
+            lblTitulo.setText("🖐️ Mantén 2s para salir");
+            javax.swing.Timer t = new javax.swing.Timer(1800, ev -> lblTitulo.setText(old));
+            t.setRepeats(false);
+            t.start();
+        });
+
+        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (!SwingUtilities.isLeftMouseButton(e)) return;
+                if (holdSalir != null) holdSalir.stop();
+                holdSalir = new javax.swing.Timer(1800, ev -> {
+                    if (holdSalir != null) holdSalir.stop();
+                    SwingUtilities.invokeLater(() -> salir());
+                });
+                holdSalir.setRepeats(false);
+                holdSalir.start();
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (holdSalir != null) holdSalir.stop();
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                if (holdSalir != null) holdSalir.stop();
+            }
+        });
     }
 
     private JPanel crearContenido() {
@@ -121,7 +169,6 @@ public class AccesoEstudianteWindow extends JFrame {
         cards.add(cardEstudiantes, CARD_ESTUDIANTES);
         root.add(cards, BorderLayout.CENTER);
 
-        btnSalir.addActionListener(e -> salir());
         btnAtras.addActionListener(e -> volverAulas());
 
         return root;
