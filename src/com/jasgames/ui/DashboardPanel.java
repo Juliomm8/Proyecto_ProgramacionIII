@@ -120,20 +120,45 @@ public class DashboardPanel extends JPanel {
         this.navigator = navigator;
 
         setLayout(new BorderLayout());
-        add(panelDashboard, BorderLayout.CENTER);
 
-        inicializarTabla();
-        construirFiltrosExtra();
-        construirReportePia();
-        construirKpis();
-        recargarCombosFiltros(true);
-        inicializarListeners();
+        try {
+            if (panelDashboard == null) {
+                panelDashboard = new JPanel(new BorderLayout());
 
-        // Mostrar algo al abrir
-        actualizarTabla(false);
+                if (panelFiltrosDashboard == null) panelFiltrosDashboard = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                if (lblFiltroJuego == null) lblFiltroJuego = new JLabel("Juego:");
+                if (cbFiltroJuego == null) cbFiltroJuego = new JComboBox<>();
+                if (btnActualizarDashboard == null) btnActualizarDashboard = new JButton("Actualizar");
+                if (btnOrdenarPorPuntaje == null) btnOrdenarPorPuntaje = new JButton("Ordenar");
+                if (tblResultados == null) tblResultados = new JTable();
+                if (scrollResultados == null) scrollResultados = new JScrollPane(tblResultados);
 
-        // Cargar datos del reporte PIA al abrir
-        refrescarReportePia();
+                JPanel top = new JPanel(new BorderLayout());
+                top.add(panelFiltrosDashboard, BorderLayout.CENTER);
+                panelDashboard.add(top, BorderLayout.NORTH);
+                panelDashboard.add(scrollResultados, BorderLayout.CENTER);
+            }
+
+            add(panelDashboard, BorderLayout.CENTER);
+
+            inicializarTabla();
+            construirFiltrosExtra();
+            construirReportePia();
+            construirKpis();
+            recargarCombosFiltros(true);
+            inicializarListeners();
+            actualizarTabla(false);
+            refrescarReportePia();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            removeAll();
+            setLayout(new BorderLayout());
+            JLabel err = new JLabel("Error al iniciar Dashboard: " + e.getMessage());
+            err.setHorizontalAlignment(SwingConstants.CENTER);
+            err.setForeground(Color.RED);
+            add(err, BorderLayout.CENTER);
+        }
     }
 
     // Back-compat
