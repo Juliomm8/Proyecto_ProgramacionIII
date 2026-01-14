@@ -95,7 +95,17 @@ public class DocenteWindow extends JFrame {
 
         tabbedPanePrincipal.addTab(
                 "Dashboard",
-                new DashboardPanel(context.getResultadoService(), context.getPiaService(), context.getAulaService())
+                new DashboardPanel(
+                        context.getResultadoService(),
+                        context.getPiaService(),
+                        context.getAulaService(),
+                        (idNino, idObjetivo) -> {
+                            tabbedPanePrincipal.setSelectedComponent(perfilesPanel);
+                            if (perfilesPanel != null) {
+                                perfilesPanel.irAObjetivoPia(idNino, idObjetivo);
+                            }
+                        }
+                )
         );
         tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
 

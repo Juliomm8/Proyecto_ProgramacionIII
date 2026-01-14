@@ -26,6 +26,13 @@ import java.util.List;
 
 public class DashboardPanel extends JPanel {
 
+    /**
+     * Permite que el Dashboard navegue hacia la pestaña "Perfiles" para revisar/editar el objetivo del PIA.
+     */
+    public interface ObjectiveNavigator {
+        void goToObjective(int idNino, String idObjetivo);
+    }
+
     // Campos que vienen del .form
     private JPanel panelDashboard;
     private JPanel panelHeaderDashboard;
@@ -42,6 +49,8 @@ public class DashboardPanel extends JPanel {
     private final SesionService sesionService;
     private final PiaService piaService;
     private final AulaService aulaServiceField;
+
+    private final ObjectiveNavigator navigator;
 
     private final java.util.List<SesionJuego> filasTabla = new java.util.ArrayList<>();
     private DefaultTableModel tablaModelo;
@@ -76,36 +85,60 @@ public class DashboardPanel extends JPanel {
     
     private JPanel cardKpiPia;
 
+    // --- Reporte PIA (Paso 4.9) ---
+    private JTabbedPane tabsCentro;
+    private JPanel panelReportePia;
+    private JComboBox<PIA> cbReportePia;
+    private JCheckBox chkIncluirPiasCerrados;
+    private JSpinner spUltimasNSesiones;
+    private JTable tblReporteObjetivos;
+    private JTable tblReporteSesiones;
+    private DefaultTableModel modeloReporteObjetivos;
+    private DefaultTableModel modeloReporteSesiones;
+    private JLabel lblReporteResumen;
+    private JButton btnReporteMarcarActivo;
+    private JButton btnReporteIrAObjetivo;
+    private JButton btnReporteRefrescar;
+
     private static final String[] AULAS_PREDEFINIDAS = {
             "Aula Azul", "Aula Roja", "Aula Verde", "Aula Amarilla", "Aula Morada"
     };
 
     // Constructor principal: lo usará DocenteWindow
-    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService) {
+    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService, ObjectiveNavigator navigator) {
         this.sesionService = sesionService;
         this.piaService = piaService;
         this.aulaServiceField = aulaService;
+        this.navigator = navigator;
 
         setLayout(new BorderLayout());
         add(panelDashboard, BorderLayout.CENTER);
 
         inicializarTabla();
         construirFiltrosExtra();
+        construirReportePia();
         construirKpis();
         recargarCombosFiltros(true);
         inicializarListeners();
 
         // Mostrar algo al abrir
         actualizarTabla(false);
+
+        // Cargar datos del reporte PIA al abrir
+        refrescarReportePia();
     }
 
     // Back-compat
+    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService) {
+        this(sesionService, piaService, aulaService, null);
+    }
+
     public DashboardPanel(SesionService sesionService, PiaService piaService) {
-        this(sesionService, piaService, null);
+        this(sesionService, piaService, null, null);
     }
 
     public DashboardPanel() {
-        this(new SesionService(), new PiaService(), new AulaService(new PerfilService()));
+        this(new SesionService(), new PiaService(), new AulaService(new PerfilService()), null);
     }
 
     private void inicializarTabla() {
@@ -199,7 +232,14 @@ public class DashboardPanel extends JPanel {
 
         JPanel centro = new JPanel(new BorderLayout());
         centro.add(panelKpis, BorderLayout.NORTH);
-        centro.add(scrollResultados, BorderLayout.CENTER);
+
+        // Tabs: Sesiones (tabla actual) + Reporte PIA
+        tabsCentro = new JTabbedPane();
+        tabsCentro.addTab("Sesiones", scrollResultados);
+        if (panelReportePia != null) {
+            tabsCentro.addTab("Reporte PIA", panelReportePia);
+        }
+        centro.add(tabsCentro, BorderLayout.CENTER);
 
         if (panelDashboard != null) {
             panelDashboard.remove(scrollResultados);
@@ -207,6 +247,419 @@ public class DashboardPanel extends JPanel {
             panelDashboard.revalidate();
             panelDashboard.repaint();
         }
+    }
+
+    // ----------------------------------------------------------------------
+    // Paso 4.9 — Reporte por Objetivo PIA (para docentes) — dentro del Dashboard
+    // ----------------------------------------------------------------------
+
+    private void construirReportePia() {
+        panelReportePia = new JPanel(new BorderLayout(10, 10));
+        panelReportePia.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // --- Header / controles ---
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+
+        cbReportePia = new JComboBox<>();
+        cbReportePia.setPreferredSize(new Dimension(320, 26));
+        cbReportePia.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    setText("Seleccione un PIA…");
+                    return this;
+                }
+                if (value instanceof PIA) {
+                    PIA p = (PIA) value;
+                    String estado = p.isActivo() ? "Activo" : "Cerrado";
+                    setText("" + p.getIdNino() + " — " + safe(p.getNombreNino()) + " (" + safe(p.getAula()) + ") · " + estado);
+                }
+                return this;
+            }
+        });
+
+        chkIncluirPiasCerrados = new JCheckBox("Incluir PIAs cerrados");
+        chkIncluirPiasCerrados.setFocusable(false);
+
+        spUltimasNSesiones = new JSpinner(new SpinnerNumberModel(10, 3, 50, 1));
+        JLabel lblN = new JLabel("Últimas sesiones:");
+
+        btnReporteRefrescar = new JButton("Refrescar");
+        btnReporteMarcarActivo = new JButton("Marcar como activo");
+        btnReporteIrAObjetivo = new JButton("Ir al objetivo");
+
+        btnReporteMarcarActivo.setEnabled(false);
+        btnReporteIrAObjetivo.setEnabled(false);
+
+        top.add(new JLabel("PIA:"));
+        top.add(cbReportePia);
+        top.add(chkIncluirPiasCerrados);
+        top.add(lblN);
+        top.add(spUltimasNSesiones);
+        top.add(btnReporteRefrescar);
+        top.add(btnReporteMarcarActivo);
+        top.add(btnReporteIrAObjetivo);
+
+        panelReportePia.add(top, BorderLayout.NORTH);
+
+        // --- Tabla de objetivos ---
+        modeloReporteObjetivos = new DefaultTableModel(
+                new Object[]{"ID_OBJ", "Juego", "Descripción", "ProgRondas", "MetaRondas", "ProgSes", "MetaSes", "Estado", "Precisión", "Errores prom.", "Duración prom.(s)", "Última"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        tblReporteObjetivos = new JTable(modeloReporteObjetivos);
+        tblReporteObjetivos.setFillsViewportHeight(true);
+        tblReporteObjetivos.setRowHeight(22);
+        tblReporteObjetivos.setAutoCreateRowSorter(true);
+
+        // ocultar columna ID_OBJ
+        tblReporteObjetivos.getColumnModel().getColumn(0).setMinWidth(0);
+        tblReporteObjetivos.getColumnModel().getColumn(0).setMaxWidth(0);
+        tblReporteObjetivos.getColumnModel().getColumn(0).setWidth(0);
+
+        JScrollPane spObj = new JScrollPane(tblReporteObjetivos);
+
+        // --- Tabla de últimas sesiones por objetivo ---
+        modeloReporteSesiones = new DefaultTableModel(
+                new Object[]{"Fecha", "Puntaje", "Dificultad", "Intentos", "Errores", "Pistas", "Dur(s)", "Precisión", "ID_SES"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        tblReporteSesiones = new JTable(modeloReporteSesiones);
+        tblReporteSesiones.setFillsViewportHeight(true);
+        tblReporteSesiones.setRowHeight(22);
+        tblReporteSesiones.setAutoCreateRowSorter(true);
+
+        // ocultar columna ID_SES
+        tblReporteSesiones.getColumnModel().getColumn(8).setMinWidth(0);
+        tblReporteSesiones.getColumnModel().getColumn(8).setMaxWidth(0);
+        tblReporteSesiones.getColumnModel().getColumn(8).setWidth(0);
+
+        JScrollPane spSes = new JScrollPane(tblReporteSesiones);
+
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, spObj, spSes);
+        split.setResizeWeight(0.55);
+        panelReportePia.add(split, BorderLayout.CENTER);
+
+        // --- Resumen inferior ---
+        JPanel bottom = new JPanel(new BorderLayout(10, 0));
+        lblReporteResumen = new JLabel("Seleccione un PIA para ver objetivos y progreso.");
+        bottom.add(lblReporteResumen, BorderLayout.CENTER);
+        panelReportePia.add(bottom, BorderLayout.SOUTH);
+
+        // --- listeners ---
+        btnReporteRefrescar.addActionListener(e -> refrescarReportePia());
+        chkIncluirPiasCerrados.addActionListener(e -> refrescarReportePia());
+
+        cbReportePia.addActionListener(e -> {
+            cargarObjetivosDelPiaSeleccionado();
+            actualizarDetalleObjetivoSeleccionado();
+        });
+
+        spUltimasNSesiones.addChangeListener(e -> actualizarDetalleObjetivoSeleccionado());
+
+        tblReporteObjetivos.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            actualizarDetalleObjetivoSeleccionado();
+        });
+
+        btnReporteMarcarActivo.addActionListener(e -> marcarObjetivoComoActivo());
+        btnReporteIrAObjetivo.addActionListener(e -> irAObjetivoEnPerfiles());
+    }
+
+    private void refrescarReportePia() {
+        if (cbReportePia == null) return;
+
+        PIA sel = (PIA) cbReportePia.getSelectedItem();
+
+        cbReportePia.removeAllItems();
+        cbReportePia.addItem(null);
+
+        boolean incluirCerrados = chkIncluirPiasCerrados != null && chkIncluirPiasCerrados.isSelected();
+        List<PIA> pias = piaService.obtenerTodos();
+
+        // Orden estable (por nombre, luego id)
+        pias.sort(Comparator
+                .comparing((PIA p) -> safe(p.getNombreNino()).toLowerCase(Locale.ROOT))
+                .thenComparingInt(PIA::getIdNino)
+                .thenComparing(PIA::getIdPia, Comparator.nullsLast(Comparator.naturalOrder()))
+        );
+
+        for (PIA p : pias) {
+            if (p == null) continue;
+            if (!incluirCerrados && !p.isActivo()) continue;
+            cbReportePia.addItem(p);
+        }
+
+        // restaurar selección si aún existe
+        if (sel != null) {
+            for (int i = 0; i < cbReportePia.getItemCount(); i++) {
+                PIA it = (PIA) cbReportePia.getItemAt(i);
+                if (it != null && Objects.equals(it.getIdPia(), sel.getIdPia())) {
+                    cbReportePia.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        cargarObjetivosDelPiaSeleccionado();
+        actualizarDetalleObjetivoSeleccionado();
+    }
+
+    private void cargarObjetivosDelPiaSeleccionado() {
+        if (modeloReporteObjetivos == null) return;
+        modeloReporteObjetivos.setRowCount(0);
+        modeloReporteSesiones.setRowCount(0);
+
+        PIA pia = (PIA) cbReportePia.getSelectedItem();
+        if (pia == null) {
+            lblReporteResumen.setText("Seleccione un PIA para ver objetivos y progreso.");
+            btnReporteMarcarActivo.setEnabled(false);
+            btnReporteIrAObjetivo.setEnabled(false);
+            return;
+        }
+
+        // Tomamos todas las sesiones una sola vez
+        List<SesionJuego> sesiones = sesionService.obtenerTodos();
+
+        for (ObjetivoPIA o : pia.getObjetivos()) {
+            if (o == null) continue;
+
+            StatsObjetivo st = calcularStatsObjetivo(pia, o, sesiones);
+
+            modeloReporteObjetivos.addRow(new Object[]{
+                    o.getIdObjetivo(),
+                    o.getJuegoId(),
+                    safe(o.getDescripcion()),
+                    o.getProgresoRondasCorrectas(),
+                    o.getMetaRondasCorrectas(),
+                    o.getProgresoSesionesCompletadas(),
+                    o.getMetaSesionesCompletadas(),
+                    o.isCompletado() ? "✅" : "⏳",
+                    st.precisionTxt,
+                    st.erroresPromTxt,
+                    st.duracionPromTxt,
+                    st.ultimaTxt
+            });
+        }
+
+        if (modeloReporteObjetivos.getRowCount() == 0) {
+            lblReporteResumen.setText("Este PIA no tiene objetivos todavía.");
+        } else {
+            lblReporteResumen.setText("Seleccione un objetivo para ver detalle y últimas sesiones.");
+        }
+
+        // Auto seleccionar la primera fila para que el docente vea algo
+        if (tblReporteObjetivos.getRowCount() > 0) {
+            tblReporteObjetivos.setRowSelectionInterval(0, 0);
+        }
+    }
+
+    private void actualizarDetalleObjetivoSeleccionado() {
+        if (modeloReporteSesiones == null) return;
+        modeloReporteSesiones.setRowCount(0);
+
+        PIA pia = (PIA) cbReportePia.getSelectedItem();
+        if (pia == null) {
+            btnReporteMarcarActivo.setEnabled(false);
+            btnReporteIrAObjetivo.setEnabled(false);
+            return;
+        }
+
+        int viewRow = tblReporteObjetivos.getSelectedRow();
+        if (viewRow < 0) {
+            btnReporteMarcarActivo.setEnabled(false);
+            btnReporteIrAObjetivo.setEnabled(false);
+            return;
+        }
+        int row = tblReporteObjetivos.convertRowIndexToModel(viewRow);
+        String idObj = (String) modeloReporteObjetivos.getValueAt(row, 0);
+        ObjetivoPIA obj = pia.getObjetivoPorId(idObj);
+        if (obj == null) {
+            btnReporteMarcarActivo.setEnabled(false);
+            btnReporteIrAObjetivo.setEnabled(false);
+            return;
+        }
+
+        int limite = 10;
+        try {
+            Object v = spUltimasNSesiones.getValue();
+            if (v instanceof Integer) limite = (Integer) v;
+        } catch (Exception ignored) {}
+        if (limite <= 0) limite = 10;
+
+        List<SesionJuego> sesiones = sesionesParaObjetivo(pia, obj, sesionService.obtenerTodos());
+        sesiones.sort((a, b) -> {
+            LocalDateTime fa = (a.getFechaFin() != null) ? a.getFechaFin() : a.getFechaHora();
+            LocalDateTime fb = (b.getFechaFin() != null) ? b.getFechaFin() : b.getFechaHora();
+            if (fa == null && fb == null) return 0;
+            if (fa == null) return 1;
+            if (fb == null) return -1;
+            return fb.compareTo(fa);
+        });
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        int count = 0;
+        for (SesionJuego s : sesiones) {
+            if (count >= limite) break;
+            count++;
+
+            LocalDateTime fh = (s.getFechaFin() != null) ? s.getFechaFin() : s.getFechaHora();
+            String fecha = (fh == null) ? "—" : fh.format(fmt);
+
+            int intentos = s.getIntentosTotales();
+            String prec = "—";
+            if (intentos > 0) {
+                double p = (double) s.getAciertosTotales() / (double) intentos;
+                prec = String.format(Locale.US, "%.0f%%", p * 100.0);
+            }
+
+            String dur = "—";
+            if (s.getDuracionMs() > 0) dur = String.format(Locale.US, "%.1f", s.getDuracionMs() / 1000.0);
+
+            modeloReporteSesiones.addRow(new Object[]{
+                    fecha,
+                    s.getPuntaje(),
+                    s.getDificultad(),
+                    s.getIntentosTotales(),
+                    s.getErroresTotales(),
+                    s.getPistasUsadas(),
+                    dur,
+                    prec,
+                    safe(s.getIdSesion())
+            });
+        }
+
+        // Botones
+        boolean puedeMarcar = pia.isActivo() && !obj.isCompletado();
+        btnReporteMarcarActivo.setEnabled(puedeMarcar);
+        btnReporteIrAObjetivo.setEnabled(navigator != null);
+
+        // Resumen
+        StatsObjetivo st = calcularStatsObjetivo(pia, obj, sesionService.obtenerTodos());
+        String activoTxt = (Objects.equals(pia.getIdObjetivoActivo(), obj.getIdObjetivo())) ? " (activo)" : "";
+        lblReporteResumen.setText(
+                "Objetivo: Juego " + obj.getJuegoId() + " — " + safe(obj.getDescripcion()) + activoTxt +
+                        " | Progreso: " + obj.getProgresoRondasCorrectas() + "/" + obj.getMetaRondasCorrectas() + " rondas, " +
+                        obj.getProgresoSesionesCompletadas() + "/" + obj.getMetaSesionesCompletadas() + " sesiones" +
+                        " | Precisión: " + st.precisionTxt + " | Errores prom.: " + st.erroresPromTxt + " | Duración prom.: " + st.duracionPromTxt
+        );
+    }
+
+    private void marcarObjetivoComoActivo() {
+        PIA pia = (PIA) cbReportePia.getSelectedItem();
+        if (pia == null) return;
+
+        int viewRow = tblReporteObjetivos.getSelectedRow();
+        if (viewRow < 0) return;
+        int row = tblReporteObjetivos.convertRowIndexToModel(viewRow);
+        String idObj = (String) modeloReporteObjetivos.getValueAt(row, 0);
+        if (idObj == null) return;
+
+        boolean ok = piaService.setObjetivoActivo(pia.getIdPia(), idObj);
+        if (!ok) {
+            JOptionPane.showMessageDialog(this, "No se pudo marcar como activo (puede estar completado o no existir).", "PIA", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        refrescarReportePia();
+    }
+
+    private void irAObjetivoEnPerfiles() {
+        if (navigator == null) {
+            JOptionPane.showMessageDialog(this, "Esta acción no está disponible en esta pantalla.", "PIA", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        PIA pia = (PIA) cbReportePia.getSelectedItem();
+        if (pia == null) return;
+        int viewRow = tblReporteObjetivos.getSelectedRow();
+        if (viewRow < 0) return;
+        int row = tblReporteObjetivos.convertRowIndexToModel(viewRow);
+        String idObj = (String) modeloReporteObjetivos.getValueAt(row, 0);
+        if (idObj == null) return;
+
+        navigator.goToObjective(pia.getIdNino(), idObj);
+    }
+
+    private static class StatsObjetivo {
+        String precisionTxt = "—";
+        String erroresPromTxt = "—";
+        String duracionPromTxt = "—";
+        String ultimaTxt = "—";
+    }
+
+    private StatsObjetivo calcularStatsObjetivo(PIA pia, ObjetivoPIA obj, List<SesionJuego> todas) {
+        StatsObjetivo st = new StatsObjetivo();
+        if (pia == null || obj == null || todas == null) return st;
+
+        List<SesionJuego> sesiones = sesionesParaObjetivo(pia, obj, todas);
+        if (sesiones.isEmpty()) return st;
+
+        int n = 0;
+        int sumErrores = 0;
+        long sumDur = 0L;
+        int cntDur = 0;
+        int sumAciertos = 0;
+        int sumIntentos = 0;
+        LocalDateTime ultima = null;
+
+        for (SesionJuego s : sesiones) {
+            if (s == null) continue;
+            n++;
+            sumErrores += s.getErroresTotales();
+            if (s.getDuracionMs() > 0) {
+                sumDur += s.getDuracionMs();
+                cntDur++;
+            }
+            sumAciertos += s.getAciertosTotales();
+            sumIntentos += s.getIntentosTotales();
+
+            LocalDateTime fh = (s.getFechaFin() != null) ? s.getFechaFin() : s.getFechaHora();
+            if (fh != null && (ultima == null || fh.isAfter(ultima))) ultima = fh;
+        }
+
+        if (sumIntentos > 0) {
+            double p = (double) sumAciertos / (double) sumIntentos;
+            st.precisionTxt = String.format(Locale.US, "%.0f%%", p * 100.0);
+        }
+
+        if (n > 0) {
+            double e = (double) sumErrores / (double) n;
+            st.erroresPromTxt = String.format(Locale.US, "%.1f", e);
+        }
+
+        if (cntDur > 0) {
+            double d = (sumDur / 1000.0) / (double) cntDur;
+            st.duracionPromTxt = String.format(Locale.US, "%.1f s", d);
+        }
+
+        if (ultima != null) {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            st.ultimaTxt = ultima.toLocalDate().format(fmt);
+        }
+
+        return st;
+    }
+
+    private List<SesionJuego> sesionesParaObjetivo(PIA pia, ObjetivoPIA obj, List<SesionJuego> todas) {
+        if (pia == null || obj == null || todas == null) return new ArrayList<>();
+        String idPia = pia.getIdPia();
+        String idObj = obj.getIdObjetivo();
+        List<SesionJuego> out = new ArrayList<>();
+        for (SesionJuego s : todas) {
+            if (s == null) continue;
+            if (idPia == null || idObj == null) continue;
+            if (!Objects.equals(idPia, s.getIdPia())) continue;
+            if (!Objects.equals(idObj, s.getIdObjetivoPia())) continue;
+            out.add(s);
+        }
+        return out;
     }
 
     private JLabel crearKpi(String titulo, String valor) {
@@ -534,6 +987,9 @@ public class DashboardPanel extends JPanel {
         // Refrescar tabla y filtros
         recargarCombosFiltros(true);
         actualizarTabla(false);
+
+        // Mantener el reporte PIA sincronizado
+        refrescarReportePia();
     }
 
     private void limpiarFiltros() {

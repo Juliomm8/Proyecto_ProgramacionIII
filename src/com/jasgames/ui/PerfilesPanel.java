@@ -1300,6 +1300,52 @@ public class PerfilesPanel extends JPanel {
     }
 
     /**
+     * Navegación desde Dashboard: abre el perfil del niño y enfoca el PIA.
+     * Si se pasa un idObjetivo, lo selecciona como "objetivo en progreso".
+     */
+    public void irAObjetivoPia(int idNino, String idObjetivo) {
+        if (idNino <= 0) return;
+        seleccionarNinoPorId(idNino);
+
+        // Esperar a que el UI termine de cargar el perfil seleccionado
+        SwingUtilities.invokeLater(() -> {
+            expandirPiaDetalles(true);
+            if (idObjetivo != null && !idObjetivo.isBlank()) {
+                seleccionarObjetivoEnProgreso(idObjetivo, true);
+            }
+        });
+    }
+
+    private void expandirPiaDetalles(boolean abrir) {
+        if (panelPiaBody == null || btnExpandirPia == null) return;
+        boolean visible = panelPiaBody.isVisible();
+        if (abrir && !visible) {
+            togglePiaBody();
+        }
+        if (!abrir && visible) {
+            togglePiaBody();
+        }
+    }
+
+    private void seleccionarObjetivoEnProgreso(String idObjetivo, boolean aplicar) {
+        if (cbPiaObjetivoActivo == null || idObjetivo == null) return;
+
+        for (int i = 0; i < cbPiaObjetivoActivo.getItemCount(); i++) {
+            Object it = cbPiaObjetivoActivo.getItemAt(i);
+            if (it instanceof ObjetivoPIA) {
+                ObjetivoPIA o = (ObjetivoPIA) it;
+                if (o != null && idObjetivo.equals(o.getIdObjetivo())) {
+                    cbPiaObjetivoActivo.setSelectedIndex(i);
+                    if (aplicar && btnSetObjetivoActivo != null && btnSetObjetivoActivo.isEnabled()) {
+                        btnSetObjetivoActivo.doClick();
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
      * Elimina un niño de forma compatible: intenta varios nombres de método para no romper compilación
      * si el service cambia.
      */
