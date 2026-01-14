@@ -93,7 +93,10 @@ public class DocenteWindow extends JFrame {
             perfilesPanel.seleccionarNinoPorId(idNino);
         }));
 
-        tabbedPanePrincipal.addTab("Dashboard", new DashboardPanel(context.getResultadoService(), context.getPiaService()));
+        tabbedPanePrincipal.addTab(
+                "Dashboard",
+                new DashboardPanel(context.getResultadoService(), context.getPiaService(), context.getAulaService())
+        );
         tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
 
     }

@@ -99,6 +99,9 @@ public class PerfilesPanel extends JPanel {
     // ---------------------- UI: botones ----------------------
     private JButton btnEliminarNino;
 
+    // Evitar listeners duplicados (esto causaba que un objetivo PIA se agregue 2 veces)
+    private boolean listenersPiaInicializados = false;
+
     private static final String[] AVATARES = {
             "😃","😄","😁","😊",
             "🙂","😎","🤩","🥳","😺",
@@ -993,6 +996,11 @@ public class PerfilesPanel extends JPanel {
     }
     
     private void initListenersPia() {
+        // Si este método se llama más de una vez (por ejemplo, desde el constructor y desde el builder
+        // del panel PIA), no debemos volver a registrar listeners. Esto duplicaba acciones.
+        if (listenersPiaInicializados) return;
+        listenersPiaInicializados = true;
+
         btnCrearPia.addActionListener(e -> {
             Nino ninoSeleccionado = listaNinos.getSelectedValue();
             if (ninoSeleccionado == null) return;

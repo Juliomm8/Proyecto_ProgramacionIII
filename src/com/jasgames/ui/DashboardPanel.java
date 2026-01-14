@@ -4,6 +4,8 @@ import com.jasgames.model.Juego;
 import com.jasgames.model.ObjetivoPIA;
 import com.jasgames.model.PIA;
 import com.jasgames.model.SesionJuego;
+import com.jasgames.service.AulaService;
+import com.jasgames.service.PerfilService;
 import com.jasgames.service.PiaService;
 import com.jasgames.service.SesionService;
 
@@ -38,6 +40,7 @@ public class DashboardPanel extends JPanel {
     // --- Servicios / Tabla ---
     private final SesionService sesionService;
     private final PiaService piaService;
+    private final AulaService aulaService;
 
     private final java.util.List<SesionJuego> filasTabla = new java.util.ArrayList<>();
     private DefaultTableModel tablaModelo;
@@ -73,9 +76,10 @@ public class DashboardPanel extends JPanel {
     };
 
     // Constructor principal: lo usará DocenteWindow
-    public DashboardPanel(SesionService sesionService, PiaService piaService) {
+    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService) {
         this.sesionService = sesionService;
         this.piaService = piaService;
+        this.aulaService = aulaService;
 
         setLayout(new BorderLayout());
         add(panelDashboard, BorderLayout.CENTER);
@@ -90,13 +94,16 @@ public class DashboardPanel extends JPanel {
         actualizarTabla(false);
     }
 
-    // Constructor sin parámetros SOLO para el diseñador de IntelliJ
+    // Back-compat
+    public DashboardPanel(SesionService sesionService, PiaService piaService) {
+        this(sesionService, piaService, null);
+    }
+
     public DashboardPanel() {
-        this(new SesionService(), new PiaService());
+        this(new SesionService(), new PiaService(), new AulaService(new PerfilService()));
     }
 
     private void inicializarTabla() {
-        // Mejor: mostrar ID y Aula (para que el filtro tenga sentido)
         tablaModelo = new DefaultTableModel(
                 new Object[]{"ID", "Estudiante", "Aula", "Juego", "Dificultad", "Puntaje", "Intentos", "Errores", "Pistas", "Duración(s)", "Precisión", "PIA", "Objetivo", "Fecha", "Hora"}, 0
         ) {
@@ -182,14 +189,10 @@ public class DashboardPanel extends JPanel {
         habilitarClickMejor();
         habilitarClickAulaActiva();
 
-        // Insertarlo arriba de la tabla: en panelDashboard, justo antes del scrollResultados
-        // Como el .form puede variar, lo metemos en el CENTER con un contenedor vertical.
         JPanel centro = new JPanel(new BorderLayout());
         centro.add(panelKpis, BorderLayout.NORTH);
         centro.add(scrollResultados, BorderLayout.CENTER);
 
-        // Reemplazamos la zona del scroll por el nuevo contenedor
-        // Quitamos y re-agregamos para no depender del .form
         if (panelDashboard != null) {
             panelDashboard.remove(scrollResultados);
             panelDashboard.add(centro, BorderLayout.CENTER);
@@ -234,11 +237,10 @@ public class DashboardPanel extends JPanel {
                     txtBuscar.setText(ultimoNombreMejor);
                 }
 
-                actualizarTabla(false); // por si acaso (aunque el DocumentListener ya refresca)
+                actualizarTabla(false);
             }
         };
 
-        // Para que el click funcione tanto en la tarjeta como en el texto
         cardKpiMejor.setToolTipText("Click para filtrar por el estudiante con mejor puntaje");
         cardKpiMejor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cardKpiMejor.addMouseListener(click);
@@ -288,7 +290,7 @@ public class DashboardPanel extends JPanel {
 
         btnOrdenarPorPuntaje.addActionListener(e -> {
             recargarCombosFiltros(true);
-            actualizarTabla(true); // fuerza puntaje desc como atajo
+            actualizarTabla(true);
         });
 
         btnLimpiar.addActionListener(e -> limpiarFiltros());
@@ -307,7 +309,6 @@ public class DashboardPanel extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) { actualizarTabla(false); }
         });
 
-        // Doble click en tabla: abrir detalle
         tblResultados.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -335,7 +336,8 @@ public class DashboardPanel extends JPanel {
     }
 
     private void recargarCombosFiltros(boolean mantenerSelecciones) {
-        Object juegoSel = mantenerSelecciones ? cbFiltroJuego.getSelectedItem() : "Todos";
+        Object juegoSelObj = mantenerSelecciones ? cbFiltroJuego.getSelectedItem() : "Todos";
+        Integer juegoSelId = (juegoSelObj instanceof Juego) ? ((Juego) juegoSelObj).getId() : null;
         String aulaSel = mantenerSelecciones ? (String) cbFiltroAula.getSelectedItem() : "Todas";
         Object difSel = mantenerSelecciones ? cbFiltroDificultad.getSelectedItem() : "Todas";
 
@@ -343,20 +345,25 @@ public class DashboardPanel extends JPanel {
         cbFiltroJuego.removeAllItems();
         cbFiltroJuego.addItem("Todos");
 
-        Set<Juego> juegosUnicos = new LinkedHashSet<>();
+        Map<Integer, Juego> juegosPorId = new LinkedHashMap<>();
         for (SesionJuego r : sesionService.obtenerTodos()) {
-            if (r.getJuego() != null) juegosUnicos.add(r.getJuego());
+            Juego j = r.getJuego();
+            if (j != null) juegosPorId.putIfAbsent(j.getId(), j);
         }
-        for (Juego j : juegosUnicos) cbFiltroJuego.addItem(j);
+        for (Juego j : juegosPorId.values()) cbFiltroJuego.addItem(j);
 
         // ---- Aulas ----
         cbFiltroAula.removeAllItems();
         cbFiltroAula.addItem("Todas");
 
-        // Primero predefinidas (aunque no haya resultados)
-        for (String a : AULAS_PREDEFINIDAS) cbFiltroAula.addItem(a);
+        Set<String> aulasBase = new LinkedHashSet<>();
+        if (aulaService != null) {
+            aulasBase.addAll(aulaService.obtenerNombres());
+        } else {
+            aulasBase.addAll(Arrays.asList(AULAS_PREDEFINIDAS));
+        }
+        for (String a : aulasBase) cbFiltroAula.addItem(a);
 
-        // Luego cualquier aula extra que exista en resultados
         Set<String> aulasExtras = new LinkedHashSet<>();
         for (SesionJuego r : sesionService.obtenerTodos()) {
             if (r.getAula() != null && !r.getAula().isBlank()) aulasExtras.add(r.getAula().trim());
@@ -373,10 +380,18 @@ public class DashboardPanel extends JPanel {
         cbFiltroDificultad.removeAllItems();
         cbFiltroDificultad.addItem("Todas");
         for (int i = 1; i <= 5; i++) cbFiltroDificultad.addItem(i);
-
-        // Restaurar selecciones si se puede
         if (mantenerSelecciones) {
-            if (juegoSel != null) cbFiltroJuego.setSelectedItem(juegoSel);
+            if (juegoSelId == null) {
+                if (juegoSelObj != null) cbFiltroJuego.setSelectedItem(juegoSelObj);
+            } else {
+                for (int i = 0; i < cbFiltroJuego.getItemCount(); i++) {
+                    Object it = cbFiltroJuego.getItemAt(i);
+                    if (it instanceof Juego && ((Juego) it).getId() == juegoSelId) {
+                        cbFiltroJuego.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
             if (aulaSel != null) cbFiltroAula.setSelectedItem(aulaSel);
             if (difSel != null) cbFiltroDificultad.setSelectedItem(difSel);
         }
@@ -642,8 +657,7 @@ private void actualizarKpis(List<SesionJuego> lista) {
             String aula = (r.getAula() == null || r.getAula().isBlank()) ? "Sin aula" : r.getAula();
             conteoAula.put(aula, conteoAula.getOrDefault(aula, 0) + 1);
         }
-        
-        // Guardar "mejor" para el click
+
         if (mejor != null) {
             ultimoIdMejor = mejor.getIdEstudiante();
             ultimoNombreMejor = mejor.getNombreEstudiante();
