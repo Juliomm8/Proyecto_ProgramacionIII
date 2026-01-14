@@ -45,23 +45,13 @@ public class PerfilesPanel extends JPanel {
     private PIA piaActual;
 
     // ---------------------- UI: filtros/lista ----------------------
-    private JPanel panelBusquedaOrden;
-    private JLabel lblBuscar;
     private JTextField txtBuscar;
-    private JButton btnBuscarNino;
-
-    private JLabel lblOrdenarPor;
     private JComboBox<String> cbOrdenarPor;
-    private JButton btnOrdenar;
-
-    private JLabel lblAulaFiltro;
     private JComboBox<String> cbAulaFiltro;
-    private JButton btnLimpiarFiltros;
     private JLabel lblContador;
 
     private DefaultListModel<Nino> listModel;
     private JList<Nino> listaNinos;
-    private JScrollPane scrollNinos;
 
     // ---------------------- UI: formulario ----------------------
     private JPanel formPerfilesPanel;
@@ -81,6 +71,12 @@ public class PerfilesPanel extends JPanel {
     private JLabel lblPiaAyuda;
     private JLabel lblPiaObjetivoActivo;
 
+    private JComboBox<ObjetivoPIA> cbPiaObjetivoActivo;
+    private JButton btnSetObjetivoActivo;
+
+    private JButton btnEditarObjetivo;
+    private JButton btnEliminarObjetivo;
+
     private JTextArea txtPiaObjetivoGeneral;
 
     private JTable tblObjetivos;
@@ -95,18 +91,13 @@ public class PerfilesPanel extends JPanel {
     private JButton btnGuardarPia;
     private JButton btnCerrarPia;
     private JButton btnAgregarObjetivo;
-    private JButton btnAyudaPia;
     
     // Nuevos campos para colapsar PIA
     private JPanel panelPiaBody;
     private JButton btnExpandirPia;
 
     // ---------------------- UI: botones ----------------------
-    // Se mantienen nombres antiguos por compatibilidad.
-    private JButton btnRegistrarNino;   // ahora actúa como "Guardar"
-    private JButton btnActualizarNino;  // oculto / no usado
     private JButton btnEliminarNino;
-    private JButton btnLimpiarCampos;
 
     private static final String[] AVATARES = {
             "😃","😄","😁","😊",
@@ -157,12 +148,20 @@ public class PerfilesPanel extends JPanel {
         
         // Init tabla PIA
         modeloObjetivos = new DefaultTableModel(
-                new Object[]{"Juego", "Descripción", "MetaRondas", "ProgRondas", "MetaSes", "ProgSes", "Estado"}, 0
+                new Object[]{"ID", "Juego", "Descripción", "MetaRondas", "ProgRondas", "MetaSes", "ProgSes", "Estado"}, 0
         ) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
         tblObjetivos = new JTable(modeloObjetivos);
+
+        // Ocultar columna interna (ID objetivo)
+        try {
+            tblObjetivos.removeColumn(tblObjetivos.getColumnModel().getColumn(0));
+        } catch (Exception ignored) {}
+        tblObjetivos.setRowHeight(22);
+        tblObjetivos.setFillsViewportHeight(true);
+
 
         add(buildHeader(), BorderLayout.NORTH);
 
@@ -216,7 +215,7 @@ public class PerfilesPanel extends JPanel {
         card.setLayout(new BorderLayout(10, 10));
 
         // --- filtros (arriba)
-        panelBusquedaOrden = new JPanel(new GridBagLayout());
+        JPanel panelBusquedaOrden = new JPanel(new GridBagLayout());
         panelBusquedaOrden.setOpaque(false);
 
         GridBagConstraints gc = new GridBagConstraints();
@@ -224,24 +223,24 @@ public class PerfilesPanel extends JPanel {
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.gridy = 0;
 
-        lblAulaFiltro = new JLabel("Aula:");
+        JLabel lblAulaFiltro = new JLabel("Aula:");
         cbAulaFiltro = new JComboBox<>();
         cbAulaFiltro.setPrototypeDisplayValue("Aula XXXXXXX");
         cbAulaFiltro.addActionListener(e -> aplicarFiltrosYOrden());
 
-        lblBuscar = new JLabel("Buscar (ID o Nombre):");
+        JLabel lblBuscar = new JLabel("Buscar (ID o Nombre):");
         txtBuscar = new JTextField();
         txtBuscar.setToolTipText("Ej: 12, Julio, Mera...");
-        btnBuscarNino = new JButton("Buscar");
+        JButton btnBuscarNino = new JButton("Buscar");
         btnBuscarNino.addActionListener(e -> aplicarFiltrosYOrden());
 
-        lblOrdenarPor = new JLabel("Orden:");
+        JLabel lblOrdenarPor = new JLabel("Orden:");
         cbOrdenarPor = new JComboBox<>(new String[]{"Nombre (A-Z)", "Nombre (Z-A)", "ID (asc)", "ID (desc)", "Aula (A-Z)"});
         cbOrdenarPor.addActionListener(e -> aplicarFiltrosYOrden());
-        btnOrdenar = new JButton("Aplicar");
+        JButton btnOrdenar = new JButton("Aplicar");
         btnOrdenar.addActionListener(e -> aplicarFiltrosYOrden());
 
-        btnLimpiarFiltros = new JButton("Limpiar");
+        JButton btnLimpiarFiltros = new JButton("Limpiar");
         btnLimpiarFiltros.addActionListener(e -> {
             txtBuscar.setText("");
             if (cbAulaFiltro.getItemCount() > 0) cbAulaFiltro.setSelectedIndex(0);
@@ -279,21 +278,18 @@ public class PerfilesPanel extends JPanel {
         listaNinos.setVisibleRowCount(12);
         listaNinos.setCellRenderer(new NinoCellRenderer());
 
-        scrollNinos = new JScrollPane(listaNinos);
+        JScrollPane scrollNinos = new JScrollPane(listaNinos);
         scrollNinos.setBorder(BorderFactory.createEmptyBorder());
         card.add(scrollNinos, BorderLayout.CENTER);
 
         // --- listeners
-        listaNinos.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (e.getValueIsAdjusting()) return;
-                Nino n = listaNinos.getSelectedValue();
-                if (n != null) {
-                    mostrarNinoEnFormulario(n);
-                } else {
-                    setEstado("Sin selección");
-                }
+        listaNinos.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            Nino n = listaNinos.getSelectedValue();
+            if (n != null) {
+                mostrarNinoEnFormulario(n);
+            } else {
+                setEstado("Sin selección");
             }
         });
 
@@ -431,12 +427,12 @@ public class PerfilesPanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
 
-        btnRegistrarNino = new JButton("Guardar");
-        btnActualizarNino = new JButton("Actualizar"); // compat (no se muestra)
+        JButton btnRegistrarNino = new JButton("Guardar");
+        JButton btnActualizarNino = new JButton("Actualizar"); // compat (no se muestra)
         btnActualizarNino.setVisible(false);
 
         btnEliminarNino = new JButton("Eliminar");
-        btnLimpiarCampos = new JButton("Nuevo / Limpiar");
+        JButton btnLimpiarCampos = new JButton("Nuevo / Limpiar");
 
         btnEliminarNino.setEnabled(false); // hasta que haya selección válida
 
@@ -488,7 +484,7 @@ public class PerfilesPanel extends JPanel {
         JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         headerRight.setOpaque(false);
         
-        btnAyudaPia = crearBotonAyudaPia();
+        JButton btnAyudaPia = crearBotonAyudaPia();
         btnAyudaPia.addActionListener(e -> mostrarAyudaPIA());
         
         btnExpandirPia = new JButton("Ver detalles ▼");
@@ -555,6 +551,42 @@ public class PerfilesPanel extends JPanel {
         lblPiaObjetivoActivo = new JLabel("Objetivo en progreso: —");
         panelPiaBody.add(lblPiaObjetivoActivo, gBody);
         gBody.gridy++;
+        // Selector de objetivo activo (para que el docente decida qué se trabaja primero)
+        JPanel filaObjActivo = new JPanel(new BorderLayout(8, 0));
+        filaObjActivo.setOpaque(false);
+
+        JLabel lblSel = new JLabel("Cambiar objetivo en progreso:");
+        lblSel.setFont(lblSel.getFont().deriveFont(Font.PLAIN, 11f));
+
+        cbPiaObjetivoActivo = new JComboBox<>();
+        cbPiaObjetivoActivo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof ObjetivoPIA) {
+                    ObjetivoPIA o = (ObjetivoPIA) value;
+                    String txt = "Juego " + o.getJuegoId() + " — " + o.getDescripcion();
+                    setText(txt);
+                }
+                return this;
+            }
+        });
+
+        btnSetObjetivoActivo = new JButton("Usar");
+        btnSetObjetivoActivo.setFocusable(false);
+        btnSetObjetivoActivo.setToolTipText("Establecer el objetivo seleccionado como el objetivo en progreso");
+
+        JPanel rightObj = new JPanel(new BorderLayout(6, 0));
+        rightObj.setOpaque(false);
+        rightObj.add(cbPiaObjetivoActivo, BorderLayout.CENTER);
+        rightObj.add(btnSetObjetivoActivo, BorderLayout.EAST);
+
+        filaObjActivo.add(lblSel, BorderLayout.WEST);
+        filaObjActivo.add(rightObj, BorderLayout.CENTER);
+
+        panelPiaBody.add(filaObjActivo, gBody);
+        gBody.gridy++;
+
 
         // Objetivo general
         JLabel lblObj = new JLabel("<html><b>Objetivo general</b> (resumen para el docente)</html>");
@@ -582,6 +614,16 @@ public class PerfilesPanel extends JPanel {
         JScrollPane spTabla = new JScrollPane(tblObjetivos);
         spTabla.setPreferredSize(new Dimension(10, 120));
         panelPiaBody.add(spTabla, gBody);
+        gBody.gridy++;
+
+        // Botones de acción para objetivos
+        JPanel pnlAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        pnlAcciones.setOpaque(false);
+        btnEditarObjetivo = new JButton("Editar");
+        btnEliminarObjetivo = new JButton("Eliminar");
+        pnlAcciones.add(btnEditarObjetivo);
+        pnlAcciones.add(btnEliminarObjetivo);
+        panelPiaBody.add(pnlAcciones, gBody);
         gBody.gridy++;
 
         // Add Objective Panel
@@ -711,15 +753,19 @@ public class PerfilesPanel extends JPanel {
         }
 
         // filtro (izquierda)
-        cbAulaFiltro.removeAllItems();
-        for (String a : aulas) cbAulaFiltro.addItem(a);
+        if (cbAulaFiltro != null) {
+            cbAulaFiltro.removeAllItems();
+            for (String a : aulas) cbAulaFiltro.addItem(a);
+        }
 
         // aula del formulario (derecha) sin "Todas"
-        cbAula.removeAllItems();
-        for (String a : aulas) {
-            if (!"Todas".equalsIgnoreCase(a)) cbAula.addItem(a);
+        if (cbAula != null) {
+            cbAula.removeAllItems();
+            for (String a : aulas) {
+                if (!"Todas".equalsIgnoreCase(a)) cbAula.addItem(a);
+            }
+            if (cbAula.getItemCount() == 0) cbAula.addItem("Aula Azul");
         }
-        if (cbAula.getItemCount() == 0) cbAula.addItem("Aula Azul");
     }
 
     /**
@@ -863,6 +909,7 @@ public class PerfilesPanel extends JPanel {
         }
 
         piaActual = piaService.obtenerActivo(getIdSafe(ninoSeleccionado));
+        if (piaActual != null) piaActual.asegurarObjetivoActivoValido();
         if (piaActual == null) {
             lblPiaEstado.setText("<html><b>PIA:</b> Sin PIA activo</html>");
             lblPiaObjetivoActivo.setText("Objetivo en progreso: —");
@@ -878,14 +925,39 @@ public class PerfilesPanel extends JPanel {
         lblPiaObjetivoActivo.setText(
                 (obj == null)
                         ? "Objetivo en progreso: (no hay objetivos)"
-                        : "Objetivo en progreso: Juego " + obj.getJuegoId() + " — " + obj.getDescripcion()
+                        : "Objetivo en progreso: Juego " + obj.getJuegoId() + " — " + obj.getDescripcion() + " (" + obj.getProgresoRondasCorrectas() + "/" + obj.getMetaRondasCorrectas() + ")"
         );
         if (lblPiaAyuda != null) lblPiaAyuda.setText("Edita el objetivo general y agrega objetivos por juego. (El sistema actualizará progreso automáticamente)");
         
         txtPiaObjetivoGeneral.setText(piaActual.getObjetivoGeneral() == null ? "" : piaActual.getObjetivoGeneral());
 
+        // Llenar combo de objetivos en progreso (solo no completados)
+        if (cbPiaObjetivoActivo != null) {
+            DefaultComboBoxModel<ObjetivoPIA> model = new DefaultComboBoxModel<>();
+            for (ObjetivoPIA o : piaActual.getObjetivos()) {
+                if (o != null && !o.isCompletado()) model.addElement(o);
+            }
+            cbPiaObjetivoActivo.setModel(model);
+
+            // Seleccionar el activo si existe
+            String idAct = piaActual.getIdObjetivoActivo();
+            if (idAct != null) {
+                for (int i = 0; i < model.getSize(); i++) {
+                    ObjetivoPIA o = model.getElementAt(i);
+                    if (o != null && idAct.equals(o.getIdObjetivo())) {
+                        cbPiaObjetivoActivo.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+            cbPiaObjetivoActivo.setEnabled(model.getSize() > 0);
+            if (btnSetObjetivoActivo != null) btnSetObjetivoActivo.setEnabled(model.getSize() > 0);
+        }
+
         for (ObjetivoPIA o : piaActual.getObjetivos()) {
+            if (o == null) continue;
             modeloObjetivos.addRow(new Object[]{
+                    o.getIdObjetivo(),
                     o.getJuegoId(),
                     o.getDescripcion(),
                     o.getMetaRondasCorrectas(),
@@ -895,6 +967,7 @@ public class PerfilesPanel extends JPanel {
                     o.isCompletado() ? "✅" : "⏳"
             });
         }
+
 
         btnCrearPia.setEnabled(false);
         setPiaEdicionEnabled(true);
@@ -912,6 +985,11 @@ public class PerfilesPanel extends JPanel {
         if (btnGuardarPia != null) btnGuardarPia.setEnabled(enabled);
         if (btnCerrarPia != null) btnCerrarPia.setEnabled(enabled);
         if (btnAgregarObjetivo != null) btnAgregarObjetivo.setEnabled(enabled);
+        if (cbPiaObjetivoActivo != null) cbPiaObjetivoActivo.setEnabled(enabled);
+        if (btnSetObjetivoActivo != null) btnSetObjetivoActivo.setEnabled(enabled);
+
+        if (btnEditarObjetivo != null) btnEditarObjetivo.setEnabled(enabled && tblObjetivos.getSelectedRow() >= 0);
+        if (btnEliminarObjetivo != null) btnEliminarObjetivo.setEnabled(enabled && tblObjetivos.getSelectedRow() >= 0);
     }
     
     private void initListenersPia() {
@@ -961,6 +1039,88 @@ public class PerfilesPanel extends JPanel {
             txtObjDescripcion.setText("");
             cargarPiaDelNino();
         });
+        // Selección / cambio de objetivo activo
+        if (btnSetObjetivoActivo != null) {
+            btnSetObjetivoActivo.addActionListener(e -> {
+                if (piaActual == null) return;
+                Object sel = cbPiaObjetivoActivo.getSelectedItem();
+                if (!(sel instanceof ObjetivoPIA)) return;
+
+                ObjetivoPIA obj = (ObjetivoPIA) sel;
+                piaActual.setIdObjetivoActivo(obj.getIdObjetivo());
+                piaActual.asegurarObjetivoActivoValido();
+                piaService.guardar(piaActual);
+                cargarPiaDelNino();
+            });
+        }
+
+        // Editar / eliminar objetivo seleccionado
+        if (btnEditarObjetivo != null) {
+            btnEditarObjetivo.addActionListener(e -> editarObjetivoSeleccionado());
+        }
+        if (btnEliminarObjetivo != null) {
+            btnEliminarObjetivo.addActionListener(e -> eliminarObjetivoSeleccionado());
+        }
+
+        // Habilitar/deshabilitar botones según selección
+        tblObjetivos.getSelectionModel().addListSelectionListener(e -> actualizarAccionesObjetivo());
+        actualizarAccionesObjetivo();
+    }
+
+    private void actualizarAccionesObjetivo() {
+        boolean enabled = (piaActual != null && piaActual.isActivo());
+        boolean selected = (tblObjetivos.getSelectedRow() >= 0);
+
+        if (btnEditarObjetivo != null) btnEditarObjetivo.setEnabled(enabled && selected);
+        if (btnEliminarObjetivo != null) btnEliminarObjetivo.setEnabled(enabled && selected);
+    }
+
+    private void editarObjetivoSeleccionado() {
+        int row = tblObjetivos.getSelectedRow();
+        if (row < 0 || piaActual == null) return;
+
+        String idObj = (String) modeloObjetivos.getValueAt(row, 0);
+        ObjetivoPIA obj = piaActual.getObjetivoPorId(idObj);
+        if (obj == null) return;
+
+        JTextField txtDesc = new JTextField(obj.getDescripcion());
+        JSpinner spRondas = new JSpinner(new SpinnerNumberModel(obj.getMetaRondasCorrectas(), 1, 999, 1));
+        JSpinner spSesiones = new JSpinner(new SpinnerNumberModel(obj.getMetaSesionesCompletadas(), 1, 999, 1));
+
+        JPanel p = new JPanel(new GridLayout(0, 1));
+        p.add(new JLabel("Descripción:"));
+        p.add(txtDesc);
+        p.add(new JLabel("Meta Rondas Correctas:"));
+        p.add(spRondas);
+        p.add(new JLabel("Meta Sesiones Completadas:"));
+        p.add(spSesiones);
+
+        int r = JOptionPane.showConfirmDialog(this, p, "Editar Objetivo", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (r == JOptionPane.OK_OPTION) {
+            piaService.actualizarObjetivo(piaActual.getIdPia(), idObj, o -> {
+                o.setDescripcion(txtDesc.getText().trim());
+                o.setMetaRondasCorrectas((Integer) spRondas.getValue());
+                o.setMetaSesionesCompletadas((Integer) spSesiones.getValue());
+            });
+            cargarPiaDelNino();
+        }
+    }
+
+    private void eliminarObjetivoSeleccionado() {
+        int row = tblObjetivos.getSelectedRow();
+        if (row < 0 || piaActual == null) return;
+
+        String idObj = (String) modeloObjetivos.getValueAt(row, 0);
+        String desc = (String) modeloObjetivos.getValueAt(row, 2);
+
+        int r = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar el objetivo \"" + desc + "\"?\nEl progreso acumulado se perderá.",
+                "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+
+        if (r == JOptionPane.YES_OPTION) {
+            piaService.eliminarObjetivo(piaActual.getIdPia(), idObj);
+            cargarPiaDelNino();
+        }
     }
 
     private void setEstado(String s) {

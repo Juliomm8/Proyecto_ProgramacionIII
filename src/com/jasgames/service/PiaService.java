@@ -42,6 +42,7 @@ public class PiaService {
         }
     }
 
+    @SuppressWarnings("unused")
     public List<PIA> obtenerPorNino(int idNino) {
         ioLock.lock();
         try {
@@ -75,6 +76,7 @@ public class PiaService {
 
         ioLock.lock();
         try {
+            pia.asegurarObjetivoActivoValido();
             int idx = indexOf(pia.getIdPia());
             if (idx >= 0) pias.set(idx, pia);
             else pias.add(pia);
@@ -97,6 +99,52 @@ public class PiaService {
         }
     }
 
+    @SuppressWarnings("unused")
+    public boolean setObjetivoActivo(String idPia, String idObjetivo) {
+        if (idPia == null || idObjetivo == null) return false;
+
+        ioLock.lock();
+        try {
+            PIA pia = obtenerPorIdInterno(idPia);
+            if (pia == null) return false;
+
+            ObjetivoPIA obj = pia.getObjetivoPorId(idObjetivo);
+            if (obj == null || obj.isCompletado()) return false;
+
+            pia.setIdObjetivoActivo(idObjetivo);
+            pia.asegurarObjetivoActivoValido();
+            guardarEnArchivo();
+            return true;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public boolean eliminarObjetivo(String idPia, String idObjetivo) {
+        if (idPia == null || idObjetivo == null) return false;
+
+        ioLock.lock();
+        try {
+            PIA pia = obtenerPorIdInterno(idPia);
+            if (pia == null) return false;
+
+            boolean removed = pia.getObjetivos().removeIf(o -> o != null && idObjetivo.equals(o.getIdObjetivo()));
+            if (!removed) return false;
+
+            // Si borramos el activo, recalcular
+            if (idObjetivo.equals(pia.getIdObjetivoActivo())) {
+                pia.setIdObjetivoActivo(null);
+            }
+            pia.asegurarObjetivoActivoValido();
+            guardarEnArchivo();
+            return true;
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
     public boolean cerrarPIA(String idPia) {
         if (idPia == null) return false;
 
@@ -112,6 +160,7 @@ public class PiaService {
         }
     }
 
+    @SuppressWarnings("unused")
     public boolean actualizarObjetivo(String idPia, String idObjetivo, Consumer<ObjetivoPIA> mutator) {
         if (idPia == null || idObjetivo == null || mutator == null) return false;
 
@@ -141,6 +190,7 @@ public class PiaService {
      * @param sesion La sesión de juego recién terminada.
      * @return true si se aplicó a algún PIA, false si no había PIA activo o no aplicaba.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public boolean aplicarSesion(SesionJuego sesion) {
         if (sesion == null || sesion.getIdEstudiante() == null || sesion.getJuego() == null) {
             return false;
@@ -148,7 +198,6 @@ public class PiaService {
 
         ioLock.lock();
         try {
-            // 1. Buscar PIA activo del niño
             PIA pia = null;
             for (PIA p : pias) {
                 if (p != null && p.getIdNino() == sesion.getIdEstudiante() && p.isActivo()) {
@@ -158,24 +207,40 @@ public class PiaService {
             }
             if (pia == null) return false;
 
-            // 2. Buscar objetivo para este juego (que no esté completado)
             ObjetivoPIA objetivo = null;
-            for (ObjetivoPIA obj : pia.getObjetivos()) {
-                if (obj.getJuegoId() == sesion.getJuego().getId() && !obj.isCompletado()) {
-                    objetivo = obj;
-                    break; // Tomamos el primero que coincida
+            int juegoId = sesion.getJuego().getId();
+
+            String idActivo = pia.getIdObjetivoActivo();
+            if (idActivo != null) {
+                ObjetivoPIA elegido = pia.getObjetivoPorId(idActivo);
+                if (elegido != null && !elegido.isCompletado() && elegido.getJuegoId() == juegoId) {
+                    objetivo = elegido;
                 }
             }
-            
+
+            // 2b) Fallback: primer objetivo no completado que coincida con el juego
+            if (objetivo == null) {
+                for (ObjetivoPIA obj : pia.getObjetivos()) {
+                    if (obj != null && obj.getJuegoId() == juegoId && !obj.isCompletado()) {
+                        objetivo = obj;
+                        break;
+                    }
+                }
+            }
+
             // Si no hay objetivo específico, no hacemos nada (o podríamos registrar actividad genérica en el futuro)
             if (objetivo == null) return false;
+
 
             // 3. Actualizar progreso
             objetivo.setProgresoRondasCorrectas(objetivo.getProgresoRondasCorrectas() + sesion.getAciertosTotales());
             objetivo.setProgresoSesionesCompletadas(objetivo.getProgresoSesionesCompletadas() + 1);
-            
+
             // 4. Evaluar si se completó
             objetivo.evaluarCompletadoSiAplica();
+
+            // Si se completó el objetivo activo, avanzar automáticamente
+            pia.asegurarObjetivoActivoValido();
 
             // 5. Vincular sesión
             sesion.setIdPia(pia.getIdPia());
@@ -219,7 +284,7 @@ public class PiaService {
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error guardando PIAs: " + e.getMessage());
         }
     }
 
@@ -239,7 +304,7 @@ public class PiaService {
             if (lista != null) pias.addAll(Arrays.asList(lista));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error cargando PIAs: " + e.getMessage());
         }
     }
 
