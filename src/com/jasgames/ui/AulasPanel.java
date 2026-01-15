@@ -18,12 +18,16 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.Consumer;
 
 public class AulasPanel extends JPanel {
 
     private final PerfilService perfilService;
     private final com.jasgames.service.AulaService aulaService;
     private final IntConsumer onAbrirPerfil;
+
+    // Barra de estado global (DocenteWindow). Si no existe, no hace nada.
+    private final Consumer<String> statusSink;
 
     private final DefaultListModel<String> aulasModel = new DefaultListModel<>();
     private final JList<String> listAulas = new JList<>(aulasModel);
@@ -55,10 +59,11 @@ public class AulasPanel extends JPanel {
     private List<Nino> cacheNinos = new ArrayList<>();
     private final Map<String, Integer> conteoPorAula = new HashMap<>();
 
-    public AulasPanel(AppContext context, IntConsumer onAbrirPerfil) {
+    public AulasPanel(AppContext context, IntConsumer onAbrirPerfil, Consumer<String> statusSink) {
         this.perfilService = context.getPerfilService();
         this.aulaService = context.getAulaService();
         this.onAbrirPerfil = onAbrirPerfil;
+        this.statusSink = (statusSink != null) ? statusSink : (m) -> {};
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
@@ -79,8 +84,19 @@ public class AulasPanel extends JPanel {
         refrescarDatos();
     }
     
+    public AulasPanel(AppContext context, IntConsumer onAbrirPerfil) {
+        this(context, onAbrirPerfil, null);
+    }
+
     public AulasPanel(AppContext context) {
-        this(context, null);
+        this(context, null, null);
+    }
+
+    private void status(String msg) {
+        try {
+            if (statusSink != null) statusSink.accept(msg);
+        } catch (Exception ignored) {
+        }
     }
 
     private JPanel crearHeader() {
@@ -426,7 +442,7 @@ public class AulasPanel extends JPanel {
         Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection(aulaSel), null);
 
-        JOptionPane.showMessageDialog(this, "Copiado: " + aulaSel, "OK", JOptionPane.INFORMATION_MESSAGE);
+        status("Copiado: " + aulaSel);
     }
 
     private void renombrarAulaDialog() {
@@ -526,7 +542,7 @@ public class AulasPanel extends JPanel {
         Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection(String.valueOf(id)), null);
 
-        JOptionPane.showMessageDialog(this, "ID copiado: " + id, "Copiado", JOptionPane.INFORMATION_MESSAGE);
+        status("ID copiado: " + id);
     }
     
     private void copiarIdsSeleccionados() {
@@ -546,7 +562,7 @@ public class AulasPanel extends JPanel {
         Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection(txt), null);
 
-        JOptionPane.showMessageDialog(this, "IDs copiados: " + txt, "OK", JOptionPane.INFORMATION_MESSAGE);
+        status("IDs copiados: " + txt);
     }
 
     private void moverSeleccionadoAOtraAula() {

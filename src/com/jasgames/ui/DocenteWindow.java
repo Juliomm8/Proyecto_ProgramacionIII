@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.function.Consumer;
 
 public class DocenteWindow extends JFrame {
 
@@ -24,6 +25,14 @@ public class DocenteWindow extends JFrame {
     private JButton btnAyuda;
     private JButton btnAcercaDe;
     private JPanel tabDashboardPanel;
+
+    // Barra de estado global (docente)
+    private JLabel lblStatus;
+    private javax.swing.Timer timerStatus;
+    private final String statusIdle = "Listo";
+
+    // Permite que los paneles informen acciones (copiar, guardar, etc.) sin JOptionPane
+    private Consumer<String> statusSink;
 
     private final AppContext context;
     private final JFrame ventanaAnterior;
@@ -128,6 +137,38 @@ public class DocenteWindow extends JFrame {
 
         mainPanel.add(panelHeaderDocente, BorderLayout.NORTH);
         mainPanel.add(tabbedPanePrincipal, BorderLayout.CENTER);
+
+        // Barra de estado (abajo)
+        JPanel statusBar = new JPanel(new BorderLayout());
+        statusBar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
+        ));
+        lblStatus = new JLabel(statusIdle);
+        Font f = lblStatus.getFont();
+        if (f != null) lblStatus.setFont(f.deriveFont(Font.PLAIN, Math.max(12f, f.getSize2D() - 1f)));
+        lblStatus.setForeground(new Color(70, 70, 70));
+        statusBar.add(lblStatus, BorderLayout.WEST);
+        mainPanel.add(statusBar, BorderLayout.SOUTH);
+
+        // Sink para que los paneles notifiquen acciones sin diálogos
+        statusSink = (msg) -> SwingUtilities.invokeLater(() -> flashStatus(msg));
+    }
+
+    /** Mensaje persistente (se queda hasta que otro lo reemplace). */
+    public void setStatus(String msg) {
+        if (lblStatus == null) return;
+        String t = (msg == null || msg.trim().isEmpty()) ? statusIdle : msg.trim();
+        lblStatus.setText(t);
+    }
+
+    /** Mensaje temporal: se muestra y luego vuelve a "Listo". */
+    public void flashStatus(String msg) {
+        setStatus(msg);
+        if (timerStatus != null && timerStatus.isRunning()) timerStatus.stop();
+        timerStatus = new javax.swing.Timer(3800, e -> setStatus(statusIdle));
+        timerStatus.setRepeats(false);
+        timerStatus.start();
     }
 
     private void initTabs() {
@@ -135,7 +176,7 @@ public class DocenteWindow extends JFrame {
 
         tabbedPanePrincipal.removeAll();
 
-        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
+        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService, statusSink));
 
         perfilesPanel = new PerfilesPanel(
                 perfilService,
@@ -147,7 +188,7 @@ public class DocenteWindow extends JFrame {
         tabbedPanePrincipal.addTab("Aulas", new AulasPanel(context, (int idNino) -> {
             tabbedPanePrincipal.setSelectedComponent(perfilesPanel);
             perfilesPanel.seleccionarNinoPorId(idNino);
-        }));
+        }, statusSink));
 
         tabbedPanePrincipal.addTab(
                 "Dashboard",
@@ -160,7 +201,8 @@ public class DocenteWindow extends JFrame {
                             if (perfilesPanel != null) {
                                 perfilesPanel.irAObjetivoPia(idNino, idObjetivo);
                             }
-                        }
+                        },
+                        statusSink
                 )
         );
 
