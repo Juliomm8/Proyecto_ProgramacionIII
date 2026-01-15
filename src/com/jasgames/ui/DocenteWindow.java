@@ -4,13 +4,11 @@ import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 import com.jasgames.ui.login.AccesoWindow;
-import com.jasgames.util.DataBackups;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.nio.file.Path;
 
 public class DocenteWindow extends JFrame {
 
@@ -23,6 +21,8 @@ public class DocenteWindow extends JFrame {
     private JLabel lblTituloDocente;
     private JButton btnBackDocente;
     private JButton btnBackups;
+    private JButton btnAyuda;
+    private JButton btnAcercaDe;
     private JPanel tabDashboardPanel;
 
     private final AppContext context;
@@ -95,14 +95,28 @@ public class DocenteWindow extends JFrame {
         panelHeaderDocente.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         btnBackDocente = new JButton("Volver");
-        btnBackups = new JButton("Backups");
-        btnBackups.setToolTipText("Restaurar datos desde backups");
         lblTituloDocente = new JLabel("JAS Games - Modo Docente", SwingConstants.CENTER);
         lblTituloDocente.setFont(lblTituloDocente.getFont().deriveFont(Font.BOLD, 18f));
 
+        // Acciones (derecha) - estilo "moderno": botones pequeños, sin saturar
+        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        acciones.setOpaque(false);
+
+        btnBackups = new JButton("Backups");
+        btnAyuda = new JButton("Ayuda");
+        btnAcercaDe = new JButton("Acerca de");
+
+        for (JButton b : new JButton[]{btnBackups, btnAyuda, btnAcercaDe}) {
+            b.setFocusPainted(false);
+        }
+
+        acciones.add(btnBackups);
+        acciones.add(btnAyuda);
+        acciones.add(btnAcercaDe);
+
         panelHeaderDocente.add(btnBackDocente, BorderLayout.WEST);
         panelHeaderDocente.add(lblTituloDocente, BorderLayout.CENTER);
-        panelHeaderDocente.add(btnBackups, BorderLayout.EAST);
+        panelHeaderDocente.add(acciones, BorderLayout.EAST);
 
         // Tabs
         tabbedPanePrincipal = new JTabbedPane();
@@ -166,11 +180,6 @@ public class DocenteWindow extends JFrame {
             });
         }
 
-
-        if (btnBackups != null) {
-            btnBackups.addActionListener(e -> abrirRestaurarBackups());
-        }
-
         if (tabbedPanePrincipal != null) {
             tabbedPanePrincipal.addChangeListener(ev -> {
                 if (perfilesPanel != null && tabbedPanePrincipal.getSelectedComponent() == perfilesPanel) {
@@ -178,34 +187,51 @@ public class DocenteWindow extends JFrame {
                 }
             });
         }
-    }
 
-    private void abrirRestaurarBackups() {
-        BackupRestoreDialog dlg = new BackupRestoreDialog(this);
-        dlg.setVisible(true);
-
-        DataBackups.RestoreResult rr = dlg.getRestoreResult();
-        if (rr != null && rr.ok) {
-            Path used = dlg.getSelectedBackup();
-            String backupName = (used != null) ? used.getFileName().toString() : "(desconocido)";
-            try {
-                context.getAuditoriaService().registrar("RESTORE_BACKUP", "backup=" + backupName + " archivos=" + rr.restoredFiles);
-            } catch (Exception ignored) {}
-
-            int opt = JOptionPane.showConfirmDialog(
-                    this,
-                    "Datos restaurados desde: " + backupName + "\n\nPara aplicar cambios se recomienda volver al inicio.\n¿Volver al inicio ahora?",
-                    "Backups",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            if (opt == JOptionPane.YES_OPTION) {
-                context.setDocenteSesion(null);
-                new AccesoWindow(new AppContext()).setVisible(true);
-                dispose();
-            }
+        if (btnAyuda != null) {
+            btnAyuda.addActionListener(e -> new HelpDialog(this).setVisible(true));
         }
+
+        if (btnAcercaDe != null) {
+            btnAcercaDe.addActionListener(e -> new AboutDialog(this).setVisible(true));
+        }
+
+        if (btnBackups != null) {
+            btnBackups.addActionListener(e -> new BackupRestoreDialog(this, context).setVisible(true));
+        }
+
+        installShortcuts();
     }
 
+    private void installShortcuts() {
+        JRootPane root = getRootPane();
+        if (root == null) return;
 
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        im.put(KeyStroke.getKeyStroke("F1"), "openHelp");
+        am.put("openHelp", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (btnAyuda != null) btnAyuda.doClick();
+            }
+        });
+
+        im.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_B, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK), "openBackups");
+        am.put("openBackups", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (btnBackups != null) btnBackups.doClick();
+            }
+        });
+
+        im.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_I, java.awt.event.InputEvent.CTRL_DOWN_MASK), "openAbout");
+        am.put("openAbout", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (btnAcercaDe != null) btnAcercaDe.doClick();
+            }
+        });
+    }
 }

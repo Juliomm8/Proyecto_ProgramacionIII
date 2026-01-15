@@ -1,184 +1,219 @@
 package com.jasgames.ui;
 
+import com.jasgames.service.AppContext;
 import com.jasgames.util.DataBackups;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Diálogo para restaurar archivos desde data/backups/.
+ *
+ * Nota: algunos servicios mantienen datos en memoria; tras restaurar es recomendable
+ * cerrar y volver a abrir Modo Docente para recargar desde disco.
+ */
 public class BackupRestoreDialog extends JDialog {
 
-    private final DefaultListModel<Path> model = new DefaultListModel<>();
-    private final JList<Path> lstBackups = new JList<>(model);
-    private final JTextArea txtDetalle = new JTextArea();
+    private final AppContext context;
 
-    private DataBackups.RestoreResult restoreResult;
-    private Path selectedBackup;
+    private final DefaultListModel<Path> modelBackups = new DefaultListModel<>();
+    private final JList<Path> listBackups = new JList<>(modelBackups);
+    private final DefaultListModel<String> modelFiles = new DefaultListModel<>();
+    private final JList<String> listFiles = new JList<>(modelFiles);
 
-    public BackupRestoreDialog(Window owner) {
-        super(owner, "Restaurar desde backups", ModalityType.APPLICATION_MODAL);
+    private final JButton btnRestore = new JButton("Restaurar");
+    private final JLabel lblEstado = new JLabel(" ");
+
+    public BackupRestoreDialog(Window owner, AppContext context) {
+        super(owner, "Backups - Restaurar", ModalityType.APPLICATION_MODAL);
+        this.context = context;
+
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(720, 420);
+        setMinimumSize(new Dimension(820, 520));
         setLocationRelativeTo(owner);
 
-        setContentPane(buildUI());
+        setContentPane(build());
         cargarBackups();
+        configurarListeners();
     }
 
-    public DataBackups.RestoreResult getRestoreResult() {
-        return restoreResult;
-    }
+    private JComponent build() {
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
 
-    public Path getSelectedBackup() {
-        return selectedBackup;
-    }
-
-    private JPanel buildUI() {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-
-        JLabel title = new JLabel("Restaurar datos desde un backup");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
+        JLabel title = new JLabel("Restaurar desde backups", SwingConstants.LEFT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
         root.add(title, BorderLayout.NORTH);
 
-        // Lista backups
-        lstBackups.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        lstBackups.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel lbl = new JLabel(value != null ? value.getFileName().toString() : "");
-            lbl.setOpaque(true);
-            if (isSelected) {
-                lbl.setBackground(list.getSelectionBackground());
-                lbl.setForeground(list.getSelectionForeground());
-            } else {
-                lbl.setBackground(list.getBackground());
-                lbl.setForeground(list.getForeground());
-            }
-            lbl.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-            return lbl;
-        });
-
-        lstBackups.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                selectedBackup = lstBackups.getSelectedValue();
-                mostrarDetalle(selectedBackup);
+        listBackups.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listBackups.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Path p) {
+                    setText(p.getFileName().toString());
+                }
+                return c;
             }
         });
 
-        JScrollPane leftScroll = new JScrollPane(lstBackups);
-        leftScroll.setPreferredSize(new Dimension(260, 300));
+        listFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Detalle
-        txtDetalle.setEditable(false);
-        txtDetalle.setLineWrap(true);
-        txtDetalle.setWrapStyleWord(true);
-        JScrollPane rightScroll = new JScrollPane(txtDetalle);
+        JPanel left = new JPanel(new BorderLayout(8, 8));
+        left.add(new JLabel("Backups disponibles:"), BorderLayout.NORTH);
+        left.add(new JScrollPane(listBackups), BorderLayout.CENTER);
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
-        split.setResizeWeight(0.35);
+        JPanel right = new JPanel(new BorderLayout(8, 8));
+        right.add(new JLabel("Archivos dentro del backup:"), BorderLayout.NORTH);
+        right.add(new JScrollPane(listFiles), BorderLayout.CENTER);
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
+        split.setResizeWeight(0.45);
         root.add(split, BorderLayout.CENTER);
 
-        // Botones
-        JButton btnRefrescar = new JButton("Refrescar");
-        JButton btnRestaurar = new JButton("Restaurar");
-        JButton btnCancelar = new JButton("Cancelar");
-
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        buttons.add(btnRefrescar);
-        buttons.add(btnCancelar);
-        buttons.add(btnRestaurar);
-
-        btnRefrescar.addActionListener(e -> cargarBackups());
-        btnCancelar.addActionListener(e -> dispose());
-        btnRestaurar.addActionListener(e -> restaurarSeleccionado());
-
-        // Nota
-        JLabel note = new JLabel("Nota: Restaurar reemplaza archivos en data/. Se crea un backup de seguridad antes de sobrescribir.");
-        note.setFont(note.getFont().deriveFont(Font.PLAIN, 12f));
-
         JPanel south = new JPanel(new BorderLayout(10, 10));
-        south.add(note, BorderLayout.NORTH);
-        south.add(buttons, BorderLayout.SOUTH);
-        root.add(south, BorderLayout.SOUTH);
+        lblEstado.setForeground(new Color(70, 70, 70));
+        south.add(lblEstado, BorderLayout.WEST);
 
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JButton btnClose = new JButton("Cerrar");
+
+        btnRestore.setEnabled(false);
+        actions.add(btnRestore);
+        actions.add(btnClose);
+
+        btnClose.addActionListener(e -> dispose());
+        south.add(actions, BorderLayout.EAST);
+
+        root.add(south, BorderLayout.SOUTH);
         return root;
     }
 
-    private void cargarBackups() {
-        model.clear();
-        List<Path> dirs = DataBackups.listBackupDirs();
-        for (Path d : dirs) model.addElement(d);
+    private void configurarListeners() {
+        listBackups.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                actualizarListaArchivos();
+            }
+        });
 
-        if (model.getSize() == 0) {
-            txtDetalle.setText("No se encontraron backups.\n\nSe crean automáticamente cuando el sistema guarda archivos en data/.");
-            selectedBackup = null;
-        } else {
-            lstBackups.setSelectedIndex(0);
-        }
+        btnRestore.addActionListener(e -> restaurarSeleccionado());
     }
 
-    private void mostrarDetalle(Path dir) {
-        if (dir == null) {
-            txtDetalle.setText("");
+    private void cargarBackups() {
+        modelBackups.clear();
+        modelFiles.clear();
+        btnRestore.setEnabled(false);
+
+        Path backupsRoot = Paths.get("data", "backups");
+        if (!Files.isDirectory(backupsRoot)) {
+            lblEstado.setText("No hay backups aún (se crean al guardar cambios en data/)." );
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Backup: ").append(dir.getFileName().toString()).append("\n");
-
-        try {
-            if (Files.exists(dir) && Files.isDirectory(dir)) {
-                sb.append("\nArchivos:\n");
-                int count = 0;
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-                    for (Path p : stream) {
-                        if (!Files.isRegularFile(p)) continue;
-                        sb.append("• ").append(p.getFileName().toString()).append("\n");
-                        count++;
-                    }
-                }
-                if (count == 0) sb.append("(vacío)\n");
+        List<Path> dirs = new ArrayList<>();
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(backupsRoot)) {
+            for (Path p : ds) {
+                if (Files.isDirectory(p)) dirs.add(p);
             }
         } catch (Exception ex) {
-            sb.append("\nNo se pudo leer el contenido: ").append(ex.getMessage()).append("\n");
+            lblEstado.setText("Error leyendo backups: " + ex.getMessage());
+            return;
         }
 
-        txtDetalle.setText(sb.toString());
-        txtDetalle.setCaretPosition(0);
+        dirs.sort(Comparator.comparing((Path p) -> p.getFileName().toString()).reversed());
+        for (Path d : dirs) modelBackups.addElement(d);
+
+        if (!dirs.isEmpty()) {
+            listBackups.setSelectedIndex(0);
+        } else {
+            lblEstado.setText("No hay backups aún.");
+        }
+    }
+
+    private void actualizarListaArchivos() {
+        modelFiles.clear();
+        btnRestore.setEnabled(false);
+
+        Path selected = listBackups.getSelectedValue();
+        if (selected == null || !Files.isDirectory(selected)) {
+            lblEstado.setText("Selecciona un backup.");
+            return;
+        }
+
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(selected)) {
+            int count = 0;
+            for (Path p : ds) {
+                if (!Files.isRegularFile(p)) continue;
+                long size = 0L;
+                try { size = Files.size(p); } catch (Exception ignored) {}
+                modelFiles.addElement(p.getFileName().toString() + "  (" + size + " bytes)");
+                count++;
+            }
+            btnRestore.setEnabled(count > 0);
+            lblEstado.setText("Backup: " + selected.getFileName() + " | archivos: " + count);
+        } catch (Exception ex) {
+            lblEstado.setText("Error leyendo archivos del backup: " + ex.getMessage());
+        }
     }
 
     private void restaurarSeleccionado() {
-        Path dir = lstBackups.getSelectedValue();
-        if (dir == null) {
-            JOptionPane.showMessageDialog(this, "Selecciona un backup primero.", "Backups", JOptionPane.INFORMATION_MESSAGE);
+        Path backupDir = listBackups.getSelectedValue();
+        if (backupDir == null || !Files.isDirectory(backupDir)) {
+            JOptionPane.showMessageDialog(this, "Selecciona un backup válido.", "Backups", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(
+        int r = JOptionPane.showConfirmDialog(
                 this,
-                "Esto reemplazará los archivos actuales en data/ con los del backup seleccionado.\n\n¿Deseas continuar?",
+                "Esto sobrescribirá archivos en la carpeta data/.\n" +
+                        "Se hará un backup automático de lo actual antes de restaurar.\n\n" +
+                        "¿Deseas continuar?",
                 "Confirmar restauración",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
         );
-        if (confirm != JOptionPane.YES_OPTION) return;
+        if (r != JOptionPane.YES_OPTION) return;
 
-        restoreResult = DataBackups.restoreBackupDir(dir);
-        selectedBackup = dir;
+        Path dataDir = Paths.get("data");
+        try {
+            Files.createDirectories(dataDir);
+        } catch (Exception ignored) {}
 
-        if (restoreResult != null && restoreResult.ok) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Restauración completada: " + restoreResult.restoredFiles + " archivo(s).\nSe recomienda reiniciar la aplicación.",
-                    "Backups",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            dispose();
-        } else {
-            String msg = (restoreResult == null) ? "Error desconocido." : restoreResult.message;
-            JOptionPane.showMessageDialog(this, msg, "No se pudo restaurar", JOptionPane.ERROR_MESSAGE);
+        int restored = 0;
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(backupDir)) {
+            for (Path src : ds) {
+                if (!Files.isRegularFile(src)) continue;
+                Path dest = dataDir.resolve(src.getFileName());
+
+                // backup de seguridad antes de sobreescribir
+                DataBackups.backupIfExists(dest);
+
+                Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                restored++;
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error restaurando: " + ex.getMessage(), "Backups", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+        try {
+            if (context != null && context.getAuditoriaService() != null) {
+                context.getAuditoriaService().registrar("RESTORE_BACKUP", "dir=" + backupDir.getFileName() + " files=" + restored);
+            }
+        } catch (Exception ignored) {}
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Restauración completada. Archivos restaurados: " + restored + "\n\n" +
+                        "Recomendación: cierra y vuelve a abrir Modo Docente para recargar datos.",
+                "Backups",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        cargarBackups();
     }
 }
