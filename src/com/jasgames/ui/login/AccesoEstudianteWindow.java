@@ -4,6 +4,7 @@ import com.jasgames.model.Nino;
 import com.jasgames.service.AppContext;
 import com.jasgames.service.DirectorioEscolarService;
 import com.jasgames.ui.EstudianteWindow;
+import com.jasgames.util.EmojiFonts;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -226,12 +227,8 @@ public class AccesoEstudianteWindow extends JFrame {
             cardEstudiantes.add(msg, BorderLayout.CENTER);
         } else {
             for (Nino n : estudiantes) {
-                JButton ficha = new JButton(formatoFicha(n));
-                ficha.setFont(ficha.getFont().deriveFont(Font.BOLD, 16f));
-                ficha.setFocusPainted(false);
-                
+                JButton ficha = crearFichaEstudiante(n);
                 aplicarEstiloFicha(ficha, n.getAula());
-                
                 ficha.addActionListener(e -> seleccionarEstudiante(n));
                 panelEstudiantes.add(ficha);
             }
@@ -251,13 +248,60 @@ public class AccesoEstudianteWindow extends JFrame {
         cardEstudiantes.repaint();
     }
 
-    private String formatoFicha(Nino n) {
-        String avatar = n.getAvatar();
-        String nombre = n.getNombre();
-        return "<html><div style='text-align:center;'>" +
-                "<span style='font-size:40px;'>" + avatar + "</span><br/>" +
-                "<span style='font-size:16px;'>" + nombre + "</span>" +
-                "</div></html>";
+    /**
+     * Crea la tarjeta del estudiante SIN HTML para el emoji.
+     *
+     * Swing (BasicHTML) suele renderizar mal algunos emojis (cuadritos), porque no aplica
+     * correctamente el fallback de fuentes dentro del HTML. Para evitarlo, ponemos el emoji
+     * en un JLabel con una fuente de emojis (EmojiFonts) y el nombre en otro JLabel.
+     */
+    private JButton crearFichaEstudiante(Nino n) {
+        JButton ficha = new JButton();
+        ficha.setFocusPainted(false);
+        ficha.setBorderPainted(true);
+        ficha.setContentAreaFilled(true);
+        ficha.setOpaque(true);
+        ficha.setLayout(new BorderLayout());
+        ficha.setMargin(new Insets(10, 10, 10, 10));
+
+        String avatar = safeAvatar(n != null ? n.getAvatar() : null);
+        JLabel lblAvatar = new JLabel(avatar, SwingConstants.CENTER);
+        EmojiFonts.apply(lblAvatar, 40f);
+        lblAvatar.setOpaque(false);
+
+        String nombre = (n != null && n.getNombre() != null) ? n.getNombre().trim() : "";
+        if (nombre.isBlank()) nombre = "Sin nombre";
+        JLabel lblNombre = new JLabel("<html><div style='text-align:center;'>" + escapeHtml(nombre) + "</div></html>",
+                SwingConstants.CENTER);
+        lblNombre.setFont(lblNombre.getFont().deriveFont(Font.BOLD, 16f));
+        lblNombre.setOpaque(false);
+        lblNombre.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
+
+        ficha.add(lblAvatar, BorderLayout.CENTER);
+        ficha.add(lblNombre, BorderLayout.SOUTH);
+
+        return ficha;
+    }
+
+    private String safeAvatar(String raw) {
+        String a = (raw == null) ? "" : raw.trim();
+        if (a.isBlank()) a = "🙂";
+
+        // Si la fuente de emoji no puede renderizar el caracter, usamos un fallback seguro.
+        try {
+            Font f = EmojiFonts.emoji(40f);
+            if (f != null && f.canDisplayUpTo(a) != -1) return "🙂";
+        } catch (Exception ignored) {}
+
+        return a;
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private void seleccionarEstudiante(Nino nino) {
