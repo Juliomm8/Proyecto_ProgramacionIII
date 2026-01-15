@@ -1,1 +1,218 @@
-[]
+[
+  {
+    "idPia": "671d1a84-e737-4a0c-875f-e1072d9718e9",
+    "idNino": 1,
+    "nombreNino": "Liz",
+    "aula": "Aula Azul",
+    "objetivoGeneral": "Mejorar identificación de colores y vocales",
+    "activo": true,
+    "fechaCreacion": "2026-01-14T22:47:25.469441400",
+    "objetivos": [
+      {
+        "idObjetivo": "8701ad7a-901b-49c3-a91e-a5faa67d8aaa",
+        "juegoId": 1,
+        "descripcion": "Reconocer colores básicos",
+        "metaRondasCorrectas": 12,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 11,
+        "progresoSesionesCompletadas": 2,
+        "completado": false
+      },
+      {
+        "idObjetivo": "bb9b6394-fa4e-464a-8f91-3d968f5a9f01",
+        "juegoId": 4,
+        "descripcion": "Identificar vocales en palabras",
+        "metaRondasCorrectas": 10,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 7,
+        "progresoSesionesCompletadas": 1,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "8701ad7a-901b-49c3-a91e-a5faa67d8aaa"
+  },
+  {
+    "idPia": "9b34c640-f953-40ad-a5c0-0a42859b0cdb",
+    "idNino": 2,
+    "nombreNino": "Mateo",
+    "aula": "Aula Azul",
+    "objetivoGeneral": "Trabajar números y series",
+    "activo": true,
+    "fechaCreacion": "2026-01-14T22:47:25.469441400",
+    "objetivos": [
+      {
+        "idObjetivo": "8755135a-27bd-4b1e-8bef-fd49f887e9f7",
+        "juegoId": 2,
+        "descripcion": "Contar y asociar cantidades",
+        "metaRondasCorrectas": 12,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 12,
+        "progresoSesionesCompletadas": 2,
+        "completado": false
+      },
+      {
+        "idObjetivo": "fc332fe1-4151-43e0-b261-728f57717bba",
+        "juegoId": 3,
+        "descripcion": "Completar series simples",
+        "metaRondasCorrectas": 10,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "8755135a-27bd-4b1e-8bef-fd49f887e9f7"
+  },
+  {
+    "idPia": "9cb7768d-bc59-4462-a995-4c952a59dcb0",
+    "idNino": 5,
+    "nombreNino": "Valentina",
+    "aula": "Aula Verde",
+    "objetivoGeneral": "Fortalecer series y fonemas",
+    "activo": true,
+    "fechaCreacion": "2026-01-14T22:47:25.469441400",
+    "objetivos": [
+      {
+        "idObjetivo": "0d787b6f-ef58-4ce1-b8cb-105f583d6c52",
+        "juegoId": 3,
+        "descripcion": "Series: patrones AB/ABB",
+        "metaRondasCorrectas": 12,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 12,
+        "progresoSesionesCompletadas": 2,
+        "completado": false
+      },
+      {
+        "idObjetivo": "94ec2fa7-6389-4121-b106-4c8395101d8e",
+        "juegoId": 5,
+        "descripcion": "Vocales: reconocimiento visual",
+        "metaRondasCorrectas": 10,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 5,
+        "progresoSesionesCompletadas": 1,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "0d787b6f-ef58-4ce1-b8cb-105f583d6c52"
+  },
+  {
+    "idPia": "35ebfb6b-8fda-462e-937e-f47c18da99de",
+    "idNino": 8,
+    "nombreNino": "Noah",
+    "aula": "Aula Amarilla",
+    "objetivoGeneral": "Atención y comunicación",
+    "activo": true,
+    "fechaCreacion": "2026-01-14T22:47:25.469441400",
+    "objetivos": [
+      {
+        "idObjetivo": "8c796b94-94ec-4073-9446-8efbd167d69f",
+        "juegoId": 1,
+        "descripcion": "Colores: selección rápida",
+        "metaRondasCorrectas": 12,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 5,
+        "progresoSesionesCompletadas": 1,
+        "completado": false
+      },
+      {
+        "idObjetivo": "de29e22d-c69f-4162-bde7-dfb34bbbd0cb",
+        "juegoId": 5,
+        "descripcion": "Vocales: sonidos básicos",
+        "metaRondasCorrectas": 10,
+        "metaSesionesCompletadas": 3,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "8c796b94-94ec-4073-9446-8efbd167d69f"
+  },
+  {
+    "idPia": "f3964373-7f46-49ca-8240-236117a7604f",
+    "idNino": 9,
+    "nombreNino": "Julio",
+    "aula": "Aula Verde",
+    "objetivoGeneral": "",
+    "activo": true,
+    "fechaCreacion": "2026-01-15T02:13:20.847620600",
+    "objetivos": [
+      {
+        "idObjetivo": "128bbde8-6e41-4fe7-b007-48ff405c5655",
+        "juegoId": 1,
+        "descripcion": "Objetivo juego 1",
+        "metaRondasCorrectas": 3,
+        "metaSesionesCompletadas": 1,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "128bbde8-6e41-4fe7-b007-48ff405c5655"
+  },
+  {
+    "idPia": "c596015b-1270-4da0-bec3-9540a896000e",
+    "idNino": 10,
+    "nombreNino": "Jeremy",
+    "aula": "Aula Amarilla",
+    "objetivoGeneral": "",
+    "activo": true,
+    "fechaCreacion": "2026-01-15T02:14:07.549744600",
+    "objetivos": [
+      {
+        "idObjetivo": "9a5c348e-e277-463c-b41a-5218e0e5d2ef",
+        "juegoId": 2,
+        "descripcion": "Objetivo juego 2",
+        "metaRondasCorrectas": 3,
+        "metaSesionesCompletadas": 1,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "9a5c348e-e277-463c-b41a-5218e0e5d2ef"
+  },
+  {
+    "idPia": "87fa8257-7810-46fa-b79b-b87292569583",
+    "idNino": 11,
+    "nombreNino": "Samuel",
+    "aula": "Aula Amarilla",
+    "objetivoGeneral": "",
+    "activo": true,
+    "fechaCreacion": "2026-01-15T02:14:39.405649100",
+    "objetivos": [
+      {
+        "idObjetivo": "609d879a-42ef-494d-afda-c5c3d281eedb",
+        "juegoId": 3,
+        "descripcion": "Objetivo juego 3",
+        "metaRondasCorrectas": 3,
+        "metaSesionesCompletadas": 1,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "609d879a-42ef-494d-afda-c5c3d281eedb"
+  },
+  {
+    "idPia": "423c9fc8-521b-433b-893c-175751eda3c7",
+    "idNino": 14,
+    "nombreNino": "Amelia",
+    "aula": "Aula Amarilla",
+    "objetivoGeneral": "",
+    "activo": true,
+    "fechaCreacion": "2026-01-15T02:15:22.549427200",
+    "objetivos": [
+      {
+        "idObjetivo": "adb04797-8a81-40f3-b58d-e476313bcbc6",
+        "juegoId": 5,
+        "descripcion": "Objetivo juego 5",
+        "metaRondasCorrectas": 3,
+        "metaSesionesCompletadas": 1,
+        "progresoRondasCorrectas": 0,
+        "progresoSesionesCompletadas": 0,
+        "completado": false
+      }
+    ],
+    "idObjetivoActivo": "adb04797-8a81-40f3-b58d-e476313bcbc6"
+  }
+]

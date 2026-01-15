@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.*;
 import com.jasgames.model.ObjetivoPIA;
 import com.jasgames.model.PIA;
@@ -332,6 +333,69 @@ public class PiaService {
             ioLock.unlock();
         }
     }
+
+/**
+ * Recalcula el progreso de una LISTA de PIA en memoria, usando como fuente de verdad
+ * las sesiones que tengan idPia + idObjetivoPia.
+ *
+ * No realiza escrituras a disco. Útil para generar datos demo y luego persistir en bloque.
+ */
+public static void recalcularProgresoLista(List<PIA> pias, List<SesionJuego> sesiones) {
+    if (pias == null) return;
+
+    // Agregados por (idPia|idObj)
+    Map<String, Integer> rondasPorKey = new HashMap<>();
+    Map<String, Integer> sesionesPorKey = new HashMap<>();
+
+    if (sesiones != null) {
+        for (SesionJuego s : sesiones) {
+            if (s == null) continue;
+            String idPia = s.getIdPia();
+            String idObj = s.getIdObjetivoPia();
+            if (idPia == null || idObj == null) continue;
+
+            int rondas = s.getAciertosTotales();
+            if (rondas <= 0) rondas = Math.max(0, s.getRondasCompletadas());
+
+            String key = idPia + "|" + idObj;
+            rondasPorKey.merge(key, rondas, Integer::sum);
+            sesionesPorKey.merge(key, 1, Integer::sum);
+        }
+    }
+
+    for (PIA pia : pias) {
+        if (pia == null) continue;
+
+        String idPia = pia.getIdPia();
+        for (ObjetivoPIA obj : pia.getObjetivos()) {
+            if (obj == null) continue;
+
+            String key = idPia + "|" + obj.getIdObjetivo();
+
+            int progR = rondasPorKey.getOrDefault(key, 0);
+            int progS = sesionesPorKey.getOrDefault(key, 0);
+
+            obj.setProgresoRondasCorrectas(progR);
+            obj.setProgresoSesionesCompletadas(progS);
+
+            boolean okRondas = (obj.getMetaRondasCorrectas() <= 0) || (progR >= obj.getMetaRondasCorrectas());
+            boolean okSesiones = (obj.getMetaSesionesCompletadas() <= 0) || (progS >= obj.getMetaSesionesCompletadas());
+
+            if (okRondas && okSesiones) {
+                if (!obj.isCompletado()) {
+                    obj.setCompletado(true);
+                    if (obj.getFechaCompletado() == null) obj.setFechaCompletado(LocalDateTime.now());
+                }
+            } else {
+                obj.setCompletado(false);
+                obj.setFechaCompletado(null);
+            }
+        }
+
+        pia.asegurarObjetivoActivoValido();
+    }
+}
+
 // ----------------- helpers internos -----------------
 
 
@@ -365,7 +429,7 @@ public class PiaService {
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            System.err.println("Error guardando PIAs: " + e.getMessage());
+            AppLog.error("Error guardando PIAs: " + e.getMessage(), e);
         }
     }
 
@@ -418,7 +482,7 @@ public class PiaService {
             }
 
         } catch (Exception e) {
-            System.err.println("Error cargando PIAs: " + e.getMessage());
+            AppLog.error("Error cargando PIAs: " + e.getMessage(), e);
         }
     }
 

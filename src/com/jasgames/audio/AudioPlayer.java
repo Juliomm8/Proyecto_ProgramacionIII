@@ -1,5 +1,6 @@
 package com.jasgames.audio;
 
+import com.jasgames.util.AppLog;
 import javax.sound.sampled.*;
 import javax.swing.SwingUtilities;
 import java.net.URL;
@@ -41,7 +42,7 @@ public class AudioPlayer {
             try {
                 URL url = AudioPlayer.class.getResource(resourcePath);
                 if (url == null) {
-                    System.err.println("Audio no encontrado: " + resourcePath);
+                    AppLog.warn("Audio no encontrado: " + resourcePath);
                     if (onDone != null && token.get() == myToken) SwingUtilities.invokeLater(onDone);
                     return;
                 }
@@ -67,7 +68,7 @@ public class AudioPlayer {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                AppLog.error("Error reproduciendo audio: " + resourcePath, e);
                 if (onDone != null && token.get() == myToken) SwingUtilities.invokeLater(onDone);
             }
         }, "AudioPlayerThread").start();

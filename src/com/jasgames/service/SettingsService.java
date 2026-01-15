@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jasgames.model.UiSettings;
@@ -73,7 +74,7 @@ public class SettingsService {
             String json = gson.toJson(settings == null ? new UiSettings() : settings);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
         } catch (Exception ex) {
-            System.err.println("No se pudo guardar settings: " + ex.getMessage());
+            AppLog.error("No se pudo guardar settings: " + ex.getMessage(), ex);
         }
     }
 }

@@ -39,7 +39,7 @@ public final class JsonSafeIO {
 
         } catch (Exception ex) {
             // IO u otro error inesperado -> no caigas
-            System.err.println("Error leyendo " + path + ": " + ex.getMessage());
+            AppLog.error("Error leyendo " + path + ": " + ex.getMessage(), ex);
             return defaultValue;
         }
     }
@@ -67,7 +67,7 @@ public final class JsonSafeIO {
             return defaultValue;
 
         } catch (Exception ex) {
-            System.err.println("Error leyendo " + path + ": " + ex.getMessage());
+            AppLog.error("Error leyendo " + path + ": " + ex.getMessage(), ex);
             return defaultValue;
         }
     }
@@ -86,7 +86,7 @@ public final class JsonSafeIO {
             }
             AtomicFiles.writeStringAtomic(path, cleanJson, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            System.err.println("No se pudo recuperar " + path + ": " + e.getMessage());
+            AppLog.error("No se pudo recuperar " + path + ": " + e.getMessage(), e);
         }
     }
 }

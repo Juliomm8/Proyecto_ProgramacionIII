@@ -128,7 +128,7 @@ public final class DemoDataService {
         }
 
         // 5) Recalcular progreso de PIA basado en sesiones
-        recalcularProgreso(pias, sesiones);
+        PiaService.recalcularProgresoLista(pias, sesiones);
 
         // 6) Ajustar puntos totales (sumatoria simple de puntajes)
         Map<Integer, Integer> puntosPorNino = new HashMap<>();
@@ -233,56 +233,5 @@ public final class DemoDataService {
         return null;
     }
 
-    /**
-     * Replica la lógica de PiaService.recalcularProgresoPIA para TODOS los PIA,
-     * pero sin escrituras extra (se guardará una sola vez con reemplazarPias()).
-     */
-    private static void recalcularProgreso(List<PIA> pias, List<SesionJuego> sesiones) {
-        if (pias == null) return;
-
-        // Indexar agregados por objetivo (idObjetivo)
-        Map<String, Integer> rondasPorObj = new HashMap<>();
-        Map<String, Integer> sesionesPorObj = new HashMap<>();
-
-        if (sesiones != null) {
-            for (SesionJuego s : sesiones) {
-                if (s == null) continue;
-                if (s.getIdPia() == null || s.getIdObjetivoPia() == null) continue;
-
-                int rondas = Math.max(0, s.getRondasCompletadas());
-                rondasPorObj.merge(s.getIdObjetivoPia(), rondas, Integer::sum);
-                sesionesPorObj.merge(s.getIdObjetivoPia(), 1, Integer::sum);
-            }
-        }
-
-        for (PIA pia : pias) {
-            if (pia == null) continue;
-
-            for (ObjetivoPIA obj : pia.getObjetivos()) {
-                if (obj == null) continue;
-
-                int rondas = rondasPorObj.getOrDefault(obj.getIdObjetivo(), 0);
-                int ses = sesionesPorObj.getOrDefault(obj.getIdObjetivo(), 0);
-
-                obj.setProgresoRondasCorrectas(rondas);
-                obj.setProgresoSesionesCompletadas(ses);
-
-                boolean okRondas = rondas >= obj.getMetaRondasCorrectas();
-                boolean okSesiones = ses >= obj.getMetaSesionesCompletadas();
-
-                if (okRondas && okSesiones) {
-                    if (!obj.isCompletado()) {
-                        obj.setCompletado(true);
-                        if (obj.getFechaCompletado() == null) obj.setFechaCompletado(LocalDateTime.now());
-                    }
-                } else {
-                    obj.setCompletado(false);
-                    obj.setFechaCompletado(null);
-                }
-            }
-
-            // coherencia objetivo activo
-            pia.asegurarObjetivoActivoValido();
-        }
-    }
+    
 }

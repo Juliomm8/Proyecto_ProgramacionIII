@@ -1,5 +1,6 @@
 package com.jasgames.ui;
 
+import com.jasgames.util.AppLog;
 import com.jasgames.model.Juego;
 import com.jasgames.model.ObjetivoPIA;
 import com.jasgames.model.PIA;
@@ -161,7 +162,7 @@ public class DashboardPanel extends JPanel {
             refrescarReportePia();
             
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error al iniciar DashboardPanel.", e);
             removeAll();
             setLayout(new BorderLayout());
             JLabel err = new JLabel("Error al iniciar Dashboard: " + e.getMessage());
@@ -700,7 +701,7 @@ public class DashboardPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Reporte exportado correctamente.", "Exportar CSV", JOptionPane.INFORMATION_MESSAGE);
 
             } catch (IOException ex) {
-                ex.printStackTrace();
+                AppLog.error("Error exportando reporte CSV.", ex);
                 JOptionPane.showMessageDialog(this, "Error al guardar el archivo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }

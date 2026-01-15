@@ -1,5 +1,6 @@
 package com.jasgames.ui.juegos;
 
+import com.jasgames.util.AppLog;
 import com.jasgames.audio.AudioPlayer;
 import com.jasgames.model.Actividad;
 
@@ -591,14 +592,14 @@ public class JuegoExplorandoVocalesPanel extends BaseJuegoPanel {
         try {
             URL url = getClass().getResource(path);
             if (url == null) {
-                System.err.println("Imagen no encontrada: " + path);
+                AppLog.warn("Imagen no encontrada: " + path);
                 return null;
             }
             BufferedImage img = ImageIO.read(url);
             Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
             return new ImageIcon(scaled);
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error cargando imagen: " + path, e);
             return null;
         }
     }

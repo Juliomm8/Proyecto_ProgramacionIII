@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class AuditoriaService {
                     StandardOpenOption.APPEND
             );
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error registrando auditoría.", e);
         }
     }
 

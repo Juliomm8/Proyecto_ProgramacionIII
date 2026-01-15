@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.*;
 import com.jasgames.model.Juego;
 import com.jasgames.model.SesionJuego;
@@ -180,7 +181,7 @@ public class SesionService {
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            AppLog.error("Error en SesionService (persistencia).", e);
         } finally {
             ioLock.unlock();
         }
@@ -202,7 +203,7 @@ public class SesionService {
             if (lista != null) resultados.addAll(Arrays.asList(lista));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error en SesionService (persistencia).", e);
         } finally {
             ioLock.unlock();
         }

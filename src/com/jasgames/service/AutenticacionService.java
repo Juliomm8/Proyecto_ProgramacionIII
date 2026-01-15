@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -129,7 +130,7 @@ public class AutenticacionService {
                 AtomicFiles.writeStringAtomic(path, "[]", StandardCharsets.UTF_8);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error en AutenticacionService.", e);
         } finally {
             ioLock.unlock();
         }
@@ -158,7 +159,7 @@ public class AutenticacionService {
             String json = gson.toJson(docentes);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error en AutenticacionService.", e);
         } finally {
             ioLock.unlock();
         }

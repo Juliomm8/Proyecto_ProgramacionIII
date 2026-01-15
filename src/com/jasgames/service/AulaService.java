@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -187,7 +188,7 @@ public class AulaService {
 
             AtomicFiles.writeStringAtomic(p, gson.toJson(aulas), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error guardando aulas.", e);
         } finally {
             ioLock.unlock();
         }

@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -185,7 +186,7 @@ public class JuegoService {
             AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            AppLog.error("Error guardando juegos.", e);
         } finally {
             ioLock.unlock();
         }

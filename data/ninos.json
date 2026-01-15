@@ -1,1 +1,295 @@
-[]
+[
+  {
+    "id": 1,
+    "nombre": "Liz",
+    "edad": 6,
+    "diagnostico": "TEA",
+    "puntosTotales": 447,
+    "juegosAsignados": [
+      1,
+      2,
+      4,
+      3,
+      5
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "2": 1,
+      "4": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Azul",
+    "avatar": "🦋"
+  },
+  {
+    "id": 2,
+    "nombre": "Mateo",
+    "edad": 7,
+    "diagnostico": "TEA",
+    "puntosTotales": 361,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "2": 1,
+      "3": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Azul",
+    "avatar": "🦁"
+  },
+  {
+    "id": 3,
+    "nombre": "Sofía",
+    "edad": 6,
+    "diagnostico": "TEA",
+    "puntosTotales": 512,
+    "juegosAsignados": [
+      1,
+      4,
+      5,
+      2,
+      3
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "4": 1,
+      "5": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Azul",
+    "avatar": "🐼"
+  },
+  {
+    "id": 4,
+    "nombre": "Dylan",
+    "edad": 8,
+    "diagnostico": "TEA",
+    "puntosTotales": 389,
+    "juegosAsignados": [
+      2,
+      3,
+      4,
+      1,
+      5
+    ],
+    "dificultadPorJuego": {
+      "2": 1,
+      "3": 1,
+      "4": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Verde",
+    "avatar": "🐸"
+  },
+  {
+    "id": 5,
+    "nombre": "Valentina",
+    "edad": 7,
+    "diagnostico": "TEA",
+    "puntosTotales": 436,
+    "juegosAsignados": [
+      1,
+      3,
+      5,
+      2,
+      4
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "3": 1,
+      "5": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Verde",
+    "avatar": "🦊"
+  },
+  {
+    "id": 6,
+    "nombre": "Ian",
+    "edad": 7,
+    "diagnostico": "TEA",
+    "puntosTotales": 426,
+    "juegosAsignados": [
+      1,
+      2,
+      5,
+      3,
+      4
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "2": 1,
+      "5": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐯"
+  },
+  {
+    "id": 7,
+    "nombre": "Camila",
+    "edad": 6,
+    "diagnostico": "TEA",
+    "puntosTotales": 634,
+    "juegosAsignados": [
+      2,
+      4,
+      5,
+      1,
+      3
+    ],
+    "dificultadPorJuego": {
+      "2": 1,
+      "4": 1,
+      "5": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐰"
+  },
+  {
+    "id": 8,
+    "nombre": "Noah",
+    "edad": 8,
+    "diagnostico": "TEA",
+    "puntosTotales": 352,
+    "juegosAsignados": [
+      1,
+      3,
+      4,
+      5,
+      2
+    ],
+    "dificultadPorJuego": {
+      "1": 1,
+      "3": 1,
+      "4": 1,
+      "5": 1
+    },
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐙"
+  },
+  {
+    "id": 9,
+    "nombre": "Julio",
+    "edad": 6,
+    "diagnostico": "",
+    "puntosTotales": 0,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {},
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Verde",
+    "avatar": "🦄"
+  },
+  {
+    "id": 10,
+    "nombre": "Jeremy",
+    "edad": 6,
+    "diagnostico": "",
+    "puntosTotales": 0,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {},
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐞"
+  },
+  {
+    "id": 11,
+    "nombre": "Samuel",
+    "edad": 6,
+    "diagnostico": "",
+    "puntosTotales": 0,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {},
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐻"
+  },
+  {
+    "id": 13,
+    "nombre": "Alisson",
+    "edad": 6,
+    "diagnostico": "",
+    "puntosTotales": 0,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {},
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐸"
+  },
+  {
+    "id": 14,
+    "nombre": "Amelia",
+    "edad": 6,
+    "diagnostico": "",
+    "puntosTotales": 0,
+    "juegosAsignados": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dificultadPorJuego": {},
+    "dificultadAutoPorJuego": {},
+    "cooldownRestantePorJuego": {},
+    "adaptacionAutomaticaPorJuego": {},
+    "aula": "Aula Amarilla",
+    "avatar": "🐨"
+  }
+]

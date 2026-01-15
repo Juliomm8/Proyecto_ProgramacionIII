@@ -1,5 +1,6 @@
 package com.jasgames.service;
 
+import com.jasgames.util.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -266,7 +267,7 @@ public class PerfilService {
             AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error en PerfilService (persistencia).", e);
         } finally {
             ioLock.unlock();
         }
@@ -332,7 +333,7 @@ public class PerfilService {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLog.error("Error en PerfilService (persistencia).", e);
         } finally {
             ioLock.unlock();
         }
