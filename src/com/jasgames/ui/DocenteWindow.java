@@ -1,6 +1,7 @@
 package com.jasgames.ui;
 
 import com.jasgames.service.AppContext;
+import com.jasgames.service.DemoDataService;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 import com.jasgames.ui.login.AccesoWindow;
@@ -21,6 +22,8 @@ public class DocenteWindow extends JFrame {
     private JPanel panelHeaderDocente;
     private JLabel lblTituloDocente;
     private JButton btnBackDocente;
+    private JButton btnDemo;
+    private JButton btnLimpiar;
     private JButton btnBackups;
     private JButton btnAyuda;
     private JButton btnAcercaDe;
@@ -111,14 +114,21 @@ public class DocenteWindow extends JFrame {
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         acciones.setOpaque(false);
 
+        btnDemo = new JButton("Demo");
+        btnLimpiar = new JButton("Limpiar");
         btnBackups = new JButton("Backups");
         btnAyuda = new JButton("Ayuda");
         btnAcercaDe = new JButton("Acerca de");
 
-        for (JButton b : new JButton[]{btnBackups, btnAyuda, btnAcercaDe}) {
+        btnDemo.setToolTipText("Cargar datos de ejemplo (niños/PIA/sesiones)");
+        btnLimpiar.setToolTipText("Borrar niños/PIA/sesiones (no borra docentes ni juegos)");
+
+        for (JButton b : new JButton[]{btnDemo, btnLimpiar, btnBackups, btnAyuda, btnAcercaDe}) {
             b.setFocusPainted(false);
         }
 
+        acciones.add(btnDemo);
+        acciones.add(btnLimpiar);
         acciones.add(btnBackups);
         acciones.add(btnAyuda);
         acciones.add(btnAcercaDe);
@@ -238,12 +248,115 @@ public class DocenteWindow extends JFrame {
             btnAcercaDe.addActionListener(e -> new AboutDialog(this).setVisible(true));
         }
 
+if (btnDemo != null) {
+    btnDemo.addActionListener(e -> accionCargarDemo());
+}
+if (btnLimpiar != null) {
+    btnLimpiar.addActionListener(e -> accionLimpiarDatos());
+}
+
         if (btnBackups != null) {
             btnBackups.addActionListener(e -> new BackupRestoreDialog(this, context).setVisible(true));
         }
 
         installShortcuts();
     }
+
+
+private void accionCargarDemo() {
+    int ok = JOptionPane.showConfirmDialog(
+            this,
+            "<html><b>Cargar datos de ejemplo</b><br>" +
+                    "Se reemplazarán niños, PIA y sesiones por datos de demo.<br>" +
+                    "Se crea un backup automático antes de sobrescribir archivos.</html>",
+            "Datos de ejemplo",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+    );
+    if (ok != JOptionPane.YES_OPTION) return;
+
+    setBusy(true, "Cargando datos de ejemplo...");
+
+    SwingWorker<Void, Void> w = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() {
+            new DemoDataService(context).cargarDemo();
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            setBusy(false, "Datos de ejemplo cargados");
+            refrescarTabs();
+        }
+    };
+    w.execute();
+}
+
+private void accionLimpiarDatos() {
+    int ok = JOptionPane.showConfirmDialog(
+            this,
+            "<html><b>Limpiar datos</b><br>" +
+                    "Esto borrará niños, PIA y sesiones (resultados).<br>" +
+                    "<b>No</b> borra docentes ni el catálogo de juegos.<br>" +
+                    "Se crea un backup automático antes de sobrescribir archivos.</html>",
+            "Confirmar limpieza",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+    );
+    if (ok != JOptionPane.YES_OPTION) return;
+
+    setBusy(true, "Limpiando datos...");
+
+    SwingWorker<Void, Void> w = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() {
+            new DemoDataService(context).limpiarDatosOperativos();
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            setBusy(false, "Datos limpiados");
+            refrescarTabs();
+        }
+    };
+    w.execute();
+}
+
+private void setBusy(boolean busy, String status) {
+    try {
+        if (btnDemo != null) btnDemo.setEnabled(!busy);
+        if (btnLimpiar != null) btnLimpiar.setEnabled(!busy);
+        if (btnBackups != null) btnBackups.setEnabled(!busy);
+        if (btnAyuda != null) btnAyuda.setEnabled(!busy);
+        if (btnAcercaDe != null) btnAcercaDe.setEnabled(!busy);
+
+        setCursor(busy ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
+    } catch (Exception ignored) {}
+
+    setStatus(status);
+}
+
+private void refrescarTabs() {
+    int idx = 0;
+    try {
+        idx = (tabbedPanePrincipal != null) ? tabbedPanePrincipal.getSelectedIndex() : 0;
+    } catch (Exception ignored) {}
+
+    initTabs();
+
+    try {
+        if (tabbedPanePrincipal != null) {
+            int max = tabbedPanePrincipal.getTabCount() - 1;
+            if (idx < 0) idx = 0;
+            if (idx > max) idx = max;
+            tabbedPanePrincipal.setSelectedIndex(idx);
+        }
+        revalidate();
+        repaint();
+    } catch (Exception ignored) {}
+}
 
     private void installShortcuts() {
         JRootPane root = getRootPane();

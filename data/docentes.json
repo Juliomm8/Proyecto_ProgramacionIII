@@ -5,12 +5,5 @@
     "nombre": "Administrador",
     "passwordHash": "eSgwsvfw71lp9Uj+Y4L6XTQwDmvvwAZh56SXEXsRzNc\u003d",
     "salt": "IHCb8nSZpEMW4MmieKUEDw\u003d\u003d"
-  },
-  {
-    "id": 2,
-    "usuario": "profe_maria",
-    "nombre": "María Pérez",
-    "passwordHash": "vJY5UgM1im+VzHFSmEmdLOQsuRnAFAuq2aMhsyPDmX4\u003d",
-    "salt": "UVFz8PmJ6TkmMrWhDOV6kA\u003d\u003d"
   }
 ]

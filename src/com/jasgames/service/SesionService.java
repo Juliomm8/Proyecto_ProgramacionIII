@@ -220,4 +220,29 @@ public class SesionService {
             return LocalDateTime.parse(json.getAsString());
         }
     }
+
+/**
+ * Reemplaza todas las sesiones/resultados y guarda en disco en UNA sola escritura.
+ * Útil para "Datos de ejemplo" y "Limpiar datos".
+ */
+public void reemplazarResultados(List<SesionJuego> nuevos) {
+    ioLock.lock();
+    try {
+        resultados.clear();
+        if (nuevos != null) {
+            for (SesionJuego s : nuevos) {
+                if (s == null) continue;
+                resultados.add(s);
+            }
+        }
+        guardarEnArchivo();
+    } finally {
+        ioLock.unlock();
+    }
+}
+
+/** Limpia todas las sesiones/resultados (deja resultados.json vacío). */
+public void limpiarResultados() {
+    reemplazarResultados(Collections.emptyList());
+}
 }

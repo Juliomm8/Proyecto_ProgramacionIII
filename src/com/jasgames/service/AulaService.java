@@ -253,4 +253,51 @@ public class AulaService {
         if (c == null) return "#95A5A6";
         return String.format("#%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
     }
+
+/**
+ * Reemplaza todas las aulas y guarda en disco en UNA sola escritura.
+ * Útil para "Datos de ejemplo".
+ */
+public void reemplazarAulas(List<Aula> nuevas) {
+    ioLock.lock();
+    try {
+        aulas.clear();
+        if (nuevas != null) {
+            for (Aula a : nuevas) {
+                if (a == null) continue;
+                String nombre = (a.getNombre() == null || a.getNombre().isBlank()) ? "Aula Azul" : a.getNombre().trim();
+                String hex = normalizarHex(a.getColorHex());
+                aulas.add(new Aula(nombre, hex));
+            }
+        }
+
+        // Guard rail: mantener Aula Azul siempre
+        if (buscarPorNombre("Aula Azul") == null) {
+            aulas.add(new Aula("Aula Azul", "#3498DB"));
+        }
+
+        guardar();
+    } finally {
+        ioLock.unlock();
+    }
+}
+
+/**
+ * Resetea el catálogo de aulas a los valores por defecto (Aula Azul/Roja/Verde/Amarilla/Morada).
+ * Útil para "Limpiar datos".
+ */
+public void resetAulasPorDefecto() {
+    ioLock.lock();
+    try {
+        aulas.clear();
+        aulas.add(new Aula("Aula Azul", "#3498DB"));
+        aulas.add(new Aula("Aula Roja", "#E74C3C"));
+        aulas.add(new Aula("Aula Verde", "#2ECC71"));
+        aulas.add(new Aula("Aula Amarilla", "#F1C40F"));
+        aulas.add(new Aula("Aula Morada", "#9B59B6"));
+        guardar();
+    } finally {
+        ioLock.unlock();
+    }
+}
 }

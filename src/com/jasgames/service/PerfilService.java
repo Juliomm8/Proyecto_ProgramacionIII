@@ -476,4 +476,40 @@ public class PerfilService {
         }
     }
 
+/**
+ * Reemplaza todos los niños y guarda en disco en UNA sola escritura.
+ * Útil para "Datos de ejemplo" y "Limpiar datos".
+ */
+public void reemplazarTodosNinos(List<Nino> nuevos) {
+    ioLock.lock();
+    try {
+        ninos.clear();
+        if (nuevos != null) {
+            for (Nino n : nuevos) {
+                if (n == null) continue;
+
+                // Normalizaciones mínimas (evita NPE / campos vacíos)
+                if (n.getNombre() == null || n.getNombre().isBlank()) n.setNombre("Sin nombre");
+                if (n.getDiagnostico() == null) n.setDiagnostico("");
+
+                if (n.getJuegosAsignados() == null) n.setJuegosAsignados(new HashSet<>());
+                if (n.getDificultadPorJuego() == null) n.setDificultadPorJuego(new HashMap<>());
+
+                if (n.getDificultadAutoPorJuego() == null) n.setDificultadAutoPorJuego(new HashMap<>());
+                if (n.getCooldownRestantePorJuego() == null) n.setCooldownRestantePorJuego(new HashMap<>());
+                if (n.getAdaptacionAutomaticaPorJuego() == null) n.setAdaptacionAutomaticaPorJuego(new HashMap<>());
+
+                ninos.add(n);
+            }
+        }
+        guardarNinosEnArchivo();
+    } finally {
+        ioLock.unlock();
+    }
+}
+
+/** Limpia todos los niños (deja ninos.json vacío). */
+public void limpiarTodosNinos() {
+    reemplazarTodosNinos(Collections.emptyList());
+}
 }

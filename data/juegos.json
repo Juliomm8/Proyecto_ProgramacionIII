@@ -3,7 +3,7 @@
     "id": 1,
     "nombre": "Discriminación de Colores",
     "tipo": "COLORES",
-    "dificultad": 4,
+    "dificultad": 1,
     "descripcion": "Toca el círculo del color indicado. Refuerzo positivo y sin castigo por error.",
     "habilitado": true
   },
@@ -19,7 +19,7 @@
     "id": 3,
     "nombre": "Sigue la Serie",
     "tipo": "SERIES",
-    "dificultad": 2,
+    "dificultad": 1,
     "descripcion": "Completa el patrón (serie) eligiendo la figura que falta. 5 rondas completadas \u003d 100 puntos.",
     "habilitado": true
   },
@@ -37,6 +37,6 @@
     "tipo": "FONEMAS",
     "dificultad": 1,
     "descripcion": "Escucha la pregunta y toca la imagen cuyo nombre empieza con la vocal mostrada. 5 rondas \u003d 100 puntos.",
-    "habilitado": true
+    "habilitado": false
   }
 ]

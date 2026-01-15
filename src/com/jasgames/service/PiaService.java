@@ -434,4 +434,29 @@ public class PiaService {
             return LocalDateTime.parse(json.getAsString());
         }
     }
+
+/**
+ * Reemplaza todos los PIA y guarda en disco en UNA sola escritura.
+ * Útil para "Datos de ejemplo" y "Limpiar datos".
+ */
+public void reemplazarPias(List<PIA> nuevos) {
+    ioLock.lock();
+    try {
+        pias.clear();
+        if (nuevos != null) {
+            for (PIA p : nuevos) {
+                if (p == null) continue;
+                pias.add(p);
+            }
+        }
+        guardarEnArchivo();
+    } finally {
+        ioLock.unlock();
+    }
+}
+
+/** Limpia todos los PIA (deja pias.json vacío). */
+public void limpiarPias() {
+    reemplazarPias(Collections.emptyList());
+}
 }
