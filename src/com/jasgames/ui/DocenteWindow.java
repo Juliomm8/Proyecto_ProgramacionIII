@@ -4,11 +4,13 @@ import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
 import com.jasgames.ui.login.AccesoWindow;
+import com.jasgames.util.DataBackups;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.nio.file.Path;
 
 public class DocenteWindow extends JFrame {
 
@@ -20,6 +22,7 @@ public class DocenteWindow extends JFrame {
     private JPanel panelHeaderDocente;
     private JLabel lblTituloDocente;
     private JButton btnBackDocente;
+    private JButton btnBackups;
     private JPanel tabDashboardPanel;
 
     private final AppContext context;
@@ -92,11 +95,14 @@ public class DocenteWindow extends JFrame {
         panelHeaderDocente.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         btnBackDocente = new JButton("Volver");
+        btnBackups = new JButton("Backups");
+        btnBackups.setToolTipText("Restaurar datos desde backups");
         lblTituloDocente = new JLabel("JAS Games - Modo Docente", SwingConstants.CENTER);
         lblTituloDocente.setFont(lblTituloDocente.getFont().deriveFont(Font.BOLD, 18f));
 
         panelHeaderDocente.add(btnBackDocente, BorderLayout.WEST);
         panelHeaderDocente.add(lblTituloDocente, BorderLayout.CENTER);
+        panelHeaderDocente.add(btnBackups, BorderLayout.EAST);
 
         // Tabs
         tabbedPanePrincipal = new JTabbedPane();
@@ -160,6 +166,11 @@ public class DocenteWindow extends JFrame {
             });
         }
 
+
+        if (btnBackups != null) {
+            btnBackups.addActionListener(e -> abrirRestaurarBackups());
+        }
+
         if (tabbedPanePrincipal != null) {
             tabbedPanePrincipal.addChangeListener(ev -> {
                 if (perfilesPanel != null && tabbedPanePrincipal.getSelectedComponent() == perfilesPanel) {
@@ -168,4 +179,33 @@ public class DocenteWindow extends JFrame {
             });
         }
     }
+
+    private void abrirRestaurarBackups() {
+        BackupRestoreDialog dlg = new BackupRestoreDialog(this);
+        dlg.setVisible(true);
+
+        DataBackups.RestoreResult rr = dlg.getRestoreResult();
+        if (rr != null && rr.ok) {
+            Path used = dlg.getSelectedBackup();
+            String backupName = (used != null) ? used.getFileName().toString() : "(desconocido)";
+            try {
+                context.getAuditoriaService().registrar("RESTORE_BACKUP", "backup=" + backupName + " archivos=" + rr.restoredFiles);
+            } catch (Exception ignored) {}
+
+            int opt = JOptionPane.showConfirmDialog(
+                    this,
+                    "Datos restaurados desde: " + backupName + "\n\nPara aplicar cambios se recomienda volver al inicio.\n¿Volver al inicio ahora?",
+                    "Backups",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            if (opt == JOptionPane.YES_OPTION) {
+                context.setDocenteSesion(null);
+                new AccesoWindow(new AppContext()).setVisible(true);
+                dispose();
+            }
+        }
+    }
+
+
 }
