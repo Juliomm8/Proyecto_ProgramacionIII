@@ -98,6 +98,10 @@ public class Nino {
         getDificultadPorJuego().put(idJuego, dificultad);
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     // -------------------- Adaptación automática --------------------
 
     public Map<Integer, Integer> getDificultadAutoPorJuego() {

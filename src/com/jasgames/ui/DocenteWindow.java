@@ -1,16 +1,16 @@
 package com.jasgames.ui;
 
 import com.jasgames.service.AppContext;
-import com.jasgames.service.DemoDataService;
 import com.jasgames.service.JuegoService;
 import com.jasgames.service.PerfilService;
+import com.jasgames.model.UiSettings;
+import com.jasgames.ui.framework.UiAccessibility;
 import com.jasgames.ui.login.AccesoWindow;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.function.Consumer;
 
 public class DocenteWindow extends JFrame {
 
@@ -22,20 +22,13 @@ public class DocenteWindow extends JFrame {
     private JPanel panelHeaderDocente;
     private JLabel lblTituloDocente;
     private JButton btnBackDocente;
-    private JButton btnDemo;
-    private JButton btnLimpiar;
     private JButton btnBackups;
+    private JButton btnAccesibilidad;
     private JButton btnAyuda;
     private JButton btnAcercaDe;
+    private JButton btnDemo;
+    private JButton btnLimpiar;
     private JPanel tabDashboardPanel;
-
-    // Barra de estado global (docente)
-    private JLabel lblStatus;
-    private javax.swing.Timer timerStatus;
-    private final String statusIdle = "Listo";
-
-    // Permite que los paneles informen acciones (copiar, guardar, etc.) sin JOptionPane
-    private Consumer<String> statusSink;
 
     private final AppContext context;
     private final JFrame ventanaAnterior;
@@ -117,19 +110,18 @@ public class DocenteWindow extends JFrame {
         btnDemo = new JButton("Demo");
         btnLimpiar = new JButton("Limpiar");
         btnBackups = new JButton("Backups");
+        btnAccesibilidad = new JButton("Accesibilidad");
         btnAyuda = new JButton("Ayuda");
         btnAcercaDe = new JButton("Acerca de");
 
-        btnDemo.setToolTipText("Cargar datos de ejemplo (niños/PIA/sesiones)");
-        btnLimpiar.setToolTipText("Borrar niños/PIA/sesiones (no borra docentes ni juegos)");
-
-        for (JButton b : new JButton[]{btnDemo, btnLimpiar, btnBackups, btnAyuda, btnAcercaDe}) {
+        for (JButton b : new JButton[]{btnDemo, btnLimpiar, btnBackups, btnAccesibilidad, btnAyuda, btnAcercaDe}) {
             b.setFocusPainted(false);
         }
 
         acciones.add(btnDemo);
         acciones.add(btnLimpiar);
         acciones.add(btnBackups);
+        acciones.add(btnAccesibilidad);
         acciones.add(btnAyuda);
         acciones.add(btnAcercaDe);
 
@@ -147,38 +139,6 @@ public class DocenteWindow extends JFrame {
 
         mainPanel.add(panelHeaderDocente, BorderLayout.NORTH);
         mainPanel.add(tabbedPanePrincipal, BorderLayout.CENTER);
-
-        // Barra de estado (abajo)
-        JPanel statusBar = new JPanel(new BorderLayout());
-        statusBar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)
-        ));
-        lblStatus = new JLabel(statusIdle);
-        Font f = lblStatus.getFont();
-        if (f != null) lblStatus.setFont(f.deriveFont(Font.PLAIN, Math.max(12f, f.getSize2D() - 1f)));
-        lblStatus.setForeground(new Color(70, 70, 70));
-        statusBar.add(lblStatus, BorderLayout.WEST);
-        mainPanel.add(statusBar, BorderLayout.SOUTH);
-
-        // Sink para que los paneles notifiquen acciones sin diálogos
-        statusSink = (msg) -> SwingUtilities.invokeLater(() -> flashStatus(msg));
-    }
-
-    /** Mensaje persistente (se queda hasta que otro lo reemplace). */
-    public void setStatus(String msg) {
-        if (lblStatus == null) return;
-        String t = (msg == null || msg.trim().isEmpty()) ? statusIdle : msg.trim();
-        lblStatus.setText(t);
-    }
-
-    /** Mensaje temporal: se muestra y luego vuelve a "Listo". */
-    public void flashStatus(String msg) {
-        setStatus(msg);
-        if (timerStatus != null && timerStatus.isRunning()) timerStatus.stop();
-        timerStatus = new javax.swing.Timer(3800, e -> setStatus(statusIdle));
-        timerStatus.setRepeats(false);
-        timerStatus.start();
     }
 
     private void initTabs() {
@@ -186,7 +146,7 @@ public class DocenteWindow extends JFrame {
 
         tabbedPanePrincipal.removeAll();
 
-        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService, statusSink));
+        tabbedPanePrincipal.addTab("Juegos", new JuegosPanel(juegoService, perfilService));
 
         perfilesPanel = new PerfilesPanel(
                 perfilService,
@@ -198,7 +158,7 @@ public class DocenteWindow extends JFrame {
         tabbedPanePrincipal.addTab("Aulas", new AulasPanel(context, (int idNino) -> {
             tabbedPanePrincipal.setSelectedComponent(perfilesPanel);
             perfilesPanel.seleccionarNinoPorId(idNino);
-        }, statusSink));
+        }));
 
         tabbedPanePrincipal.addTab(
                 "Dashboard",
@@ -211,12 +171,23 @@ public class DocenteWindow extends JFrame {
                             if (perfilesPanel != null) {
                                 perfilesPanel.irAObjetivoPia(idNino, idObjetivo);
                             }
-                        },
-                        statusSink
+                        }
                 )
         );
 
         tabbedPanePrincipal.addTab("Auditoría", new AuditoriaPanel(context.getAuditoriaService()));
+
+        aplicarPreferenciasDocente();
+    }
+
+    private void aplicarPreferenciasDocente() {
+        try {
+            UiSettings s = context.getSettingsService().getSettings();
+            UiAccessibility.applyLargeText(mainPanel, s != null && s.isDocenteLetraGrande());
+            revalidate();
+            repaint();
+        } catch (Exception ignored) {
+        }
     }
 
     private void initListeners() {
@@ -248,115 +219,163 @@ public class DocenteWindow extends JFrame {
             btnAcercaDe.addActionListener(e -> new AboutDialog(this).setVisible(true));
         }
 
-if (btnDemo != null) {
-    btnDemo.addActionListener(e -> accionCargarDemo());
-}
-if (btnLimpiar != null) {
-    btnLimpiar.addActionListener(e -> accionLimpiarDatos());
-}
-
         if (btnBackups != null) {
             btnBackups.addActionListener(e -> new BackupRestoreDialog(this, context).setVisible(true));
+        }
+
+        if (btnDemo != null) {
+            btnDemo.addActionListener(e -> ejecutarCargaDemo());
+        }
+
+        if (btnLimpiar != null) {
+            btnLimpiar.addActionListener(e -> ejecutarLimpiezaDatos());
+        }
+
+        if (btnAccesibilidad != null) {
+            btnAccesibilidad.addActionListener(e -> mostrarMenuAccesibilidad());
         }
 
         installShortcuts();
     }
 
+    private void ejecutarCargaDemo() {
+        int r = JOptionPane.showConfirmDialog(
+                this,
+                "Esto cargará datos de ejemplo y reemplazará niños/sesiones/PIA y aulas.\n\n" +
+                        "Se creará un backup automático antes de sobrescribir los archivos.\n\n" +
+                        "¿Deseas continuar?",
+                "Cargar datos de ejemplo",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (r != JOptionPane.YES_OPTION) return;
 
-private void accionCargarDemo() {
-    int ok = JOptionPane.showConfirmDialog(
-            this,
-            "<html><b>Cargar datos de ejemplo</b><br>" +
-                    "Se reemplazarán niños, PIA y sesiones por datos de demo.<br>" +
-                    "Se crea un backup automático antes de sobrescribir archivos.</html>",
-            "Datos de ejemplo",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
-    );
-    if (ok != JOptionPane.YES_OPTION) return;
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        btnDemo.setEnabled(false);
+        btnLimpiar.setEnabled(false);
 
-    setBusy(true, "Cargando datos de ejemplo...");
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                new com.jasgames.service.DemoDataService(context).cargarDemo();
+                return null;
+            }
 
-    SwingWorker<Void, Void> w = new SwingWorker<Void, Void>() {
-        @Override
-        protected Void doInBackground() {
-            new DemoDataService(context).cargarDemo();
-            return null;
+            @Override
+            protected void done() {
+                setCursor(Cursor.getDefaultCursor());
+                btnDemo.setEnabled(true);
+                btnLimpiar.setEnabled(true);
+
+                // refrescar tabs manteniendo selección
+                int idx = tabbedPanePrincipal != null ? tabbedPanePrincipal.getSelectedIndex() : 0;
+                initTabs();
+                if (tabbedPanePrincipal != null && idx >= 0 && idx < tabbedPanePrincipal.getTabCount()) {
+                    tabbedPanePrincipal.setSelectedIndex(idx);
+                }
+
+                JOptionPane.showMessageDialog(
+                        DocenteWindow.this,
+                        "Datos de ejemplo cargados.",
+                        "Demo",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        }.execute();
+    }
+
+    private void ejecutarLimpiezaDatos() {
+        int r = JOptionPane.showConfirmDialog(
+                this,
+                "Esto eliminará niños, sesiones y PIA, y reseteará las aulas.\n\n" +
+                        "NO se borrarán docentes ni el catálogo de juegos.\n\n" +
+                        "Se creará un backup automático antes de sobrescribir los archivos.\n\n" +
+                        "¿Deseas continuar?",
+                "Limpiar datos",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (r != JOptionPane.YES_OPTION) return;
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        btnDemo.setEnabled(false);
+        btnLimpiar.setEnabled(false);
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                new com.jasgames.service.DemoDataService(context).limpiarDatosOperativos();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(Cursor.getDefaultCursor());
+                btnDemo.setEnabled(true);
+                btnLimpiar.setEnabled(true);
+
+                int idx = tabbedPanePrincipal != null ? tabbedPanePrincipal.getSelectedIndex() : 0;
+                initTabs();
+                if (tabbedPanePrincipal != null && idx >= 0 && idx < tabbedPanePrincipal.getTabCount()) {
+                    tabbedPanePrincipal.setSelectedIndex(idx);
+                }
+
+                JOptionPane.showMessageDialog(
+                        DocenteWindow.this,
+                        "Datos limpiados.",
+                        "Limpiar",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        }.execute();
+    }
+
+    private void mostrarMenuAccesibilidad() {
+        UiSettings s = context.getSettingsService().getSettings();
+        if (s == null) s = new UiSettings();
+
+        JPopupMenu menu = new JPopupMenu();
+
+        JCheckBoxMenuItem mLetraDocente = new JCheckBoxMenuItem("Letra grande (Docente)", s.isDocenteLetraGrande());
+        JCheckBoxMenuItem mLetraEst = new JCheckBoxMenuItem("Letra grande (Estudiante)", s.isEstudianteLetraGrande());
+        JCheckBoxMenuItem mContrasteEst = new JCheckBoxMenuItem("Alto contraste (Estudiante)", s.isEstudianteAltoContraste());
+        JCheckBoxMenuItem mFullEst = new JCheckBoxMenuItem("Pantalla completa (Estudiante)", s.isEstudiantePantallaCompleta());
+
+        mLetraDocente.addActionListener(ev -> {
+            boolean val = mLetraDocente.isSelected();
+            context.getSettingsService().update(set -> set.setDocenteLetraGrande(val));
+            aplicarPreferenciasDocente();
+        });
+
+        mLetraEst.addActionListener(ev -> {
+            boolean val = mLetraEst.isSelected();
+            context.getSettingsService().update(set -> set.setEstudianteLetraGrande(val));
+        });
+
+        mContrasteEst.addActionListener(ev -> {
+            boolean val = mContrasteEst.isSelected();
+            context.getSettingsService().update(set -> set.setEstudianteAltoContraste(val));
+        });
+
+        mFullEst.addActionListener(ev -> {
+            boolean val = mFullEst.isSelected();
+            context.getSettingsService().update(set -> set.setEstudiantePantallaCompleta(val));
+        });
+
+        menu.add(mLetraDocente);
+        menu.addSeparator();
+        menu.add(mLetraEst);
+        menu.add(mContrasteEst);
+        menu.add(mFullEst);
+
+        // Mostrar debajo del botón
+        try {
+            menu.show(btnAccesibilidad, 0, btnAccesibilidad.getHeight());
+        } catch (Exception ignored) {
+            // fallback: centro de la ventana
+            menu.show(getRootPane(), getWidth() / 2, 40);
         }
-
-        @Override
-        protected void done() {
-            setBusy(false, "Datos de ejemplo cargados");
-            refrescarTabs();
-        }
-    };
-    w.execute();
-}
-
-private void accionLimpiarDatos() {
-    int ok = JOptionPane.showConfirmDialog(
-            this,
-            "<html><b>Limpiar datos</b><br>" +
-                    "Esto borrará niños, PIA y sesiones (resultados).<br>" +
-                    "<b>No</b> borra docentes ni el catálogo de juegos.<br>" +
-                    "Se crea un backup automático antes de sobrescribir archivos.</html>",
-            "Confirmar limpieza",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
-    );
-    if (ok != JOptionPane.YES_OPTION) return;
-
-    setBusy(true, "Limpiando datos...");
-
-    SwingWorker<Void, Void> w = new SwingWorker<Void, Void>() {
-        @Override
-        protected Void doInBackground() {
-            new DemoDataService(context).limpiarDatosOperativos();
-            return null;
-        }
-
-        @Override
-        protected void done() {
-            setBusy(false, "Datos limpiados");
-            refrescarTabs();
-        }
-    };
-    w.execute();
-}
-
-private void setBusy(boolean busy, String status) {
-    try {
-        if (btnDemo != null) btnDemo.setEnabled(!busy);
-        if (btnLimpiar != null) btnLimpiar.setEnabled(!busy);
-        if (btnBackups != null) btnBackups.setEnabled(!busy);
-        if (btnAyuda != null) btnAyuda.setEnabled(!busy);
-        if (btnAcercaDe != null) btnAcercaDe.setEnabled(!busy);
-
-        setCursor(busy ? Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR) : Cursor.getDefaultCursor());
-    } catch (Exception ignored) {}
-
-    setStatus(status);
-}
-
-private void refrescarTabs() {
-    int idx = 0;
-    try {
-        idx = (tabbedPanePrincipal != null) ? tabbedPanePrincipal.getSelectedIndex() : 0;
-    } catch (Exception ignored) {}
-
-    initTabs();
-
-    try {
-        if (tabbedPanePrincipal != null) {
-            int max = tabbedPanePrincipal.getTabCount() - 1;
-            if (idx < 0) idx = 0;
-            if (idx > max) idx = max;
-            tabbedPanePrincipal.setSelectedIndex(idx);
-        }
-        revalidate();
-        repaint();
-    } catch (Exception ignored) {}
-}
+    }
 
     private void installShortcuts() {
         JRootPane root = getRootPane();

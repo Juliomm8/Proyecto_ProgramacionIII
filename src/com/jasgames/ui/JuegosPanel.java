@@ -27,7 +27,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * JuegosPanel (Modo Docente)
@@ -121,30 +120,14 @@ public class JuegosPanel extends JPanel {
 
     private String resumenAsignacionBase = " ";
 
-    // Barra de estado global (DocenteWindow)
-    private final Consumer<String> statusSink;
-
-    private void status(String msg) {
-        try {
-            if (statusSink != null) statusSink.accept(msg);
-        } catch (Exception ignored) {
-        }
-    }
-
-    public JuegosPanel(JuegoService juegoService, PerfilService perfilService, Consumer<String> statusSink) {
+    public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
         this.juegoService = juegoService;
         this.perfilService = perfilService;
-        this.statusSink = (statusSink != null) ? statusSink : (m) -> {};
 
         initUI();
         cargarJuegos();
         cargarNinos();
         initListeners();
-    }
-
-    // Back-compat
-    public JuegosPanel(JuegoService juegoService, PerfilService perfilService) {
-        this(juegoService, perfilService, null);
     }
 
     // ---------------------------------------------------------------------
@@ -1091,7 +1074,7 @@ public class JuegosPanel extends JPanel {
             afectadosTotal += afectados;
         }
 
-        status("Operación completada. Cambios aplicados: " + afectadosTotal);
+        JOptionPane.showMessageDialog(this, "Operación completada. Cambios aplicados (sumatoria): " + afectadosTotal);
         cargarNinos();
         actualizarAsignacionesParaSeleccionado();
     }
@@ -1181,7 +1164,7 @@ public class JuegosPanel extends JPanel {
 
         juegoService.guardar();
         cargarJuegos();
-        status("Cambios del catálogo guardados.");
+        JOptionPane.showMessageDialog(this, "Cambios del catálogo guardados.");
     }
 
     // ---------------------------------------------------------------------

@@ -221,28 +221,46 @@ public class SesionService {
         }
     }
 
-/**
- * Reemplaza todas las sesiones/resultados y guarda en disco en UNA sola escritura.
- * Útil para "Datos de ejemplo" y "Limpiar datos".
- */
-public void reemplazarResultados(List<SesionJuego> nuevos) {
-    ioLock.lock();
-    try {
-        resultados.clear();
-        if (nuevos != null) {
-            for (SesionJuego s : nuevos) {
-                if (s == null) continue;
-                resultados.add(s);
-            }
-        }
-        guardarEnArchivo();
-    } finally {
-        ioLock.unlock();
-    }
-}
 
-/** Limpia todas las sesiones/resultados (deja resultados.json vacío). */
-public void limpiarResultados() {
-    reemplazarResultados(Collections.emptyList());
-}
+    /**
+     * Reemplaza completamente el historial de resultados (1 sola escritura).
+     * Útil para cargar datos demo / limpiar o restaurar estructuras.
+     */
+    public void reemplazarResultados(List<SesionJuego> nuevos) {
+        ioLock.lock();
+        try {
+            resultados.clear();
+
+            if (nuevos != null) {
+                for (SesionJuego s : nuevos) {
+                    if (s == null) continue;
+
+                    if (s.getIdSesion() == null || s.getIdSesion().isBlank()) {
+                        s.setIdSesion(UUID.randomUUID().toString());
+                    }
+                    if (s.getFechaHora() == null) {
+                        s.setFechaHora(LocalDateTime.now());
+                    }
+
+                    resultados.add(s);
+                }
+            }
+
+            guardarEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    /** Limpia todos los resultados (1 sola escritura). */
+    public void limpiarResultados() {
+        ioLock.lock();
+        try {
+            resultados.clear();
+            guardarEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
 }

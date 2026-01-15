@@ -1,6 +1,7 @@
 package com.jasgames.ui.login;
 
 import com.jasgames.model.Nino;
+import com.jasgames.model.UiSettings;
 import com.jasgames.service.AppContext;
 import com.jasgames.service.DirectorioEscolarService;
 import com.jasgames.ui.EstudianteWindow;
@@ -32,6 +33,11 @@ public class AccesoEstudianteWindow extends JFrame {
     private final JButton btnAtras = new JButton("Atrás");
     private final JButton btnSalir = new JButton("Salir");
 
+    // Preferencias UI (persistentes)
+    private final float uiScale;
+    private final boolean altoContraste;
+    private final boolean pantallaCompleta;
+
     // Salida protegida (mantener presionado) para evitar que el niño salga sin querer
     private javax.swing.Timer holdSalir;
 
@@ -40,6 +46,10 @@ public class AccesoEstudianteWindow extends JFrame {
     }
 
     private Color fondoSuave(Color c) {
+        if (altoContraste) {
+            // Alto contraste: evita el pastel (baja contraste) -> usa blanco
+            return Color.WHITE;
+        }
         // Mezcla con blanco para un fondo pastel (más suave)
         int r = (c.getRed() + 255) / 2;
         int g = (c.getGreen() + 255) / 2;
@@ -54,9 +64,9 @@ public class AccesoEstudianteWindow extends JFrame {
         ficha.setContentAreaFilled(true);
         ficha.setBorderPainted(true);
 
-        // Fondo pastel + borde grueso del color del aula
+        // Fondo pastel (o blanco en alto contraste) + borde del color del aula
         ficha.setBackground(fondoSuave(c));
-        Border borde = BorderFactory.createLineBorder(c, 6, true);
+        Border borde = BorderFactory.createLineBorder(c, altoContraste ? 8 : 6, true);
         ficha.setBorder(borde);
 
         ficha.setForeground(Color.BLACK);
@@ -67,11 +77,19 @@ public class AccesoEstudianteWindow extends JFrame {
 
         btn.setOpaque(true);
         btn.setContentAreaFilled(true);
-        btn.setBorderPainted(false);
+        btn.setBorderPainted(altoContraste);
         btn.setBackground(c);
 
+        if (altoContraste) {
+            btn.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3, true));
+        }
+
         if ("Aula Amarilla".equalsIgnoreCase(aula)) btn.setForeground(Color.BLACK);
-        else btn.setForeground(Color.WHITE);
+        else {
+            // Contraste por luminancia (mejor que hardcode)
+            double lum = (0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c.getBlue());
+            btn.setForeground(lum > 140 ? Color.BLACK : Color.WHITE);
+        }
     }
     
     private void aplicarBarraAulaHeader(String aula) {
@@ -93,10 +111,17 @@ public class AccesoEstudianteWindow extends JFrame {
         this.ventanaAnterior = ventanaAnterior;
         this.directorio = context.getDirectorioEscolarService();
 
+        UiSettings s = context.getSettingsService().getSettings();
+        this.uiScale = (s != null && s.isEstudianteLetraGrande()) ? 1.18f : 1.0f;
+        this.altoContraste = (s != null && s.isEstudianteAltoContraste());
+        this.pantallaCompleta = (s != null && s.isEstudiantePantallaCompleta());
+
         setTitle("JAS Games - Acceso Estudiante");
         // Evita cerrar con la X por accidente (salida protegida)
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setSize(950, 650);
+        if (!pantallaCompleta) {
+            setSize(950, 650);
+        }
         setLocationRelativeTo(null);
 
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -108,6 +133,10 @@ public class AccesoEstudianteWindow extends JFrame {
         });
 
         setContentPane(crearContenido());
+
+        if (pantallaCompleta) {
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
         instalarSalidaProtegida();
         cargarAulas();
     }
@@ -152,7 +181,10 @@ public class AccesoEstudianteWindow extends JFrame {
         root.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         this.header = new JPanel(new BorderLayout(10, 10));
-        lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 22f));
+        lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 22f * uiScale));
+        if (altoContraste) {
+            lblTitulo.setForeground(Color.BLACK);
+        }
         this.header.add(lblTitulo, BorderLayout.CENTER);
 
         JPanel izquierda = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -163,6 +195,14 @@ public class AccesoEstudianteWindow extends JFrame {
         JPanel derecha = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         derecha.add(btnSalir);
         this.header.add(derecha, BorderLayout.EAST);
+
+        if (altoContraste) {
+            root.setBackground(Color.WHITE);
+            cards.setBackground(Color.WHITE);
+            cardAulas.setBackground(Color.WHITE);
+            cardEstudiantes.setBackground(Color.WHITE);
+            this.header.setBackground(Color.WHITE);
+        }
 
         root.add(this.header, BorderLayout.NORTH);
 
@@ -189,7 +229,7 @@ public class AccesoEstudianteWindow extends JFrame {
         } else {
             for (String aula : aulas) {
                 JButton btn = new JButton(aula);
-                btn.setFont(btn.getFont().deriveFont(Font.BOLD, 22f));
+                btn.setFont(btn.getFont().deriveFont(Font.BOLD, 22f * uiScale));
                 btn.setFocusPainted(false);
                 btn.addActionListener(e -> abrirAula(aula));
                 panelAulas.add(btn);
@@ -266,14 +306,14 @@ public class AccesoEstudianteWindow extends JFrame {
 
         String avatar = safeAvatar(n != null ? n.getAvatar() : null);
         JLabel lblAvatar = new JLabel(avatar, SwingConstants.CENTER);
-        EmojiFonts.apply(lblAvatar, 40f);
+        EmojiFonts.apply(lblAvatar, 40f * uiScale);
         lblAvatar.setOpaque(false);
 
         String nombre = (n != null && n.getNombre() != null) ? n.getNombre().trim() : "";
         if (nombre.isBlank()) nombre = "Sin nombre";
         JLabel lblNombre = new JLabel("<html><div style='text-align:center;'>" + escapeHtml(nombre) + "</div></html>",
                 SwingConstants.CENTER);
-        lblNombre.setFont(lblNombre.getFont().deriveFont(Font.BOLD, 16f));
+        lblNombre.setFont(lblNombre.getFont().deriveFont(Font.BOLD, 16f * uiScale));
         lblNombre.setOpaque(false);
         lblNombre.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 0));
 
@@ -289,7 +329,7 @@ public class AccesoEstudianteWindow extends JFrame {
 
         // Si la fuente de emoji no puede renderizar el caracter, usamos un fallback seguro.
         try {
-            Font f = EmojiFonts.emoji(40f);
+            Font f = EmojiFonts.emoji(40f * uiScale);
             if (f != null && f.canDisplayUpTo(a) != -1) return "🙂";
         } catch (Exception ignored) {}
 

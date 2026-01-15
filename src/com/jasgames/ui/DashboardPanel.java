@@ -29,7 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class DashboardPanel extends JPanel {
 
@@ -58,9 +57,6 @@ public class DashboardPanel extends JPanel {
     private final AulaService aulaServiceField;
 
     private final ObjectiveNavigator navigator;
-
-    // Barra de estado global (DocenteWindow). Si no existe, no hace nada.
-    private final Consumer<String> statusSink;
 
     private final java.util.List<SesionJuego> filasTabla = new java.util.ArrayList<>();
     private DefaultTableModel tablaModelo;
@@ -127,12 +123,11 @@ public class DashboardPanel extends JPanel {
     };
 
     // Constructor principal: lo usará DocenteWindow
-    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService, ObjectiveNavigator navigator, Consumer<String> statusSink) {
+    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService, ObjectiveNavigator navigator) {
         this.sesionService = sesionService;
         this.piaService = piaService;
         this.aulaServiceField = aulaService;
         this.navigator = navigator;
-        this.statusSink = (statusSink != null) ? statusSink : (m) -> {};
 
         setLayout(new BorderLayout());
 
@@ -177,27 +172,16 @@ public class DashboardPanel extends JPanel {
     }
 
     // Back-compat
-    public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService, ObjectiveNavigator navigator) {
-        this(sesionService, piaService, aulaService, navigator, null);
-    }
-
     public DashboardPanel(SesionService sesionService, PiaService piaService, AulaService aulaService) {
-        this(sesionService, piaService, aulaService, null, null);
+        this(sesionService, piaService, aulaService, null);
     }
 
     public DashboardPanel(SesionService sesionService, PiaService piaService) {
-        this(sesionService, piaService, null, null, null);
+        this(sesionService, piaService, null, null);
     }
 
     public DashboardPanel() {
         this(new SesionService(), new PiaService(), new AulaService(new PerfilService()), null);
-    }
-
-    private void status(String msg) {
-        try {
-            if (statusSink != null) statusSink.accept(msg);
-        } catch (Exception ignored) {
-        }
     }
 
     private void inicializarTabla() {
@@ -713,7 +697,7 @@ public class DashboardPanel extends JPanel {
                     writer.newLine();
                 }
 
-                status("Reporte exportado: " + fileToSave.getName());
+                JOptionPane.showMessageDialog(this, "Reporte exportado correctamente.", "Exportar CSV", JOptionPane.INFORMATION_MESSAGE);
 
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -747,7 +731,7 @@ public class DashboardPanel extends JPanel {
     }
 
     refrescarReportePia();
-    status("Progreso del PIA recalculado.");
+    JOptionPane.showMessageDialog(this, "Progreso recalculado correctamente.", "PIA", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private static class StatsObjetivo {
@@ -1170,7 +1154,6 @@ public class DashboardPanel extends JPanel {
 
         // Mostrar banner de "Deshacer"
         mostrarUndo(eliminado);
-        status("Sesión eliminada. Puedes deshacer (10s).");
     }
 
     // ----------------------------------------------------------------------
@@ -1229,7 +1212,6 @@ public class DashboardPanel extends JPanel {
         if (!ok) {
             // Si falló, mantenemos el banner un instante y luego ocultamos.
             if (lblUndo != null) lblUndo.setText("No se pudo restaurar (ya existe una sesión con ese ID).");
-            status("No se pudo restaurar la sesión.");
             javax.swing.Timer t = new javax.swing.Timer(2200, e -> ocultarUndo());
             t.setRepeats(false);
             t.start();
@@ -1247,7 +1229,6 @@ public class DashboardPanel extends JPanel {
         refrescarReportePia();
 
         if (lblUndo != null) lblUndo.setText("Sesión restaurada ✅");
-        status("Sesión restaurada.");
         javax.swing.Timer t = new javax.swing.Timer(1600, e -> ocultarUndo());
         t.setRepeats(false);
         t.start();

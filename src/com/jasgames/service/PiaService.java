@@ -435,28 +435,78 @@ public class PiaService {
         }
     }
 
-/**
- * Reemplaza todos los PIA y guarda en disco en UNA sola escritura.
- * Útil para "Datos de ejemplo" y "Limpiar datos".
- */
-public void reemplazarPias(List<PIA> nuevos) {
-    ioLock.lock();
-    try {
-        pias.clear();
-        if (nuevos != null) {
-            for (PIA p : nuevos) {
-                if (p == null) continue;
-                pias.add(p);
-            }
-        }
-        guardarEnArchivo();
-    } finally {
-        ioLock.unlock();
-    }
-}
 
-/** Limpia todos los PIA (deja pias.json vacío). */
-public void limpiarPias() {
-    reemplazarPias(Collections.emptyList());
-}
+    /**
+     * Reemplaza completamente la lista de PIAs (1 sola escritura).
+     * Útil para cargar datos demo / limpiar o restaurar estructuras.
+     */
+    public void reemplazarPias(List<PIA> nuevas) {
+        ioLock.lock();
+        try {
+            pias.clear();
+
+            if (nuevas != null) {
+                for (PIA p : nuevas) {
+                    if (p == null) continue;
+
+                    if (p.getIdPia() == null || p.getIdPia().isBlank()) {
+                        p.setIdPia(UUID.randomUUID().toString());
+                    }
+                    if (p.getFechaCreacion() == null) {
+                        p.setFechaCreacion(LocalDateTime.now());
+                    }
+                    if (p.getNombreNino() == null) p.setNombreNino("");
+                    if (p.getAula() == null) p.setAula("");
+                    if (p.getObjetivoGeneral() == null) p.setObjetivoGeneral("");
+
+                    // asegurar listas / objetivo activo consistente
+                    p.getObjetivos();
+                    p.asegurarObjetivoActivoValido();
+
+                    pias.add(p);
+                }
+
+                // asegurar solo 1 PIA activo por niño (se queda el más reciente)
+                Map<Integer, PIA> activoPorNino = new HashMap<>();
+                for (PIA p : pias) {
+                    if (!p.isActivo()) continue;
+                    int idN = p.getIdNino();
+
+                    PIA previo = activoPorNino.get(idN);
+                    if (previo == null) {
+                        activoPorNino.put(idN, p);
+                    } else {
+                        LocalDateTime fp = previo.getFechaCreacion();
+                        LocalDateTime fc = p.getFechaCreacion();
+                        boolean currentNewer =
+                                (fp == null && fc != null) ||
+                                        (fp != null && fc != null && fc.isAfter(fp));
+
+                        if (currentNewer) {
+                            previo.setActivo(false);
+                            activoPorNino.put(idN, p);
+                        } else {
+                            p.setActivo(false);
+                        }
+                    }
+                }
+            }
+
+            guardarEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    /** Limpia todos los PIAs (1 sola escritura). */
+    public void limpiarPias() {
+        ioLock.lock();
+        try {
+            pias.clear();
+            guardarEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
 }

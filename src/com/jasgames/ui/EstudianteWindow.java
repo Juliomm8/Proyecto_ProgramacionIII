@@ -1,6 +1,7 @@
 package com.jasgames.ui;
 
 import com.jasgames.model.Juego;
+import com.jasgames.model.UiSettings;
 import com.jasgames.service.AppContext;
 import com.jasgames.service.JuegoService;
 import com.jasgames.model.Actividad;
@@ -69,6 +70,11 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
     // Salida protegida (mantener presionado)
     private javax.swing.Timer holdTimer;
 
+    // Preferencias UI (persistentes)
+    private final float uiScale;
+    private final boolean altoContraste;
+    private final boolean pantallaCompleta;
+
 
     public EstudianteWindow(AppContext context, JFrame ventanaAnterior) {
         this.context = context;
@@ -77,6 +83,11 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         this.perfilService = context.getPerfilService();
         this.sesionService = context.getResultadoService();
         this.piaService = context.getPiaService();
+
+        UiSettings s = context.getSettingsService().getSettings();
+        this.uiScale = (s != null && s.isEstudianteLetraGrande()) ? 1.18f : 1.0f;
+        this.altoContraste = (s != null && s.isEstudianteAltoContraste());
+        this.pantallaCompleta = (s != null && s.isEstudiantePantallaCompleta());
 
         // Evita IllegalComponentStateException si el panel del diseñador no fue inicializado
         if (panelEstudianteMain == null) {
@@ -148,14 +159,21 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
         setTitle("JAS Games - Modo Estudiante");
         // En modo estudiante se protege la salida (evita cerrar con la X sin querer)
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setSize(1100, 800);
+        if (!pantallaCompleta) {
+            setSize(1100, 800);
+        }
         setLocationRelativeTo(null);
+
+        if (pantallaCompleta) {
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
 
         initModeloJuegos();
         initListeners();
 
         initUxSesion();
         aplicarEstiloInfantil();
+        aplicarAltoContrasteSiAplica();
         mostrarModoBusqueda(); // por defecto (si aún no hay sesión visual)
 
         addWindowListener(new WindowAdapter() {
@@ -255,14 +273,14 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
      */
     private void aplicarEstiloInfantil() {
         try {
-            Font base = new Font("Dialog", Font.PLAIN, 16);
+            Font base = new Font("Dialog", Font.PLAIN, Math.round(16 * uiScale));
 
             if (lblTituloEstudiante != null) {
-                lblTituloEstudiante.setFont(lblTituloEstudiante.getFont().deriveFont(Font.BOLD, 20f));
+                lblTituloEstudiante.setFont(lblTituloEstudiante.getFont().deriveFont(Font.BOLD, 20f * uiScale));
             }
 
             if (lblSeleccionJuego != null) {
-                lblSeleccionJuego.setFont(base.deriveFont(Font.BOLD, 16f));
+                lblSeleccionJuego.setFont(base.deriveFont(Font.BOLD, 16f * uiScale));
             }
 
             if (listaJuegosEstudiante != null) {
@@ -270,29 +288,81 @@ public class EstudianteWindow extends JFrame implements JuegoListener {
             }
 
             if (btnIniciarJuego != null) {
-                btnIniciarJuego.setFont(base.deriveFont(Font.BOLD, 16f));
+                btnIniciarJuego.setFont(base.deriveFont(Font.BOLD, 16f * uiScale));
                 if (!btnIniciarJuego.getText().contains("▶")) btnIniciarJuego.setText("▶ Iniciar");
             }
 
             if (btnFinalizarJuego != null) {
-                btnFinalizarJuego.setFont(base.deriveFont(Font.BOLD, 16f));
+                btnFinalizarJuego.setFont(base.deriveFont(Font.BOLD, 16f * uiScale));
                 if (!btnFinalizarJuego.getText().contains("⏹")) btnFinalizarJuego.setText("⏹ Finalizar");
             }
 
             if (btnBackEstudiante != null) {
-                btnBackEstudiante.setFont(base.deriveFont(Font.BOLD, 15f));
+                btnBackEstudiante.setFont(base.deriveFont(Font.BOLD, 15f * uiScale));
             }
 
             if (lblPuntajeActual != null) {
-                lblPuntajeActual.setFont(base.deriveFont(Font.BOLD, 16f));
+                lblPuntajeActual.setFont(base.deriveFont(Font.BOLD, 16f * uiScale));
             }
 
             if (lblValorPuntaje != null) {
-                lblValorPuntaje.setFont(lblValorPuntaje.getFont().deriveFont(Font.BOLD, 18f));
+                lblValorPuntaje.setFont(lblValorPuntaje.getFont().deriveFont(Font.BOLD, 18f * uiScale));
             }
 
         } catch (Exception ignored) {
             // Si algo falla por L&F, no rompemos la app.
+        }
+    }
+
+    private void aplicarAltoContrasteSiAplica() {
+        if (!altoContraste) return;
+
+        try {
+            // Blanco/negro con bordes marcados, sin tocar el panel de juego (para no romper estilos de minijuegos)
+            Color bg = Color.WHITE;
+            Color fg = Color.BLACK;
+
+            if (panelEstudianteMain != null) panelEstudianteMain.setBackground(bg);
+            if (panelHeaderEstudiante != null) {
+                panelHeaderEstudiante.setBackground(bg);
+                panelHeaderEstudiante.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, Color.BLACK));
+            }
+            if (panelDatosEstudiante != null) panelDatosEstudiante.setBackground(bg);
+            if (panelSeleccionJuego != null) {
+                panelSeleccionJuego.setBackground(bg);
+                panelSeleccionJuego.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2, true));
+            }
+
+            for (JLabel l : new JLabel[]{lblTituloEstudiante, lblNombreEstudiante, lblSeleccionJuego, lblPuntajeActual, lblValorPuntaje}) {
+                if (l != null) {
+                    l.setForeground(fg);
+                    l.setBackground(bg);
+                }
+            }
+
+            if (txtNombreEstudiante != null) {
+                txtNombreEstudiante.setForeground(fg);
+                txtNombreEstudiante.setBackground(bg);
+            }
+
+            if (listaJuegosEstudiante != null) {
+                listaJuegosEstudiante.setForeground(fg);
+                listaJuegosEstudiante.setBackground(bg);
+            }
+            if (scrollJuegosEstudiante != null && scrollJuegosEstudiante.getViewport() != null) {
+                scrollJuegosEstudiante.getViewport().setBackground(bg);
+            }
+
+            for (JButton b : new JButton[]{btnBackEstudiante, btnIniciarJuego, btnFinalizarJuego, btnFinalizarJuego, btnCambiarNino}) {
+                if (b == null) continue;
+                b.setOpaque(true);
+                b.setContentAreaFilled(true);
+                b.setBackground(bg);
+                b.setForeground(fg);
+                b.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2, true));
+            }
+
+        } catch (Exception ignored) {
         }
     }
 

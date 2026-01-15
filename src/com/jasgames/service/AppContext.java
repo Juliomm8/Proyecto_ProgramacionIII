@@ -7,6 +7,8 @@ import com.jasgames.service.PiaService;
 
 public class AppContext {
 
+    private final SettingsService settingsService;
+
     private final JuegoService juegoService;
     private final PerfilService perfilService;
     private final SesionService sesionService;
@@ -22,6 +24,7 @@ public class AppContext {
     private Nino ninoSesion;
 
     public AppContext() {
+        this.settingsService = new SettingsService();
         this.juegoService = new JuegoService();
         this.perfilService = new PerfilService();
         this.aulaService = new AulaService(perfilService);
@@ -45,6 +48,8 @@ public class AppContext {
 
     public AutenticacionService getAutenticacionService() { return autenticacionService; }
     public DirectorioEscolarService getDirectorioEscolarService() { return directorioEscolarService; }
+
+    public SettingsService getSettingsService() { return settingsService; }
 
     public Docente getDocenteSesion() { return docenteSesion; }
     public void setDocenteSesion(Docente docenteSesion) { this.docenteSesion = docenteSesion; }

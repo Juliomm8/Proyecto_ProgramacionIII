@@ -476,40 +476,64 @@ public class PerfilService {
         }
     }
 
-/**
- * Reemplaza todos los niños y guarda en disco en UNA sola escritura.
- * Útil para "Datos de ejemplo" y "Limpiar datos".
- */
-public void reemplazarTodosNinos(List<Nino> nuevos) {
-    ioLock.lock();
-    try {
-        ninos.clear();
-        if (nuevos != null) {
-            for (Nino n : nuevos) {
-                if (n == null) continue;
 
-                // Normalizaciones mínimas (evita NPE / campos vacíos)
-                if (n.getNombre() == null || n.getNombre().isBlank()) n.setNombre("Sin nombre");
-                if (n.getDiagnostico() == null) n.setDiagnostico("");
 
-                if (n.getJuegosAsignados() == null) n.setJuegosAsignados(new HashSet<>());
-                if (n.getDificultadPorJuego() == null) n.setDificultadPorJuego(new HashMap<>());
+    /**
+     * Reemplaza completamente el catálogo de niños (1 sola escritura).
+     * Útil para cargar datos demo / limpiar o restaurar estructuras.
+     */
+    public void reemplazarTodosNinos(List<Nino> nuevos) {
+        ioLock.lock();
+        try {
+            ninos.clear();
 
-                if (n.getDificultadAutoPorJuego() == null) n.setDificultadAutoPorJuego(new HashMap<>());
-                if (n.getCooldownRestantePorJuego() == null) n.setCooldownRestantePorJuego(new HashMap<>());
-                if (n.getAdaptacionAutomaticaPorJuego() == null) n.setAdaptacionAutomaticaPorJuego(new HashMap<>());
+            if (nuevos != null) {
+                int nextId = 1;
+                for (Nino n : nuevos) {
+                    if (n != null && n.getId() >= nextId) nextId = n.getId() + 1;
+                }
 
-                ninos.add(n);
+                Set<Integer> usados = new HashSet<>();
+                for (Nino n : nuevos) {
+                    if (n == null) continue;
+
+                    // asegurar id único y positivo
+                    if (n.getId() <= 0 || usados.contains(n.getId())) {
+                        n.setId(nextId++);
+                    }
+                    usados.add(n.getId());
+
+                    // normalizaciones suaves
+                    String nombre = (n.getNombre() == null) ? "" : n.getNombre().trim();
+                    if (nombre.isBlank()) nombre = "Sin nombre";
+                    n.setNombre(nombre);
+
+                    n.setDiagnostico(n.getDiagnostico()); // null -> ""
+                    n.setAula(n.getAula());               // null/"General" -> "Aula Azul"
+
+                    // asegurar estructuras no-nulas por compatibilidad
+                    n.getJuegosAsignados();
+                    n.getDificultadPorJuego();
+
+                    ninos.add(n);
+                }
             }
-        }
-        guardarNinosEnArchivo();
-    } finally {
-        ioLock.unlock();
-    }
-}
 
-/** Limpia todos los niños (deja ninos.json vacío). */
-public void limpiarTodosNinos() {
-    reemplazarTodosNinos(Collections.emptyList());
-}
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
+    /** Limpia todos los niños (1 sola escritura). */
+    public void limpiarTodosNinos() {
+        ioLock.lock();
+        try {
+            ninos.clear();
+            guardarNinosEnArchivo();
+        } finally {
+            ioLock.unlock();
+        }
+    }
+
 }
