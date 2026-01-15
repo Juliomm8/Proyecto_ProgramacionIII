@@ -7,6 +7,7 @@ import com.jasgames.model.Actividad;
 import com.jasgames.model.Juego;
 import com.jasgames.model.TipoJuego;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
@@ -176,6 +177,9 @@ public class JuegoService {
             if (carpeta != null) {
                 Files.createDirectories(carpeta);
             }
+
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(pathArchivo);
 
             String json = gson.toJson(juegos);
             AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);

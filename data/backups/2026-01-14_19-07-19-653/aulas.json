@@ -1,0 +1,10 @@
+[
+  {
+    "nombre": "Aula Azul",
+    "colorHex": "#3333FF"
+  },
+  {
+    "nombre": "Aula Roja",
+    "colorHex": "#FF0033"
+  }
+]

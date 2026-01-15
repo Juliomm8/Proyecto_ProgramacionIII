@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Aula;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
@@ -180,6 +181,10 @@ public class AulaService {
             Path p = Paths.get(ARCHIVO_AULAS);
             Path dir = p.getParent();
             if (dir != null) Files.createDirectories(dir);
+
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(p);
+
             AtomicFiles.writeStringAtomic(p, gson.toJson(aulas), StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();

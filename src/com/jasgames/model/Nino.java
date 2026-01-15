@@ -37,12 +37,20 @@ public class Nino {
         return nombre;
     }
 
+    public void setNombre(String nombre) {
+        this.nombre = (nombre == null) ? "" : nombre;
+    }
+
     public int getEdad() {
         return edad;
     }
 
     public String getDiagnostico() {
         return diagnostico;
+    }
+
+    public void setDiagnostico(String diagnostico) {
+        this.diagnostico = (diagnostico == null) ? "" : diagnostico;
     }
 
     public Set<Integer> getJuegosAsignados() {

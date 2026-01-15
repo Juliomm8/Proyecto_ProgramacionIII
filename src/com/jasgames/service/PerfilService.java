@@ -6,7 +6,9 @@ import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.CriterioOrdenNino;
 import com.jasgames.model.Nino;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
+import com.jasgames.util.JsonSafeIO;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -257,10 +259,13 @@ public class PerfilService {
                 Files.createDirectories(carpeta); // crea "data" si no existe
             }
 
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(pathArchivo);
+
             String json = gson.toJson(ninos);
             AtomicFiles.writeStringAtomic(pathArchivo, json, StandardCharsets.UTF_8);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             ioLock.unlock();
@@ -272,15 +277,15 @@ public class PerfilService {
         ioLock.lock();
         try {
             Path pathArchivo = Paths.get(ARCHIVO_NINOS);
-            if (!Files.exists(pathArchivo)) {
-                return; // primera vez, no hay archivo
-            }
-
-            String json = Files.readString(pathArchivo, StandardCharsets.UTF_8);
-            if (json == null || json.isBlank()) return;
-
             Type tipoLista = new TypeToken<List<Nino>>() {}.getType();
-            List<Nino> cargados = gson.fromJson(json, tipoLista);
+
+            // Lectura robusta con recuperación si el JSON está corrupto
+            List<Nino> cargados = JsonSafeIO.readOrRecover(
+                    pathArchivo,
+                    gson,
+                    tipoLista,
+                    new ArrayList<>()
+            );
 
             ninos.clear();
             if (cargados != null) {
@@ -289,6 +294,16 @@ public class PerfilService {
 
             boolean cambiado = false;
             for (Nino n : ninos) {
+                // Normalizaciones seguras (evita NPE por datos viejos/corruptos)
+                if (n.getNombre() == null || n.getNombre().isBlank()) { // puede venir null desde JSON
+                    n.setNombre("Sin nombre");
+                    cambiado = true;
+                }
+                if (n.getDiagnostico() == null) {
+                    n.setDiagnostico("");
+                    cambiado = true;
+                }
+
                 if (n.getJuegosAsignados() == null) {
                     n.setJuegosAsignados(new HashSet<>());
                     cambiado = true;
@@ -297,12 +312,26 @@ public class PerfilService {
                     n.setDificultadPorJuego(new HashMap<>());
                     cambiado = true;
                 }
+
+                // Mapas del modo adaptativo (por compatibilidad con versiones previas)
+                if (n.getDificultadAutoPorJuego() == null) {
+                    n.setDificultadAutoPorJuego(new HashMap<>());
+                    cambiado = true;
+                }
+                if (n.getCooldownRestantePorJuego() == null) {
+                    n.setCooldownRestantePorJuego(new HashMap<>());
+                    cambiado = true;
+                }
+                if (n.getAdaptacionAutomaticaPorJuego() == null) {
+                    n.setAdaptacionAutomaticaPorJuego(new HashMap<>());
+                    cambiado = true;
+                }
             }
             if (cambiado) {
                 guardarNinosEnArchivo();
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             ioLock.unlock();

@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.jasgames.model.Juego;
 import com.jasgames.model.SesionJuego;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
@@ -171,6 +172,9 @@ public class SesionService {
             Path path = Paths.get(ARCHIVO_RESULTADOS);
             Path dir = path.getParent();
             if (dir != null) Files.createDirectories(dir);
+
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(path);
 
             String json = gson.toJson(resultados);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);

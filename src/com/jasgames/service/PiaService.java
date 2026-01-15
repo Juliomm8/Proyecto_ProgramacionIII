@@ -5,6 +5,7 @@ import com.jasgames.model.ObjetivoPIA;
 import com.jasgames.model.PIA;
 import com.jasgames.model.SesionJuego;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
@@ -357,6 +358,9 @@ public class PiaService {
             Path dir = path.getParent();
             if (dir != null) Files.createDirectories(dir);
 
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(path);
+
             String json = gson.toJson(pias);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
 
@@ -379,6 +383,39 @@ public class PiaService {
 
             pias.clear();
             if (lista != null) pias.addAll(Arrays.asList(lista));
+
+            // Validaciones suaves por compatibilidad
+            boolean changed = false;
+            for (PIA p : pias) {
+                if (p == null) continue;
+                if (p.getIdPia() == null || p.getIdPia().isBlank()) {
+                    p.setIdPia(java.util.UUID.randomUUID().toString());
+                    changed = true;
+                }
+                if (p.getNombreNino() == null) {
+                    p.setNombreNino("");
+                    changed = true;
+                }
+                if (p.getAula() == null) {
+                    p.setAula("");
+                    changed = true;
+                }
+                if (p.getObjetivoGeneral() == null) {
+                    p.setObjetivoGeneral("");
+                    changed = true;
+                }
+
+                // Asegurar lista de objetivos y objetivo activo coherente
+                if (p.getObjetivos() == null) {
+                    p.setObjetivos(new java.util.ArrayList<>());
+                    changed = true;
+                }
+                p.asegurarObjetivoActivoValido();
+            }
+
+            if (changed) {
+                guardarEnArchivo();
+            }
 
         } catch (Exception e) {
             System.err.println("Error cargando PIAs: " + e.getMessage());

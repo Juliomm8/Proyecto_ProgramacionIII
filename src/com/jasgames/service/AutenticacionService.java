@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jasgames.model.Docente;
 import com.jasgames.util.AtomicFiles;
+import com.jasgames.util.DataBackups;
 import com.jasgames.util.FileLocks;
 import com.jasgames.util.JsonSafeIO;
 
@@ -150,6 +151,10 @@ public class AutenticacionService {
         ioLock.lock();
         try {
             Path path = Paths.get(ARCHIVO_DOCENTES);
+
+            // Backup antes de sobrescribir
+            DataBackups.backupIfExists(path);
+
             String json = gson.toJson(docentes);
             AtomicFiles.writeStringAtomic(path, json, StandardCharsets.UTF_8);
         } catch (Exception e) {
