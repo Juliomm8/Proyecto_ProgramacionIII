@@ -2,23 +2,21 @@
 
 > **Proyecto universitario desarrollado para las materias de Programación III e Ingeniería de Requerimientos.**  
 > **Comitente:** Escuela de Educación Básica Particular *“Timoleón Povea Garzón”*  
-> *Última actualización: 7 de enero de 2026*
+> *Última actualización: 16 de enero de 2026*
 
 ---
 
-## ✅ Estado Actual: Alpha (70% Completado)
+## ✅ Estado Actual: Beta / Entregable (funcional + pulido)
+El sistema cuenta con el flujo completo **Docente / Estudiante**, persistencia robusta en JSON con backups, analítica (Dashboard + PIA), auditoría y 5 minijuegos integrados.
 
-El sistema ya cuenta con el flujo completo **Docente / Estudiante**, gestión de datos (JSON), 5 minijuegos integrados y paneles administrativos con UX mejorada (filtros, orden, acciones rápidas).
-
-- **Docente:** gestión de perfiles, aulas, catálogo/asignación de juegos, auditoría y dashboard.  
-- **Estudiante:** acceso visual por aula/estudiante y ejecución de juegos.  
-- **Persistencia:** datos en `data/*.json` + auditoría en `data/auditoria.log` (y `data/resultados.json` se crea automáticamente al registrar partidas).
+- **Docente:** login, gestión de perfiles, aulas, catálogo/asignación de juegos, PIA, dashboard, auditoría, backups/restauración, demo/limpieza y accesibilidad.
+- **Estudiante:** acceso visual por aula/estudiante (sin teclado), ejecución de juegos y guardado automático de resultados.
+- **Persistencia:** datos en `data/*.json` + backups automáticos en `data/backups/`.
 
 ---
 
 ## 🎮 Minijuegos implementados (5/5)
-
-Actualmente están disponibles **5 minijuegos** (catálogo en `data/juegos.json`):
+Catálogo en `data/juegos.json`:
 
 - Discriminación de Colores
 - Cuenta y Conecta
@@ -26,73 +24,97 @@ Actualmente están disponibles **5 minijuegos** (catálogo en `data/juegos.json`
 - Vocales Divertidas
 - Explorando las Vocales
 
-Incluyen **niveles/dificultad**, retroalimentación amigable (enfoque TEA) y registro de resultados para analítica.
+Incluyen niveles/dificultad, retroalimentación amigable (enfoque TEA) y registro de resultados para analítica.
 
 ---
 
-## ✨ Mejoras recientes (UX/Paneles)
-
-### JuegosPanel (Docente)
-- Lista “pro” con mejor legibilidad.
-- Separación clara entre **dificultad GLOBAL** (catálogo) y **dificultad PERSONAL** (por estudiante).
-- Acciones masivas (habilitar/deshabilitar y asignación a todos).
-- Selector de estudiante optimizado (pensado para listas grandes).
-
-### PerfilesPanel (Docente)
-- Lista de estudiantes con filtros por aula + búsqueda + orden.
-- Vista de detalle más clara (avatar, datos y acciones).
-- **Aulas nuevas aparecen en el combo aunque estén vacías** (refresco y servicio compartido).
-
-### AulasPanel (Docente)
-- Contraste automático para texto según color de aula.
-- Tooltips en tabla (textos largos).
-- Ordenamiento por columnas (click en encabezados).
-- Menú contextual + acciones masivas (mover selección y copiar IDs).
+## 🧩 Enfoque pedagógico
+**JAS Games** es una plataforma educativa de escritorio diseñada bajo **DUA (Diseño Universal para el Aprendizaje)** para apoyar a niños con **TEA** mediante actividades lúdicas enfocadas en atención, colores, números, series y vocales.
 
 ---
 
-## 📖 Descripción del Proyecto
-
-**JAS Games** es una plataforma educativa de escritorio diseñada bajo el enfoque **DUA (Diseño Universal para el Aprendizaje)** para apoyar a niños con **Trastorno del Espectro Autista (TEA)** mediante actividades lúdicas enfocadas en atención, colores, números, series y vocales.
-
----
-
-## 🔐 Seguridad y Acceso (Híbrido)
+## 🔐 Seguridad y Acceso
 
 ### 👩‍🏫 Docente
-- Login con **usuario + contraseña** (persistencia en `data/docentes.json`).
-- Acceso a gestión y paneles administrativos.
+- Login con **usuario + contraseña** (`data/docentes.json`).
+- **Creación de usuario docente desde la UI** (sin editar JSON manualmente).
+- Acceso a paneles administrativos (Perfiles, Aulas, Dashboard, Auditoría, etc.).
 
 ### 🧒 Estudiante (accesible)
-- Acceso visual por:
-  1) Selección de **Aula**
-  2) Selección de **estudiante** (ficha con nombre/avatar)
+Acceso visual en 2 pasos:
+1) Selección de **Aula**
+2) Selección de **Estudiante** (ficha con nombre/avatar)
+
+Incluye mejoras de UX:
+- Diseño más infantil/visual en pantallas de acceso.
+- Emojis/avatares renderizados de forma compatible (evita “cuadritos”).
+- Confirmaciones no invasivas para operaciones normales (y confirmación para acciones sensibles).
 
 ---
 
 ## 📊 Analítica (Dashboard)
-- Visualización de resultados guardados.
-- Filtros por **aula**, **dificultad**, **rango de fechas** y **orden**.
+- Tabla de resultados (sesiones) con filtros por:
+  - aula, estudiante, juego, dificultad, rango de fechas, búsqueda.
+- **Debounce en búsqueda** (mejor rendimiento con listas grandes).
+- **Eliminar sesión con “Deshacer”** (ventana de tiempo breve para revertir).
+- **Exportar PIA a CSV** desde Dashboard.
+
+---
+
+## 🧠 PIA (Plan Individual de Apoyo)
+- Gestión y seguimiento de objetivos por estudiante.
+- Progreso se actualiza automáticamente según sesiones registradas.
+- Recalculo de progreso cuando corresponde (por ejemplo, al eliminar/restaurar sesiones).
 
 ---
 
 ## 🧾 Auditoría
 - Registro de acciones en `data/auditoria.log`.
-- Panel para lectura rápida de registros.
+- Panel de auditoría con búsqueda y filtros (con debounce).
+
+---
+
+## 💾 Backups y restauración (anti-pérdida de datos)
+- Antes de sobrescribir archivos `data/*.json`, el sistema crea backups automáticos en:
+  - `data/backups/YYYY-MM-DD_HH-mm-ss-SSS/`
+- UI en modo docente para:
+  - listar backups disponibles,
+  - ver archivos contenidos,
+  - **restaurar** un backup (con confirmación).
+
+---
+
+## 🧪 Demo y limpieza (para exposiciones)
+En modo docente:
+- **Demo:** carga datos de ejemplo (aulas, niños, PIA y sesiones).
+- **Limpiar:** borra datos operativos (niños/sesiones/PIA) y resetea aulas.
+- En ambos casos: crea **backup automático** antes de sobrescribir.
+
+---
+
+## ♿ Accesibilidad (persistente)
+Configuraciones guardadas en `data/ui_settings.json`:
+- Letra grande (Docente)
+- Letra grande (Estudiante)
+- Alto contraste (Estudiante)
+- Pantalla completa (Estudiante)
+
+Estas opciones se activan desde el botón **Accesibilidad** en Modo Docente.
 
 ---
 
 ## 🏫 Aulas configurables
-Aulas administradas desde `data/aulas.json`:
+Aulas administradas en `data/aulas.json`:
 - Crear aulas
 - Cambiar color
-- Eliminar (con migración segura de estudiantes a otra aula)
+- Eliminar/migrar estudiantes de forma segura
+- Acciones masivas y utilidades (copiar IDs, mover selección, etc.)
 
 ---
 
 ## 🛠 Tecnologías
-- **Lenguaje:** Java (**JDK 24**)
-- **UI:** Swing (paneles por código; pantallas de login aún con `.form`)
+- **Lenguaje:** Java (recomendado **JDK 21+**, probado con JDK 24)
+- **UI:** Swing
 - **Persistencia:** JSON (Gson)
 
 ---
@@ -102,12 +124,17 @@ Aulas administradas desde `data/aulas.json`:
 - `ninos.json` → estudiantes  
 - `docentes.json` → credenciales docentes  
 - `juegos.json` → catálogo/configuración de juegos  
-- `resultados.json` → historial de partidas (**se crea al primer resultado**)  
+- `pias.json` → PIA por estudiante  
+- `resultados.json` → historial de partidas (sesiones)  
 - `auditoria.log` → bitácora de acciones  
+- `ui_settings.json` → preferencias de accesibilidad  
+- `backups/` → copias automáticas antes de sobrescrituras  
+
+> Nota: algunos archivos se crean automáticamente la primera vez que se usan.
 
 ---
 
-## 🚀 Ejecución
+## 🚀 Ejecución (IntelliJ)
 1. Abrir el proyecto en IntelliJ IDEA.
 2. Verificar que `lib/gson-2.10.1.jar` esté en el classpath.
 3. Ejecutar: `src/com/jasgames/ui/App.java`
@@ -115,20 +142,20 @@ Aulas administradas desde `data/aulas.json`:
 ---
 
 ## 👥 Autores - Equipo JAS Games
-- Julio Mera  
-- Jeremy Tomaselly  
-- Samuel Cobo  
-- Amelia Povea  
-- Alisson Armas  
+- Julio Mera
+- Jeremy Tomaselly
+- Samuel Cobo
+- Amelia Povea
+- Alisson Armas
 
 ---
 
 ## 📂 Estructura (referencial)
-
 ```text
 src/com/jasgames/
 ├── model/
 ├── service/
+├── util/
 └── ui/
     ├── login/
     ├── juegos/
@@ -139,34 +166,38 @@ src/com/jasgames/
 
 ## ✅ Checklist (actualizado)
 
-### 🎮 Juegos y Contenido
-- [x] Implementar los **5 minijuegos** definidos en el alcance.
-- [x] Integrar registro de partidas para analítica (`resultados.json`).
-- [ ] Afinar métricas/puntajes (más rondas, mejor escalado, cooldown y fallos) según TEA.
+### 🎮 Juegos y contenido
+- [x] Implementar los 5 minijuegos del alcance.
+- [x] Registro de partidas para analítica (`resultados.json`).
+- [ ] Ajustes finos de métricas/puntajes (escalado TEA y más rondas).
 
 ### 🧩 UX/UI
-- [x] Rediseño **JuegosPanel** (lista, filtros, acciones masivas).
-- [x] Rediseño **PerfilesPanel** (lista, detalle, avatar, acciones claras).
-- [x] Mejoras **AulasPanel** (contraste, tooltips, orden, menú contextual, acciones masivas).
-- [ ] Rediseñar pantallas de acceso (AccesoWindow / LoginDocenteWindow / AccesoEstudianteWindow).
-- [ ] Unificar estilo global (tipografías, márgenes, componentes y tema).
+- [x] Acceso con estilo más visual (Docente/Estudiante).
+- [x] Login docente con creación de usuario desde la UI.
+- [x] Selección visual (sin teclado) para estudiantes.
+- [x] Corrección de avatares/emoji compatibles.
+- [x] Mejoras en Dashboard: filtros + debounce + “Deshacer”.
+- [x] Ventanas Ayuda y Acerca de.
+- [ ] Unificación completa de tema global (opcional; se evitó forzar L&F por compatibilidad).
 
 ### 📊 Analítica y reportes
 - [x] Dashboard funcional con filtros principales.
-- [ ] Mejorar visual del dashboard (tarjetas KPI, tablas más limpias).
-- [ ] Exportar reportes (CSV/PDF) (opcional).
+- [x] Exportar PIA a CSV.
+- [ ] Mejoras visuales extra (KPIs/tarjetas, opcional).
 
 ### 🔐 Cuentas y administración
 - [x] Login docente operativo.
-- [ ] UI para gestión de docentes (CRUD) dentro del sistema (sin editar JSON).
+- [x] Crear docente desde UI.
+- [ ] CRUD completo de docentes (editar/eliminar desde la UI) (opcional).
 
 ### 🧾 Auditoría
 - [x] Registro en `auditoria.log` y panel de visualización.
-- [ ] Filtros avanzados (fecha/usuario/acción) + rotación de log.
+- [x] Búsqueda con debounce.
+- [ ] Rotación/archivado automático del log (opcional).
 
-### 🧱 Calidad y estabilidad
-- [ ] Validaciones completas (campos vacíos, ids duplicados, consistencia).
-- [ ] Manejo de fallos (JSON corrupto/faltante) con mensajes amigables.
-- [ ] Pruebas manuales con datos grandes (500+ estudiantes) y casos límite.
-
----
+### 💾 Calidad y estabilidad
+- [x] Backups automáticos antes de sobrescribir JSON.
+- [x] UI de restauración desde backups.
+- [x] Demo/Limpiar con backups automáticos.
+- [x] Configuración de accesibilidad persistente.
+- [ ] Empaquetado (JAR ejecutable) + guía de distribución (pendiente final).
